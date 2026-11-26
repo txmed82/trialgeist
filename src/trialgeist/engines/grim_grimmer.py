@@ -19,6 +19,8 @@ than reality):
 
 from __future__ import annotations
 
+from typing import Any
+
 from fractions import Fraction
 from math import ceil, floor
 
@@ -174,11 +176,19 @@ def grim_check(
     return f
 
 
+def _lit(x) -> str:
+    """Source literal for a bound that the certificate reads with F(str(.)) or compares directly."""
+    if x is None:
+        return "None"
+    fx = Fraction(str(x)) if not isinstance(x, Fraction) else x
+    return str(fx.numerator) if fx.denominator == 1 else f"F({str(fx)!r})"
+
+
 def grim_certificate(cid: str, inputs: dict, assumptions: list[str], claim: str) -> str:
     body = f'''from fractions import Fraction as F
 from math import ceil, floor
 N, MEAN, G = {inputs["N"]}, {inputs["mean"]!r}, F({str(inputs["granularity"])!r})
-LO_B, HI_B = {inputs["scale_min"]!r}, {inputs["scale_max"]!r}
+LO_B, HI_B = {_lit(inputs["scale_min"])}, {_lit(inputs["scale_max"])}
 {HULL_SRC}
 lo, hi = hull(MEAN)
 smin, smax = ceil(lo * N / G), floor(hi * N / G)  # mean = G*S/N, S integer
@@ -265,7 +275,7 @@ def grimmer_certificate(cid: str, inputs: dict, assumptions: list[str], claim: s
     body = f'''from fractions import Fraction as F
 from math import ceil, floor
 N, MEAN, SD, G = {inputs["N"]}, {inputs["mean"]!r}, {inputs["sd"]!r}, F({str(inputs["granularity"])!r})
-LO, HI = {lo_u!r}, {hi_u!r}  # bounds on y = x/G (None = unbounded)
+LO, HI = {_lit(lo_u)}, {_lit(hi_u)}  # bounds on y = x/G (None = unbounded)
 {HULL_SRC}
 def qmin(s):  # most even integer split of s minimises sum of squares
     q, r = divmod(s, N); return r * (q + 1) ** 2 + (N - r) * q * q
@@ -289,3 +299,61 @@ for denom, name in ((N * (N - 1), "n-1"), (N * N, "n")):
 print(f"VERIFIED: no integer (S, Q) fits mean {{MEAN}} and SD {{SD}} with N={{N}} under N-1 or N.")
 '''
     return render(cid, "GRIMMER", claim, inputs, assumptions, body)
+
+
+# ------------------------------------------------------------ Bhatia-Davis
+
+
+def bhatia_davis_check(
+    n_min: int,
+    mean: str,
+    sd: str,
+    scale_min,
+    scale_max,
+    label: str = "",
+    provenance: list[Provenance] | None = None,
+) -> Finding:
+    """Bounded-scale SD ceiling, valid for real-valued data and any N >= n_min.
+
+    For values in [L, U] with mean m the population variance is at most
+    (m - L)(U - m) (Bhatia-Davis); the sample variance at most that times
+    N/(N-1), which is largest at the smallest possible N.  No integrality and
+    no exact N is needed, so missing data cannot break the proof.
+    """
+    if n_min < 2:
+        raise ValueError("n_min must be >= 2")
+    rm, rs = parse_reported(mean), parse_reported(sd)
+    L, U = _frac(scale_min), _frac(scale_max)
+    mh, sh = proof_interval(rm), proof_interval(rs, nonnegative=True)
+    inputs = {"label": label, "n_min": n_min, "mean": rm.text, "sd": rs.text, "scale_min": str(scale_min), "scale_max": str(scale_max)}
+    assumptions = [f"every observation lies in [{scale_min}, {scale_max}]", f"at least {n_min} observations"]
+    common: dict[str, Any] = dict(engine=ENGINE, check="bhatia_davis", inputs=inputs, assumptions=assumptions, provenance=provenance)
+    lo, hi = max(mh.lo, L), min(mh.hi, U)
+    if lo > hi:
+        claim = f"Mean {rm.text} lies outside the scale [{scale_min}, {scale_max}]."
+        best = None
+    else:
+        mid = (L + U) / 2
+        mu = min(max(mid, lo), hi)
+        best = (mu - L) * (U - mu) * Fraction(n_min, n_min - 1)
+        if sh.lo**2 <= best:
+            return make_finding(**common, tier=Tier.CONSISTENT, title=f"SD within bounded-scale ceiling ({label or rm.text})",
+                                detail=f"max SD {float(best) ** 0.5:.4g} >= printed lower bound {float(sh.lo):.4g}")
+        claim = (f"On [{scale_min}, {scale_max}] a mean of {rm.text} allows an SD of at most "
+                 f"{float(best) ** 0.5:.4f} (N >= {n_min}), but the printed SD is {rs.text}.")
+    f = make_finding(**common, tier=Tier.PROVEN_IMPOSSIBLE, title=f"SD/mean impossible on bounded scale: {rm.text} ({rs.text})" + (f" ({label})" if label else ""),
+                     detail=claim)
+    body = f'''from fractions import Fraction as F
+MEAN, SD, L, U, NMIN = {rm.text!r}, {rs.text!r}, F({str(L)!r}), F({str(U)!r}), {n_min}
+{HULL_SRC}
+mlo, mhi = hull(MEAN); slo, _ = hull(SD, nonneg=True)
+lo, hi = max(mlo, L), min(mhi, U)
+if lo > hi: print(f"VERIFIED: mean {{MEAN}} is outside [{{L}}, {{U}}]."); raise SystemExit(0)
+mu = min(max((L + U) / 2, lo), hi)  # maximiser of (m-L)(U-m) over admissible means
+vmax = (mu - L) * (U - mu) * F(NMIN, NMIN - 1)  # Bhatia-Davis, sample-SD factor at smallest N
+print(f"  max variance {{float(vmax):.6f}} (SD {{float(vmax) ** 0.5:.6f}}); printed SD >= {{float(slo):.6f}}")
+if slo * slo <= vmax: print("NOT VERIFIED"); raise SystemExit(1)
+print("VERIFIED: printed SD exceeds the largest SD any data on this scale can have.")
+'''
+    f.certificate = render(f.id, "BHATIA_DAVIS", claim, inputs, assumptions, body)
+    return f

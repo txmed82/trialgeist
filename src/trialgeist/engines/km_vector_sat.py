@@ -167,9 +167,20 @@ def _feasible(segs: list[Segment], total_events: int | None) -> bool | None:
     return None
 
 
-def km_check(arm: KMArm) -> Finding:
+def _analyse(arm: KMArm) -> tuple[bool | None, list[Segment], int | None]:
+    """(feasible?, minimal failing segments, total-events bound used)."""
     segs = segments(arm)
-    inputs = {
+    whole = _feasible(segs, arm.total_events)
+    if whole is not False:
+        return whole, [], None
+    for seg in segs:
+        if _feasible([seg], None) is False:
+            return False, [seg], None
+    return False, segs, arm.total_events
+
+
+def _inputs(arm: KMArm) -> dict:
+    return {
         "label": arm.label,
         "risk_times": [str(t) for t in arm.risk_times],
         "at_risk": list(arm.at_risk),
@@ -178,71 +189,93 @@ def km_check(arm: KMArm) -> Finding:
         "eps_t": str(arm.eps_t),
         "total_events": arm.total_events,
     }
-    assumptions = [
+
+
+def _assumptions(arm: KMArm) -> list[str]:
+    a = [
         f"plotted survival levels are within +/-{float(arm.eps):.4g} of the true KM estimate",
+        f"plotted drop times are within +/-{float(arm.eps_t):.4g} of the true event times",
         "numbers at risk are counted from the same population as the curve, with no delayed entry",
+        "the curve is an unweighted, unadjusted Kaplan-Meier estimate",
         "each visible drop contains at least one event (drops <= 2*eps may be jitter)",
     ]
     if arm.total_events is not None:
-        assumptions.append(f"the arm has at most {arm.total_events} events in total")
-    common: dict[str, Any] = dict(engine=ENGINE, check="km_sat", inputs=inputs, assumptions=assumptions, provenance=arm.provenance)
-    whole = _feasible(segs, arm.total_events)
-    if whole is None:
-        return make_finding(**common, tier=Tier.INCONCLUSIVE, title=f"KM-SAT timeout ({arm.label})", detail="solver UNKNOWN")
-    if whole:
-        return make_finding(**common, tier=Tier.CONSISTENT, title=f"KM curve consistent with risk table ({arm.label})",
-                            detail=f"{len(arm.steps)} drops across {len(segs)} intervals admit integer events and censoring.")
-    # Find the smallest self-contained contradiction for the certificate.
-    bad: list[Segment] = []
-    total = None
-    for seg in segs:
-        if _feasible([seg], None) is False:
-            bad = [seg]
-            break
-    if not bad:
-        bad, total = segs, arm.total_events
-    seg_desc = "; ".join(
+        a.append(f"the arm has at most {arm.total_events} events in total")
+    return a
+
+
+def _seg_desc(segs: list[Segment]) -> str:
+    return "; ".join(
         f"[{float(s.t0):g}, {'end' if s.t1 is None else f'{float(s.t1):g}'}) at risk {s.n_start}->{s.n_end}, {len(s.steps)} drops"
-        for s in bad
+        for s in segs
     )
-    claim = (f"No integer sequence of events and censorings reproduces the plotted drops of '{arm.label}' "
-             f"together with its numbers at risk: {seg_desc}"
-             + (f" and at most {total} events" if total is not None else "") + ".")
-    f = make_finding(**common, tier=Tier.PROVEN_IMPOSSIBLE, title=f"KM curve impossible given numbers at risk ({arm.label})",
-                     detail=claim, stats={"segments": len(segs), "drops": len(arm.steps)})
-    f.certificate = km_certificate(f.id, arm, bad, total, assumptions, claim)
+
+
+def km_check(arm: KMArm) -> Finding:
+    return km_check_any_row(arm.label, arm.steps, arm.eps, arm.eps_t,
+                            [(arm.risk_times, arm.at_risk, arm.total_events)], arm.provenance)
+
+
+def km_check_any_row(label: str, steps: list[KMStep], eps, eps_t, rows: list[tuple[list, list[int], int | None]],
+                     provenance: list[Provenance] | None = None) -> Finding:
+    """PROVEN only if the curve is incompatible with EVERY candidate risk row.
+
+    PDF extraction cannot always tell which numbers-at-risk row belongs to
+    which curve; trying every row keeps a mismatch from becoming a proof.
+    """
+    arms = [KMArm(label, list(t), list(c), steps, eps, eps_t, tot, provenance or []) for t, c, tot in rows]
+    inputs = {"label": label, "alternatives": [_inputs(a) for a in arms]} if len(arms) > 1 else _inputs(arms[0])
+    assumptions = _assumptions(arms[0])
+    if len(arms) > 1:
+        assumptions.append(f"the curve belongs to one of the {len(arms)} printed numbers-at-risk rows (all are tried)")
+    common: dict[str, Any] = dict(engine=ENGINE, check="km_sat", inputs=inputs, assumptions=assumptions, provenance=provenance)
+    results = [_analyse(a) for a in arms]
+    if any(r[0] is True for r in results):
+        ok = [i for i, r in enumerate(results) if r[0] is True]
+        return make_finding(**common, tier=Tier.CONSISTENT, title=f"KM curve consistent with numbers at risk ({label})",
+                            detail=f"{len(steps)} drops admit integer events/censoring for risk row(s) {ok}.")
+    if any(r[0] is None for r in results):
+        return make_finding(**common, tier=Tier.INCONCLUSIVE, title=f"KM-SAT timeout ({label})", detail="solver UNKNOWN")
+    alts = [(a, r[1], r[2]) for a, r in zip(arms, results)]
+    desc = " | ".join(_seg_desc(segs) + (f", at most {tot} events" if tot is not None else "") for _, segs, tot in alts)
+    claim = (f"No integer sequence of events and censorings reproduces the plotted drops of '{label}' together with "
+             f"{'any of the printed numbers-at-risk rows' if len(arms) > 1 else 'its numbers at risk'}: {desc}.")
+    f = make_finding(**common, tier=Tier.PROVEN_IMPOSSIBLE, title=f"KM curve impossible given numbers at risk ({label})",
+                     detail=claim, stats={"drops": len(steps), "alternatives": len(arms)})
+    f.certificate = km_certificate(f.id, alts, assumptions, claim, label)
     return f
 
 
-def km_certificate(cid: str, arm: KMArm, segs: list[Segment], total: int | None, assumptions, claim) -> str:
-    data = [
-        {"n_start": s.n_start, "n_end": s.n_end,
-         "steps": [[str(arm.steps[i].before), str(arm.steps[i].after)] for i, _, _, _ in s.steps]}
-        for s in segs
-    ]
-    small_inputs = {"label": arm.label, "eps": str(arm.eps), "segments": data, "total_events": total}
+def km_certificate(cid: str, alts, assumptions, claim, label) -> str:
+    data = []
+    for arm, segs, total in alts:
+        data.append({"eps": str(arm.eps), "total": total, "segs": [
+            {"n_start": s.n_start, "n_end": s.n_end,
+             "steps": [[str(arm.steps[i].before), str(arm.steps[i].after)] for i, _, _, _ in s.steps]} for s in segs]})
+    small_inputs = {"label": label, "alternatives": len(data)}
     body = f'''from fractions import Fraction as F
 from math import ceil, floor
 from z3 import Int, Solver, And, Or, Sum, unsat  # pip install z3-solver
-EPS, Q, TOTAL = F({str(arm.eps)!r}), {QUANT}, {total!r}
-SEGS = {data!r}  # per interval: at-risk at start, at-risk lower bound at end, drops (before, after)
-sv, allD = Solver(), []
-for j, seg in enumerate(SEGS):
-    N, prev = seg["n_start"], seg["n_start"]
-    for k, (b, a_) in enumerate(seg["steps"]):
-        b, a_ = F(b), F(a_)
-        lo = floor(max(F(0), a_ - EPS) / (b + EPS) * Q)  # factor >= lo/Q, rounded outward
-        hi = Q if b - EPS <= 0 else min(Q, ceil((a_ + EPS) / (b - EPS) * Q))
-        n, D, a = Int(f"n{{j}}_{{k}}"), Int(f"D{{j}}_{{k}}"), Int(f"a{{j}}_{{k}}")
-        sv.add(n >= 0, a >= 0, D >= 0, n <= prev, a <= n - D)  # censoring only removes people
-        ratio = And(D >= 1, Q * (n - D) >= lo * n, (Q - hi) * a <= hi * D)  # (n-D)/n >= F >= a/(a+D)
-        sv.add(Or(ratio, D == 0) if b - a_ <= 2 * EPS else ratio)  # tiny drops may be jitter
-        allD.append(D); prev = a
-    sv.add(prev >= seg["n_end"])
-    print(f"  interval {{j}}: at risk {{N}} -> {{seg['n_end']}}, {{len(seg['steps'])}} drops")
-if TOTAL is not None and allD: sv.add(Sum(allD) <= TOTAL)
-if sv.check() != unsat:
-    print("NOT VERIFIED:", sv.check()); raise SystemExit(1)
-print("VERIFIED: no integer events/censoring reproduce these drops and numbers at risk (Z3 UNSAT).")
+Q = {QUANT}
+ALTS = {data!r}  # per candidate risk row: tolerance, event cap, intervals (at risk start/end, drops)
+for ai, alt in enumerate(ALTS):
+    EPS, sv, allD = F(alt["eps"]), Solver(), []
+    for j, seg in enumerate(alt["segs"]):
+        prev = seg["n_start"]
+        for k, (b, a_) in enumerate(seg["steps"]):
+            b, a_ = F(b), F(a_)
+            lo = floor(max(F(0), a_ - EPS) / (b + EPS) * Q)  # factor >= lo/Q, rounded outward
+            hi = Q if b - EPS <= 0 else min(Q, ceil((a_ + EPS) / (b - EPS) * Q))
+            n, D, a = Int(f"n{{j}}_{{k}}"), Int(f"D{{j}}_{{k}}"), Int(f"a{{j}}_{{k}}")
+            sv.add(n >= 0, a >= 0, D >= 0, n <= prev, a <= n - D)  # censoring only removes people
+            ratio = And(D >= 1, Q * (n - D) >= lo * n, (Q - hi) * a <= hi * D)  # (n-D)/n >= F >= a/(a+D)
+            sv.add(Or(ratio, D == 0) if b - a_ <= 2 * EPS else ratio)  # tiny drops may be jitter
+            allD.append(D); prev = a
+        sv.add(prev >= seg["n_end"])
+        print(f"  row {{ai}} interval {{j}}: at risk {{seg['n_start']}} -> {{seg['n_end']}}, {{len(seg['steps'])}} drops")
+    if alt["total"] is not None and allD: sv.add(Sum(allD) <= alt["total"])
+    if sv.check() != unsat:
+        print(f"NOT VERIFIED: risk row {{ai}} is satisfiable"); raise SystemExit(1)
+print("VERIFIED: no integer events/censoring reproduce these drops with any candidate risk row (Z3 UNSAT).")
 '''
     return render(cid, "KM-SAT", claim, small_inputs, assumptions, body)

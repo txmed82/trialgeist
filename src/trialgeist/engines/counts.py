@@ -179,3 +179,41 @@ print(f"VERIFIED: admissible counts sum to [{{lo_sum}}, {{hi_sum}}], which exclu
 '''
     f.certificate = render(f.id, "PERCENT_PARTITION", claim, inputs, assumptions, body)
     return f
+
+
+def any_denominator_check(count: int, percent: str, label: str = "", provenance: list[Provenance] | None = None) -> Finding:
+    """n (pct%) where no integer denominator D >= n reproduces pct: impossible whatever N is."""
+    r = parse_reported(percent)
+    iv = proof_interval(r, nonnegative=True)
+    inputs = {"label": label, "count": count, "percent": r.text}
+    assumptions = ["the percentage is count/D x 100 for some whole-number denominator D (not weighted or imputed)"]
+    common: dict[str, Any] = dict(engine=ENGINE, check="percent_any_denominator", inputs=inputs, assumptions=assumptions, provenance=provenance)
+    if count == 0:
+        ok = iv.lo <= 0
+    elif iv.lo <= 0:
+        ok = True
+    else:
+        d_lo = max(count, ceil(HUNDRED * count / iv.hi))
+        d_hi = floor(HUNDRED * count / iv.lo)
+        ok = d_lo <= d_hi
+    if ok:
+        return make_finding(**common, tier=Tier.CONSISTENT, title=f"{count} ({r.text}%) has a valid denominator", detail="")
+    claim = f"{count}/D x 100 never prints as {r.text}% for any whole number D >= {max(count, 1)}."
+    f = make_finding(**common, tier=Tier.PROVEN_IMPOSSIBLE, title=f"Impossible n (%): {count} ({r.text}%)" + (f" ({label})" if label else ""),
+                     detail=claim)
+    body = f'''from fractions import Fraction as F
+from math import ceil, floor
+K, PCT = {count}, {r.text!r}
+{HULL_SRC}
+lo, hi = hull(PCT, nonneg=True)
+if K == 0:
+    ok = lo <= 0
+else:  # K/D*100 in [lo, hi]  <=>  D in [100K/hi, 100K/lo]
+    dlo, dhi = max(K, ceil(100 * K / hi)), (floor(100 * K / lo) if lo > 0 else None)
+    print(f"  D must lie in [{{float(100 * K / hi):.4f}}, {{float(100 * K / lo) if lo > 0 else 'inf'}}]")
+    ok = dhi is None or dlo <= dhi
+if ok: print("NOT VERIFIED"); raise SystemExit(1)
+print(f"VERIFIED: no whole-number denominator gives {{K}} = {{PCT}}%.")
+'''
+    f.certificate = render(f.id, "PERCENT_ANY_DENOMINATOR", claim, inputs, assumptions, body)
+    return f

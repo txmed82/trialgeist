@@ -1,7 +1,7 @@
 [project]
 name = "trialgeist"
 version = "0.1.0"
-description = "Add your description here"
+description = "Machine-verified mathematical forensics for clinical trials"
 readme = "README.md"
 authors = [
     { name = "Colin Son", email = "colinson@gmail.com" }
@@ -17,6 +17,9 @@ dependencies = [
     "typer>=0.29.3",
     "z3-solver>=5.4.1.0",
 ]
+
+[project.scripts]
+trialgeist = "trialgeist.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.13.5,<0.14.0"]

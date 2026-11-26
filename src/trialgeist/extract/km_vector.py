@@ -1,0 +1,318 @@
+"""Vector-first Kaplan-Meier extraction from PDF drawing operators.
+
+Pipeline per page:
+
+1. collect axis-aligned line segments from ``page.get_drawings()`` grouped by
+   stroke colour/width;
+2. build a monotone DAG (x and PDF-y non-decreasing, i.e. survival
+   non-increasing) and take the longest left-to-right path per colour as the
+   candidate survival staircase (censor ticks become dead-end branches);
+3. calibrate axes from numeric tick labels (snapped to vector tick marks when
+   present) with a linear least-squares fit, refusing poor fits / log axes;
+4. read the "No. at risk" table: rows of integers aligned with the x tick
+   labels underneath the plot;
+5. emit :class:`KMArmClaim` objects (one per curve) with all candidate risk
+   rows, plus bbox provenance for every vertex.
+
+Refusals (no claim emitted): raster figures, rising curves (cumulative
+incidence; Aalen-Johansen is not 1-KM), pages mentioning adjusted / weighted
+curves, poor calibration, no risk table.
+"""
+
+from __future__ import annotations
+
+import re
+from collections import defaultdict
+from dataclasses import dataclass, field
+from fractions import Fraction
+
+import pymupdf
+
+from ..verdict import Provenance
+from .pdf_text import Row, rows_from_page
+
+SEG_TOL = 0.15  # pt, endpoint matching
+NUM_WORD = re.compile(r"^[\-\u2212]?\d+(?:[.\u00b7]\d+)?%?$")
+ADJUSTED_RE = re.compile(r"adjusted (survival|curves?)|weighted|IPTW|inverse.probability|cumulative incidence|competing risk", re.I)
+RISK_LABEL_RE = re.compile(r"(no\.?|number|n)\s*(of patients\s*)?at\s*risk|at risk", re.I)
+
+
+@dataclass
+class Seg:
+    x0: float
+    y0: float
+    x1: float
+    y1: float
+    color: tuple
+    width: float
+
+    @property
+    def horizontal(self) -> bool:
+        return abs(self.y0 - self.y1) < 1e-3 and abs(self.x1 - self.x0) > 1e-3
+
+    @property
+    def vertical(self) -> bool:
+        return abs(self.x0 - self.x1) < 1e-3 and abs(self.y1 - self.y0) > 1e-3
+
+
+@dataclass
+class Staircase:
+    color: tuple
+    width: float
+    points: list[tuple[float, float]]  # PDF coords along the path
+
+    @property
+    def bbox(self):
+        xs, ys = [p[0] for p in self.points], [p[1] for p in self.points]
+        return (min(xs), min(ys), max(xs), max(ys))
+
+
+@dataclass
+class Axis:
+    a: float  # value = a + b * coord
+    b: float
+    residual: float
+    labels: list[tuple[float, float]]  # (coord, value)
+
+    def value(self, coord: float) -> float:
+        return self.a + self.b * coord
+
+
+@dataclass
+class KMPlot:
+    page: int
+    curves: list[Staircase]
+    xaxis: Axis
+    yaxis: Axis
+    y_scale: float  # 1 for probability axis, 0.01 for percent axis
+    risk_rows: list[tuple[str, list[tuple[float, int]]]]  # (label, [(time, count)])
+    notes: list[str] = field(default_factory=list)
+
+
+def _segments(page: pymupdf.Page) -> list[Seg]:
+    segs = []
+    for d in page.get_drawings():
+        color = tuple(round(c, 3) for c in (d.get("color") or ())) or None
+        if color is None:
+            continue
+        w = d.get("width") or 0.0
+        for it in d["items"]:
+            if it[0] == "l":
+                p, q = it[1], it[2]
+                x0, y0, x1, y1 = p.x, p.y, q.x, q.y
+                if (x1, y1) < (x0, y0):
+                    x0, y0, x1, y1 = x1, y1, x0, y0
+                segs.append(Seg(x0, y0, x1, y1, color, w))
+    return segs
+
+
+def _key(x: float, y: float) -> tuple[int, int]:
+    return (round(x / SEG_TOL), round(y / SEG_TOL))
+
+
+def staircases(segs: list[Seg], min_steps: int = 3) -> list[Staircase]:
+    by_style: dict[tuple, list[Seg]] = defaultdict(list)
+    for s in segs:
+        if s.horizontal or s.vertical:
+            by_style[(s.color, round(s.width, 2))].append(s)
+    out = []
+    for (color, width), ss in by_style.items():
+        # edges oriented so x and y never decrease (survival never increases)
+        adj: dict[tuple, list[tuple[tuple, tuple[float, float]]]] = defaultdict(list)
+        coords: dict[tuple, tuple[float, float]] = {}
+        for s in ss:
+            if s.horizontal:
+                a, b = (s.x0, s.y0), (s.x1, s.y1)
+            else:
+                a, b = ((s.x0, s.y0), (s.x1, s.y1)) if s.y0 <= s.y1 else ((s.x1, s.y1), (s.x0, s.y0))
+            ka, kb = _key(*a), _key(*b)
+            coords.setdefault(ka, a)
+            coords.setdefault(kb, b)
+            adj[ka].append((kb, b))
+        # longest path in DAG by x-extent then edge count (memoised DFS)
+        order = sorted(coords, key=lambda k: (coords[k][0], coords[k][1]))
+        best: dict[tuple, tuple[float, int, tuple | None]] = {}
+        for k in reversed(order):
+            cand = (0.0, 0, None)
+            for nk, _ in adj.get(k, []):
+                if nk == k:
+                    continue
+                ext = coords[nk][0] - coords[k][0] + best.get(nk, (0.0, 0, None))[0]
+                cnt = 1 + best.get(nk, (0.0, 0, None))[1]
+                if (ext, cnt) > cand[:2]:
+                    cand = (ext, cnt, nk)
+            best[k] = cand
+        if not best:
+            continue
+        start = max(order, key=lambda k: best[k][:2])
+        path, k = [coords[start]], start
+        while best[k][2] is not None:
+            k = best[k][2]
+            path.append(coords[k])
+        drops = sum(1 for p, q in zip(path, path[1:]) if q[1] - p[1] > 1e-3)
+        if drops >= min_steps:
+            out.append(Staircase(color, width, path))
+    return out
+
+
+def _fit(pairs: list[tuple[float, float]]) -> Axis | None:
+    if len(pairs) < 3:
+        return None
+    n = len(pairs)
+    mx = sum(p[0] for p in pairs) / n
+    my = sum(p[1] for p in pairs) / n
+    sxx = sum((p[0] - mx) ** 2 for p in pairs)
+    if sxx == 0:
+        return None
+    b = sum((p[0] - mx) * (p[1] - my) for p in pairs) / sxx
+    a = my - b * mx
+    res = max(abs(a + b * c - v) / abs(b) for c, v in pairs) if b else 1e9  # residual in pt
+    return Axis(a, b, res, pairs)
+
+
+def _num(t: str) -> float | None:
+    t = t.replace("\u2212", "-").replace("\u00b7", ".").rstrip("%")
+    try:
+        return float(t)
+    except ValueError:
+        return None
+
+
+def _snap(coord: float, ticks: list[float], tol: float = 4.0) -> float:
+    near = [t for t in ticks if abs(t - coord) <= tol]
+    return min(near, key=lambda t: abs(t - coord)) if near else coord
+
+
+def plot_frame(sc: Staircase, segs: list[Seg]) -> tuple[float, float, float, float]:
+    """(left, top, right, bottom) of the plot area from long axis lines, else the curve bbox."""
+    x0, y0, x1, y1 = sc.bbox
+    w = max(x1 - x0, 1.0)
+    hs = [s for s in segs if s.horizontal and s.y0 >= y1 - 1 and s.x1 - s.x0 >= 0.6 * w and s.x0 <= x0 + 5 and s.y0 - y1 < 400]
+    vs = [s for s in segs if s.vertical and s.x0 <= x0 + 1 and x0 - s.x0 < 60 and s.y1 - s.y0 >= 0.3 * max(y1 - y0, 1.0)]
+    bottom = min((s.y0 for s in hs), default=y1)
+    left = max((s.x0 for s in vs), default=x0)
+    top = min((s.y0 for s in vs if s.x0 == left), default=y0)
+    return left, top, x1, bottom
+
+
+def calibrate(page: pymupdf.Page, sc: Staircase, segs: list[Seg]):
+    x0, y0, _, y1 = plot_frame(sc, segs)
+    words = [w for w in page.get_text("words") if NUM_WORD.match(w[4])]
+    # y labels: right edge left of the plot, vertically within the plot band
+    ycand = [w for w in words if w[2] <= x0 + 2 and w[2] >= x0 - 60 and y0 - 30 <= (w[1] + w[3]) / 2 <= y1 + 30]
+    groups: dict[int, list] = defaultdict(list)
+    for w in ycand:
+        groups[round(w[2] / 3)].append(w)
+    hticks = [s.y0 for s in segs if s.horizontal and abs(s.x1 - s.x0) < 8 and s.x1 <= x0 + 8]
+    yaxis = None
+    for g in sorted(groups.values(), key=len, reverse=True):
+        pairs = [(_snap((w[1] + w[3]) / 2, hticks), _num(w[4])) for w in g]
+        pairs = [(c, v) for c, v in pairs if v is not None]
+        ax = _fit(pairs)
+        if ax and ax.b < 0 and ax.residual < 1.0:
+            yaxis = ax
+            break
+    # x labels: a row below the plot with increasing values left to right
+    xcand = [w for w in words if (w[1] + w[3]) / 2 > y1 and (w[1] + w[3]) / 2 < y1 + 40 and x0 - 20 <= (w[0] + w[2]) / 2]
+    rows: dict[int, list] = defaultdict(list)
+    for w in xcand:
+        rows[round((w[1] + w[3]) / 2 / 3)].append(w)
+    vticks = [s.x0 for s in segs if s.vertical and abs(s.y1 - s.y0) < 8 and s.y0 >= y1 - 8]
+    xaxis = None
+    for key in sorted(rows):
+        g = rows[key]
+        pairs = [(_snap((w[0] + w[2]) / 2, vticks), _num(w[4])) for w in g]
+        pairs = sorted((c, v) for c, v in pairs if v is not None)
+        ax = _fit(pairs)
+        if ax and ax.b > 0 and ax.residual < 1.0:
+            xaxis = ax
+            break
+    return xaxis, yaxis
+
+
+def risk_rows(page: pymupdf.Page, xaxis: Axis, below_y: float) -> list[tuple[str, list[tuple[float, int]]]]:
+    rows = rows_from_page(page)
+    tick_x = [c for c, _ in xaxis.labels]
+    label_rows = [r for r in rows if r.y > below_y and RISK_LABEL_RE.search(r.text)]
+    if not label_rows:
+        return []
+    start_y = label_rows[0].y
+    out = []
+    for r in rows:
+        if r.y < start_y - 1 or r.y > start_y + 120:
+            continue
+        ints = [w for w in r.words if re.fullmatch(r"\d[\d,]*", w.text)]
+        aligned = []
+        for w in ints:
+            xc = (w.x0 + w.x1) / 2
+            near = [t for t in tick_x if abs(t - xc) <= 10]
+            if near:
+                t = min(near, key=lambda t: abs(t - xc))
+                aligned.append((xaxis.value(t), int(w.text.replace(",", ""))))
+        if len(aligned) >= 3 and len(aligned) >= len(ints) - 1:
+            label = " ".join(w.text for w in r.words if not re.fullmatch(r"\d[\d,]*", w.text))
+            aligned.sort()
+            out.append((label.strip(), aligned))
+    return out
+
+
+def find_km_plots(path: str) -> tuple[list[KMPlot], list[str]]:
+    doc = pymupdf.open(path)
+    plots, notes = [], []
+    for pi, page in enumerate(doc):
+        segs = _segments(page)
+        scs = staircases(segs)
+        if not scs:
+            continue
+        text = page.get_text()
+        if ADJUSTED_RE.search(text):
+            notes.append(f"page {pi}: staircases skipped (adjusted/weighted/cumulative-incidence wording)")
+            continue
+        # cluster staircases that share a plot area
+        used = set()
+        for i, sc in enumerate(scs):
+            if i in used:
+                continue
+            group = [sc]
+            for j in range(i + 1, len(scs)):
+                b1, b2 = sc.bbox, scs[j].bbox
+                if abs(b1[0] - b2[0]) < 15 and not (b2[1] > b1[3] + 10 or b1[1] > b2[3] + 10):
+                    group.append(scs[j])
+                    used.add(j)
+            xaxis, yaxis = calibrate(page, sc, segs)
+            if not xaxis or not yaxis:
+                notes.append(f"page {pi}: staircase found but axes could not be calibrated")
+                continue
+            vmax = max(v for _, v in yaxis.labels)
+            y_scale = 0.01 if vmax > 1.5 else 1.0
+            below = plot_frame(sc, segs)[3]
+            rr = risk_rows(page, xaxis, below)
+            if not rr:
+                notes.append(f"page {pi}: KM curves without a parsable numbers-at-risk table")
+                continue
+            plots.append(KMPlot(pi, group, xaxis, yaxis, y_scale, rr))
+    return plots, notes
+
+
+def plot_to_claims(plot: KMPlot, eps_pt: float = 1.0):
+    """One KMArmClaim per curve; every printed risk row is a candidate pairing."""
+    from ..claims import KMArmClaim, KMRiskRow, KMStepIn
+
+    ys = plot.y_scale
+    eps = abs(plot.yaxis.b) * ys * max(eps_pt, 3 * plot.yaxis.residual)
+    eps_t = abs(plot.xaxis.b) * max(eps_pt, 3 * plot.xaxis.residual)
+    rows = [KMRiskRow(label=lab, risk_times=[f"{t:.6f}" for t, _ in row], at_risk=[n for _, n in row])
+            for lab, row in plot.risk_rows]
+    out = []
+    for ci, sc in enumerate(plot.curves):
+        steps = []
+        for p, q in zip(sc.points, sc.points[1:]):
+            if q[1] - p[1] > 1e-3 and abs(q[0] - p[0]) < 1e-3:
+                t = plot.xaxis.value(p[0])
+                b, a = plot.yaxis.value(p[1]) * ys, plot.yaxis.value(q[1]) * ys
+                steps.append(KMStepIn(t=f"{t:.6f}", before=f"{min(max(b, 0), 1):.6f}", after=f"{min(max(a, 0), 1):.6f}"))
+        prov = [Provenance(source="pdf", page=plot.page, bbox=sc.bbox, text=f"KM curve {ci} (stroke {sc.color})",
+                           note="vertices: " + ";".join(f"{x:.2f},{y:.2f}" for x, y in sc.points[:400]))]
+        out.append(KMArmClaim(label=f"page {plot.page + 1} curve {ci + 1}", alternatives=rows, steps=steps,
+                              eps=f"{eps:.6f}", eps_t=f"{eps_t:.6f}", provenance=prov))
+    return out
