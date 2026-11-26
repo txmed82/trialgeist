@@ -1,0 +1,29 @@
+[project]
+name = "trialgeist"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Colin Son", email = "colinson@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "httpx>=0.29.0",
+    "numpy>=2.5.5",
+    "ortools>=9.15.6755",
+    "pydantic>=2.14.4",
+    "pymupdf>=2.2",
+    "scipy>=1.18.1",
+    "typer>=0.29.3",
+    "z3-solver>=5.4.1.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.170.17",
+    "pytest>=9.2.0",
+]

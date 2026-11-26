@@ -1,0 +1,9 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "typeCheckingMode": "basic",
+  "reportArgumentType": "none",
+  "reportOptionalOperand": "none",
+  "reportReturnType": "none",
+  "reportGeneralTypeIssues": "none"
+}
