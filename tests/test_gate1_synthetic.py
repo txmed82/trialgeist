@@ -86,3 +86,23 @@ def test_gate1_corruption_recall(outdir: Path):
     assert not collateral, collateral[:5]  # proofs only ever land on the corrupted item
     assert overall >= 0.9, (recall, missed[:6])
     assert min(recall.values()) >= 0.75, (recall, missed[:6])
+
+
+def test_gate1_registry_swaps():
+    from trialgeist.bench.synthetic import make_registry_case
+    from trialgeist.extract.paper_outcomes import paper_from_text
+    from trialgeist.registry.diff import load_registry, registry_diff
+
+    false_alarms, hits, n = [], 0, 100
+    for seed in range(n):
+        for cor in (None, "endpoint_swap"):
+            fx, nct, text = make_registry_case(seed, cor)
+            fs = registry_diff(load_registry(nct, fx.__getitem__), paper_from_text(text))
+            assert all(f.tier is Tier.REGISTRY_DISCORDANT and f.certificate is None for f in fs)
+            if cor is None:
+                false_alarms += [(seed, f.title) for f in fs]
+            else:
+                hits += any(f.check in ("secondary_reported_as_primary", "unregistered_primary") for f in fs)
+    print(f"registry: {hits}/{n} swaps detected, {len(false_alarms)} false alarms on {n} clean")
+    assert not false_alarms, false_alarms[:5]
+    assert hits / n >= 0.9

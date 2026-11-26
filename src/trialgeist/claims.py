@@ -100,8 +100,23 @@ class KMArmClaim(_Claim):
     total_events: int | None = None
 
 
+class BaselineVar(BaseModel):
+    name: str
+    means: list[str] | None = None
+    sds: list[str] | None = None
+    ns: list[int] | None = None
+    counts: list[list[int]] | None = None  # categorical: per arm, per category
+
+
+class BaselineTableClaim(_Claim):
+    kind: Literal["baseline_table"] = "baseline_table"
+    variables: list[BaselineVar]
+    randomization: str = "unknown"
+    strata: list[str] = Field(default_factory=list)
+
+
 Claim = Annotated[
-    Union[MeanClaim, PercentClaim, CountSumClaim, PercentPartitionClaim, TwoByTwoClaim, KMArmClaim],
+    Union[MeanClaim, PercentClaim, CountSumClaim, PercentPartitionClaim, TwoByTwoClaim, KMArmClaim, BaselineTableClaim],
     Field(discriminator="kind"),
 ]
 
@@ -152,6 +167,12 @@ def check_claim(c) -> list[Finding]:
         rows = [(r.risk_times, r.at_risk) for r in c.alternatives] or [(c.risk_times, c.at_risk)]
         rows3 = [([Fraction(t) for t in ts], list(ns), c.total_events) for ts, ns in rows]
         return [km_check_any_row(c.label, steps, Fraction(c.eps), Fraction(c.eps_t), rows3, c.provenance)]
+    if isinstance(c, BaselineTableClaim):
+        from .engines.carlisle import CategoricalVar, ContinuousVar, Design, carlisle_check
+
+        cont = [ContinuousVar(v.name, v.means, v.sds, v.ns) for v in c.variables if v.means and v.sds and v.ns]
+        cat = [CategoricalVar(v.name, v.counts) for v in c.variables if v.counts]
+        return [carlisle_check(cont, cat, Design(c.randomization, c.strata), c.label, c.provenance)]
     raise TypeError(type(c))
 
 

@@ -39,10 +39,10 @@ def _dedupe(findings: list[Finding]) -> list[Finding]:
 
 def scan_pdf(pdf: str | Path, nct: str | None = None, km_eps_pt: float = 1.0, registry_fetch=None) -> Report:
     from .extract.km_vector import find_km_plots, plot_to_claims
-    from .extract.pdf_text import extract_claims
+    from .extract.pdf_text import extract_baseline, extract_claims
 
     pdf = str(pdf)
-    claims = extract_claims(pdf)
+    claims = extract_claims(pdf) + extract_baseline(pdf)
     plots, notes = find_km_plots(pdf)
     for p in plots:
         claims += plot_to_claims(p, eps_pt=km_eps_pt)

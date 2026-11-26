@@ -310,3 +310,54 @@ def make_trial(seed: int, out_dir: Path, corruption: str | None = None) -> Trial
     doc.save(trial.pdf)
     trial.meta = {"n": [n1, n2], "complete": complete}
     return trial
+
+
+# ------------------------------------------------------------- registry
+
+OUTCOME_POOL = [
+    ("Modified Rankin Scale score", "90 days", "the distribution of modified Rankin Scale scores at 90 days"),
+    ("All-cause mortality", "28 days", "death from any cause at 28 days"),
+    ("Time to recovery", "28 days", "the time to recovery within 28 days after enrollment"),
+    ("Change in HbA1c", "26 weeks", "the change from baseline in glycated hemoglobin (HbA1c) at 26 weeks"),
+    ("Progression-free survival", "36 months", "progression-free survival, assessed by blinded central review"),
+    ("Major adverse cardiovascular events", "12 months", "a composite of cardiovascular death, myocardial infarction, or stroke (major adverse cardiovascular events) at 12 months"),
+    ("Oswestry Disability Index", "24 months", "the change in Oswestry Disability Index score at 24 months"),
+    ("Ventilator-free days", "28 days", "the number of ventilator-free days through day 28"),
+    ("Surgical site infection", "30 days", "surgical site infection within 30 days after surgery"),
+    ("Pain intensity on numeric rating scale", "6 weeks", "pain intensity on the numeric rating scale at 6 weeks"),
+]
+
+
+def make_registry_case(seed: int, corruption: str | None = None):
+    """Return (fixtures dict path->json, nct, paper text, corrupted?) for an offline fetcher."""
+    rnd = random.Random(seed)
+    nct = f"NCT{90000000 + seed:08d}"
+    picks = rnd.sample(OUTCOME_POOL, 4)
+    prim, secs = picks[0], picks[1:]
+    n_plan = rnd.randint(80, 900)
+
+    def ps(primary, enroll):
+        return {"protocolSection": {
+            "statusModule": {"startDateStruct": {"date": "2021-03-01", "type": "ACTUAL"},
+                             "primaryCompletionDateStruct": {"date": "2023-06-30", "type": "ACTUAL"}},
+            "designModule": {"enrollmentInfo": {"count": enroll, "type": "ESTIMATED"}},
+            "outcomesModule": {"primaryOutcomes": [{"measure": primary[0], "timeFrame": primary[1]}],
+                               "secondaryOutcomes": [{"measure": m, "timeFrame": t} for m, t, _ in secs]}}}
+
+    n_actual = round(n_plan * rnd.uniform(0.9, 1.1))
+    v0 = ps(prim, n_plan)
+    later = ps(prim, n_actual)
+    paper_primary = prim[2]
+    if corruption == "endpoint_swap":
+        paper_primary = secs[0][2]
+    fx = {
+        f"/api/v2/studies/{nct}": later,
+        f"/api/int/studies/{nct}/history": {"changes": [
+            {"version": 0, "date": "2021-01-15", "moduleLabels": []},
+            {"version": 1, "date": "2023-09-01", "moduleLabels": ["Study Design"]}]},
+        f"/api/int/studies/{nct}/history/0": {"studyVersion": 0, "study": v0},
+        f"/api/int/studies/{nct}/history/1": {"studyVersion": 1, "study": later},
+    }
+    text = (f"Methods. This was a randomized trial (ClinicalTrials.gov {nct}). The primary outcome was {paper_primary}. "
+            f"Results. A total of {n_actual} patients underwent randomization.")
+    return fx, nct, text

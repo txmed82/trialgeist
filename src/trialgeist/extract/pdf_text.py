@@ -205,3 +205,54 @@ def extract_claims(path: str) -> list:
                     claims.append(MeanClaim(label=label[:80], n=col_n or 2, n_min=2, n_exact=False, mean=mean, sd=sd,
                                             granularity=g, scale_min=lo, scale_max=hi, provenance=prov))
     return claims
+
+
+def extract_baseline(path: str):
+    """Table 1 style rows with one summary per arm -> BaselineTableClaim per page (for Carlisle only)."""
+    from ..claims import BaselineTableClaim, BaselineVar
+    from ..engines.carlisle import detect_design
+
+    doc_text = ""
+    pages = load_pages(path)
+    for pt in pages:
+        doc_text += pt.text + "\n"
+    design = detect_design(re.sub(r"\s+", " ", doc_text))
+    out = []
+    for pt in pages:
+        if not re.search(r"baseline|characteristics", pt.text, re.I):
+            continue
+        vars_: list[BaselineVar] = []
+        boxes = []
+        for i, row in enumerate(pt.rows):
+            ms = list(MEANSD_RE.finditer(row.text))
+            nps = list(NPCT_RE.finditer(row.text))
+            if len(ms) == 2 and not nps:
+                bb0 = row.span_bbox(ms[0].start(), ms[0].end())
+                kind, _ = _context(pt.rows, i, bb0[0])
+                if kind not in ("mean", "mixed") and "\u00b1" not in ms[0].group(0):
+                    continue
+                ns = [_header_n(pt, (bb[0] + bb[2]) / 2, row.y)[0] for bb in (row.span_bbox(m.start(), m.end()) for m in ms)]
+                if None in ns:
+                    continue
+                vars_.append(BaselineVar(name=row.label_before(bb0[0])[:60], means=[m.group(1).replace("\u2212", "-") for m in ms],
+                                         sds=[m.group(2) or m.group(3) for m in ms], ns=ns))
+                boxes.append(bb0)
+            elif len(nps) == 2 and not ms:
+                bbs = [row.span_bbox(m.start(), m.end()) for m in nps]
+                kind, _ = _context(pt.rows, i, bbs[0][0])
+                if kind not in ("pct", "mixed") and not nps[0].group(3):
+                    continue
+                ns = [_header_n(pt, (bb[0] + bb[2]) / 2, row.y)[0] for bb in bbs]
+                ks = [int(m.group(1)) for m in nps]
+                if None in ns or any(k > n for k, n in zip(ks, ns)):  # type: ignore[operator]
+                    continue
+                vars_.append(BaselineVar(name=row.label_before(bbs[0][0])[:60],
+                                         counts=[[k, n - k] for k, n in zip(ks, ns)]))  # type: ignore[operator]
+                boxes.append(bbs[0])
+        if len(vars_) >= 3:
+            prov = [Provenance(source="pdf", page=pt.index, bbox=(min(b[0] for b in boxes), min(b[1] for b in boxes),
+                                                                   max(b[2] for b in boxes), max(b[3] for b in boxes)),
+                               text=f"{len(vars_)} baseline rows")]
+            out.append(BaselineTableClaim(label=f"Table on page {pt.index + 1}", variables=vars_,
+                                          randomization=design.randomization, strata=design.strata, provenance=prov))
+    return out
