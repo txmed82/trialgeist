@@ -59,6 +59,7 @@ class PercentPartitionClaim(_Claim):
     kind: Literal["percent_partition"] = "percent_partition"
     n: int
     percents: list[str]
+    n_exact: bool = True  # False: shares of one unknown denominator D <= n
 
 
 class TwoByTwoClaim(_Claim):
@@ -115,8 +116,23 @@ class BaselineTableClaim(_Claim):
     strata: list[str] = Field(default_factory=list)
 
 
+class MeanPartitionClaim(_Claim):
+    kind: Literal["mean_partition"] = "mean_partition"
+    overall_mean: str
+    parts: list[tuple[int, str]]  # (n, printed mean) of disjoint subgroups making up the whole
+
+
+class MedianRangeClaim(_Claim):
+    kind: Literal["median_range"] = "median_range"
+    median: str
+    min: str
+    max: str
+    granularity: str | None = None
+
+
 Claim = Annotated[
-    Union[MeanClaim, PercentClaim, CountSumClaim, PercentPartitionClaim, TwoByTwoClaim, KMArmClaim, BaselineTableClaim],
+    Union[MeanClaim, PercentClaim, CountSumClaim, PercentPartitionClaim, TwoByTwoClaim, KMArmClaim, BaselineTableClaim,
+          MeanPartitionClaim, MedianRangeClaim],
     Field(discriminator="kind"),
 ]
 
@@ -158,6 +174,10 @@ def check_claim(c) -> list[Finding]:
     if isinstance(c, CountSumClaim):
         return [count_sum_check(c.total, c.counts, c.label, c.provenance, c.exhaustive)]
     if isinstance(c, PercentPartitionClaim):
+        if not c.n_exact:
+            from .engines.counts import percent_partition_any_check
+
+            return [percent_partition_any_check(c.n, c.percents, c.label, c.provenance)]
         return [percent_partition_check(c.n, c.percents, c.label, c.provenance)]
     if isinstance(c, TwoByTwoClaim):
         return [contingency_check(c.n1, c.n2, c.events1, c.events2, c.pct1, c.pct2, c.rr, c.odds_ratio, c.rd_percent,
@@ -167,6 +187,14 @@ def check_claim(c) -> list[Finding]:
         rows = [(r.risk_times, r.at_risk) for r in c.alternatives] or [(c.risk_times, c.at_risk)]
         rows3 = [([Fraction(t) for t in ts], list(ns), c.total_events) for ts, ns in rows]
         return [km_check_any_row(c.label, steps, Fraction(c.eps), Fraction(c.eps_t), rows3, c.provenance)]
+    if isinstance(c, MeanPartitionClaim):
+        from .engines.consistency import mean_partition_check
+
+        return [mean_partition_check(c.overall_mean, list(c.parts), c.label, c.provenance)]
+    if isinstance(c, MedianRangeClaim):
+        from .engines.consistency import median_range_check
+
+        return [median_range_check(c.median, c.min, c.max, c.label, c.granularity, c.provenance)]
     if isinstance(c, BaselineTableClaim):
         from .engines.carlisle import CategoricalVar, ContinuousVar, Design, carlisle_check
 

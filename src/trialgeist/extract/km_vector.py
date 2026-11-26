@@ -213,7 +213,8 @@ def calibrate(page: pymupdf.Page, sc: Staircase, segs: list[Seg]):
             yaxis = ax
             break
     # x labels: a row below the plot with increasing values left to right
-    xcand = [w for w in words if (w[1] + w[3]) / 2 > y1 and (w[1] + w[3]) / 2 < y1 + 40 and x0 - 20 <= (w[0] + w[2]) / 2]
+    x_right = sc.bbox[2]
+    xcand = [w for w in words if y1 < (w[1] + w[3]) / 2 < y1 + 40 and x0 - 20 <= (w[0] + w[2]) / 2 <= x_right + 40]
     rows: dict[int, list] = defaultdict(list)
     for w in xcand:
         rows[round((w[1] + w[3]) / 2 / 3)].append(w)
@@ -230,34 +231,54 @@ def calibrate(page: pymupdf.Page, sc: Staircase, segs: list[Seg]):
     return xaxis, yaxis
 
 
-def risk_rows(page: pymupdf.Page, xaxis: Axis, below_y: float) -> list[tuple[str, list[tuple[float, int]]]]:
+def risk_rows(page: pymupdf.Page, xaxis: Axis, below_y: float, x_lo: float, x_hi: float) -> list[tuple[str, list[tuple[float, int]]]]:
+    """Rows of integers under the plot whose x positions fall on a regular time grid.
+
+    Counts in parentheses (events/censored) are ignored.  Only the horizontal
+    band of this panel [x_lo, x_hi] is read, so side-by-side panels stay apart.
+    """
     rows = rows_from_page(page)
-    tick_x = [c for c, _ in xaxis.labels]
-    label_rows = [r for r in rows if r.y > below_y and RISK_LABEL_RE.search(r.text)]
+    label_rows = [r for r in rows if r.y > below_y and r.y < below_y + 80 and RISK_LABEL_RE.search(r.text)]
     if not label_rows:
         return []
     start_y = label_rows[0].y
+    tick_vals = sorted(v for _, v in xaxis.labels)
+    tick_step = min((b - a for a, b in zip(tick_vals, tick_vals[1:]) if b > a), default=None)
     out = []
     for r in rows:
-        if r.y < start_y - 1 or r.y > start_y + 120:
+        if r.y < start_y - 1 or r.y > start_y + 90:
             continue
-        ints = [w for w in r.words if re.fullmatch(r"\d[\d,]*", w.text)]
+        ints = [w for w in r.words if re.fullmatch(r"\d[\d,]*", w.text) and x_lo - 15 <= (w.x0 + w.x1) / 2 <= x_hi + 15]
+        if len(ints) < 3 or not tick_step:
+            continue
+        ts = [xaxis.value((w.x0 + w.x1) / 2) for w in ints]
+        diffs = sorted(b - a for a, b in zip(ts, ts[1:]))
+        step = diffs[len(diffs) // 2] if diffs else tick_step
+        # the grid step must be a simple fraction of the tick-label step
+        ratio = tick_step / step if step > 0 else 0
+        if step <= 0 or abs(ratio - round(ratio)) > 0.1 or round(ratio) < 1:
+            continue
+        step = tick_step / round(ratio)
         aligned = []
-        for w in ints:
-            xc = (w.x0 + w.x1) / 2
-            near = [t for t in tick_x if abs(t - xc) <= 10]
-            if near:
-                t = min(near, key=lambda t: abs(t - xc))
-                aligned.append((xaxis.value(t), int(w.text.replace(",", ""))))
-        if len(aligned) >= 3 and len(aligned) >= len(ints) - 1:
-            label = " ".join(w.text for w in r.words if not re.fullmatch(r"\d[\d,]*", w.text))
-            aligned.sort()
+        for w, t in zip(ints, ts):
+            snapped = round(t / step) * step
+            if abs(t - snapped) > 0.25 * step:
+                aligned = []
+                break
+            aligned.append((snapped, int(w.text.replace(",", ""))))
+        times = [t for t, _ in aligned]
+        if len(aligned) >= 3 and len(set(times)) == len(times) and times == sorted(times):
+            label = " ".join(w.text for w in r.words if not re.fullmatch(r"[\d,()]+", w.text) and (w.x1 < x_lo + 5))
             out.append((label.strip(), aligned))
     return out
 
 
 def find_km_plots(path: str) -> tuple[list[KMPlot], list[str]]:
-    doc = pymupdf.open(path)
+    with pymupdf.open(path) as doc:
+        return _find_km_plots(doc)
+
+
+def _find_km_plots(doc) -> tuple[list[KMPlot], list[str]]:
     plots, notes = [], []
     for pi, page in enumerate(doc):
         segs = _segments(page)
@@ -286,7 +307,7 @@ def find_km_plots(path: str) -> tuple[list[KMPlot], list[str]]:
             vmax = max(v for _, v in yaxis.labels)
             y_scale = 0.01 if vmax > 1.5 else 1.0
             below = plot_frame(sc, segs)[3]
-            rr = risk_rows(page, xaxis, below)
+            rr = risk_rows(page, xaxis, below, min(c.bbox[0] for c in group), max(c.bbox[2] for c in group))
             if not rr:
                 notes.append(f"page {pi}: KM curves without a parsable numbers-at-risk table")
                 continue

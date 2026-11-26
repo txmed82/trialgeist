@@ -7,3 +7,5 @@ report/
 !/tests/corpus/negative/manifest.json
 *.egg-info/
 dist/
+.worktrees/
+/tests/corpus/positive/

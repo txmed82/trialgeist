@@ -59,6 +59,34 @@ def scan_pdf(pdf: str | Path, nct: str | None = None, km_eps_pt: float = 1.0, re
     return Report(pdf, _dedupe(findings), notes, len(claims))
 
 
+def scan_xml(xml: str | Path, nct: str | None = None, registry_fetch=None) -> Report:
+    """PMC JATS XML: exact table cells (no KM geometry in XML)."""
+    from .extract.jats import extract_claims_xml, paper_text_xml
+
+    xml = str(xml)
+    claims = extract_claims_xml(xml)
+    findings = check_all(ClaimSet(source=xml, claims=claims))
+    notes = ["JATS XML: tables parsed from markup; figures (KM curves) need the PDF"]
+    if nct:
+        from .extract.paper_outcomes import paper_from_text
+        from .registry.diff import registry_findings
+
+        try:
+            findings += registry_findings(nct, paper_from_text(paper_text_xml(xml)), fetch=registry_fetch)
+        except Exception as e:
+            notes.append(f"registry check skipped: {type(e).__name__}: {e}")
+    return Report(xml, _dedupe(findings), notes, len(claims))
+
+
+def scan_any(path: str | Path, nct: str | None = None, **kw) -> Report:
+    p = str(path).lower()
+    if p.endswith((".xml", ".nxml")):
+        return scan_xml(path, nct=nct)
+    if p.endswith(".json"):
+        return scan_claims(path)
+    return scan_pdf(path, nct=nct, **kw)
+
+
 def scan_claims(path: str | Path) -> Report:
     cs = ClaimSet.model_validate_json(Path(path).read_text())
     return Report(str(path), _dedupe(check_all(cs)), [], len(cs.claims))

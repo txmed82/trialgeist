@@ -1,0 +1,673 @@
+{
+ "description": "Real retracted/withdrawn trials with publicly documented numerical problems. Numbers copied as printed (numbers_seen_in says whether from the original or a sleuth's transcription). expected=CONSISTENT marks documented problems that are NOT proofs under TRIALGEIST's all-conventions policy; Gate 2 asserts those stay unproven.",
+ "controls": [
+  {
+   "id": "olgun_keles_2_15.0",
+   "paper": {
+    "citation": "Olgun Keles B, Kaya M. Cureus 2024;16(2):e53725",
+    "doi": "10.7759/cureus.53725",
+    "pmcid": "PMC10846847",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   ],
+   "location": "Table 2, 0h, group 2 mild",
+   "claim": {
+    "kind": "percent",
+    "label": "Table 2, 0h, group 2 mild",
+    "n": 70,
+    "percent": "15.0",
+    "denominator_exact": true
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "with all 70 patients per arm assessed, no k/70 prints as this percentage",
+   "numbers_seen_in": "original"
+  },
+  {
+   "id": "olgun_keles_2_2.1",
+   "paper": {
+    "citation": "Olgun Keles B, Kaya M. Cureus 2024;16(2):e53725",
+    "doi": "10.7759/cureus.53725",
+    "pmcid": "PMC10846847",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   ],
+   "location": "Table 2, 0h, group 2 moderate",
+   "claim": {
+    "kind": "percent",
+    "label": "Table 2, 0h, group 2 moderate",
+    "n": 70,
+    "percent": "2.1",
+    "denominator_exact": true
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "with all 70 patients per arm assessed, no k/70 prints as this percentage",
+   "numbers_seen_in": "original"
+  },
+  {
+   "id": "olgun_keles_2_34.8",
+   "paper": {
+    "citation": "Olgun Keles B, Kaya M. Cureus 2024;16(2):e53725",
+    "doi": "10.7759/cureus.53725",
+    "pmcid": "PMC10846847",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   ],
+   "location": "Table 2, 0h, group 3 mild",
+   "claim": {
+    "kind": "percent",
+    "label": "Table 2, 0h, group 3 mild",
+    "n": 70,
+    "percent": "34.8",
+    "denominator_exact": true
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "with all 70 patients per arm assessed, no k/70 prints as this percentage",
+   "numbers_seen_in": "original"
+  },
+  {
+   "id": "olgun_keles_2_10.1",
+   "paper": {
+    "citation": "Olgun Keles B, Kaya M. Cureus 2024;16(2):e53725",
+    "doi": "10.7759/cureus.53725",
+    "pmcid": "PMC10846847",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   ],
+   "location": "Table 2, 0h, group 3 moderate",
+   "claim": {
+    "kind": "percent",
+    "label": "Table 2, 0h, group 3 moderate",
+    "n": 70,
+    "percent": "10.1",
+    "denominator_exact": true
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "with all 70 patients per arm assessed, no k/70 prints as this percentage",
+   "numbers_seen_in": "original"
+  },
+  {
+   "id": "olgun_keles_2_9.4",
+   "paper": {
+    "citation": "Olgun Keles B, Kaya M. Cureus 2024;16(2):e53725",
+    "doi": "10.7759/cureus.53725",
+    "pmcid": "PMC10846847",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   ],
+   "location": "Table 2, 0h, group 3 severe",
+   "claim": {
+    "kind": "percent",
+    "label": "Table 2, 0h, group 3 severe",
+    "n": 70,
+    "percent": "9.4",
+    "denominator_exact": true
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "with all 70 patients per arm assessed, no k/70 prints as this percentage",
+   "numbers_seen_in": "original"
+  },
+  {
+   "id": "olgun_keles_3_66.9",
+   "paper": {
+    "citation": "Olgun Keles B, Kaya M. Cureus 2024;16(2):e53725",
+    "doi": "10.7759/cureus.53725",
+    "pmcid": "PMC10846847",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   ],
+   "location": "Table 3, POST, group 3",
+   "claim": {
+    "kind": "percent",
+    "label": "Table 3, POST, group 3",
+    "n": 70,
+    "percent": "66.9",
+    "denominator_exact": true
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "with all 70 patients per arm assessed, no k/70 prints as this percentage",
+   "numbers_seen_in": "original",
+   "e2e": false,
+   "e2e_note": "Table 3 single percent-only cells need the exact denominator (no missing data), which the paper never states"
+  },
+  {
+   "id": "olgun_keles_3_15.1",
+   "paper": {
+    "citation": "Olgun Keles B, Kaya M. Cureus 2024;16(2):e53725",
+    "doi": "10.7759/cureus.53725",
+    "pmcid": "PMC10846847",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   ],
+   "location": "Table 3, hoarseness, group 1",
+   "claim": {
+    "kind": "percent",
+    "label": "Table 3, hoarseness, group 1",
+    "n": 70,
+    "percent": "15.1",
+    "denominator_exact": true
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "with all 70 patients per arm assessed, no k/70 prints as this percentage",
+   "numbers_seen_in": "original",
+   "e2e": false,
+   "e2e_note": "Table 3 single percent-only cells need the exact denominator (no missing data), which the paper never states"
+  },
+  {
+   "id": "olgun_keles_3_17.2",
+   "paper": {
+    "citation": "Olgun Keles B, Kaya M. Cureus 2024;16(2):e53725",
+    "doi": "10.7759/cureus.53725",
+    "pmcid": "PMC10846847",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   ],
+   "location": "Table 3, hoarseness, group 2",
+   "claim": {
+    "kind": "percent",
+    "label": "Table 3, hoarseness, group 2",
+    "n": 70,
+    "percent": "17.2",
+    "denominator_exact": true
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "with all 70 patients per arm assessed, no k/70 prints as this percentage",
+   "numbers_seen_in": "original",
+   "e2e": false,
+   "e2e_note": "Table 3 single percent-only cells need the exact denominator (no missing data), which the paper never states"
+  },
+  {
+   "id": "olgun_keles_3_71.9",
+   "paper": {
+    "citation": "Olgun Keles B, Kaya M. Cureus 2024;16(2):e53725",
+    "doi": "10.7759/cureus.53725",
+    "pmcid": "PMC10846847",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   ],
+   "location": "Table 3, hoarseness, group 3",
+   "claim": {
+    "kind": "percent",
+    "label": "Table 3, hoarseness, group 3",
+    "n": 70,
+    "percent": "71.9",
+    "denominator_exact": true
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "with all 70 patients per arm assessed, no k/70 prints as this percentage",
+   "numbers_seen_in": "original",
+   "e2e": false,
+   "e2e_note": "Table 3 single percent-only cells need the exact denominator (no missing data), which the paper never states"
+  },
+  {
+   "id": "olgun_keles_3_15.8",
+   "paper": {
+    "citation": "Olgun Keles B, Kaya M. Cureus 2024;16(2):e53725",
+    "doi": "10.7759/cureus.53725",
+    "pmcid": "PMC10846847",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   ],
+   "location": "Table 3, dysphagia, group 1",
+   "claim": {
+    "kind": "percent",
+    "label": "Table 3, dysphagia, group 1",
+    "n": 70,
+    "percent": "15.8",
+    "denominator_exact": true
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "with all 70 patients per arm assessed, no k/70 prints as this percentage",
+   "numbers_seen_in": "original",
+   "e2e": false,
+   "e2e_note": "Table 3 single percent-only cells need the exact denominator (no missing data), which the paper never states"
+  },
+  {
+   "id": "olgun_keles_3_19.0",
+   "paper": {
+    "citation": "Olgun Keles B, Kaya M. Cureus 2024;16(2):e53725",
+    "doi": "10.7759/cureus.53725",
+    "pmcid": "PMC10846847",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   ],
+   "location": "Table 3, dysphagia, group 2",
+   "claim": {
+    "kind": "percent",
+    "label": "Table 3, dysphagia, group 2",
+    "n": 70,
+    "percent": "19.0",
+    "denominator_exact": true
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "with all 70 patients per arm assessed, no k/70 prints as this percentage",
+   "numbers_seen_in": "original",
+   "e2e": false,
+   "e2e_note": "Table 3 single percent-only cells need the exact denominator (no missing data), which the paper never states"
+  },
+  {
+   "id": "olgun_keles_3_70.2",
+   "paper": {
+    "citation": "Olgun Keles B, Kaya M. Cureus 2024;16(2):e53725",
+    "doi": "10.7759/cureus.53725",
+    "pmcid": "PMC10846847",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/"
+   ],
+   "location": "Table 3, dysphagia, group 3",
+   "claim": {
+    "kind": "percent",
+    "label": "Table 3, dysphagia, group 3",
+    "n": 70,
+    "percent": "70.2",
+    "denominator_exact": true
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "with all 70 patients per arm assessed, no k/70 prints as this percentage",
+   "numbers_seen_in": "original",
+   "e2e": false,
+   "e2e_note": "Table 3 single percent-only cells need the exact denominator (no missing data), which the paper never states"
+  },
+  {
+   "id": "el_refaeey_51_27.54",
+   "paper": {
+    "citation": "El Refaeey A, Selem A, Badawy A. Reprod Biomed Online 2014;29:119-124",
+    "doi": "10.1016/j.rbmo.2014.03.011",
+    "retraction_url": "https://pubmed.ncbi.nlm.nih.gov/37683569/",
+    "pmcid": null
+   },
+   "evidence_urls": [
+    "http://steamtraen.blogspot.com/2021/10/a-catastrophic-failure-of-peer-review.html"
+   ],
+   "location": "Table 1 age, CoQ10 arm",
+   "claim": {
+    "kind": "mean",
+    "label": "Table 1 age, CoQ10 arm",
+    "n": 51,
+    "mean": "27.54",
+    "granularity": "1"
+   },
+   "expected": "CONSISTENT",
+   "why": "documented GRIM inconsistency under round-half rules, but truncating the float mean (e.g. 1462/50 = 29.24 stored as 29.2399999...) prints the same digits, so TRIALGEIST correctly refuses to prove it",
+   "numbers_seen_in": "secondary (Nick Brown transcription)"
+  },
+  {
+   "id": "el_refaeey_50_29.23",
+   "paper": {
+    "citation": "El Refaeey A, Selem A, Badawy A. Reprod Biomed Online 2014;29:119-124",
+    "doi": "10.1016/j.rbmo.2014.03.011",
+    "retraction_url": "https://pubmed.ncbi.nlm.nih.gov/37683569/",
+    "pmcid": null
+   },
+   "evidence_urls": [
+    "http://steamtraen.blogspot.com/2021/10/a-catastrophic-failure-of-peer-review.html"
+   ],
+   "location": "Table 1 age, control arm",
+   "claim": {
+    "kind": "mean",
+    "label": "Table 1 age, control arm",
+    "n": 50,
+    "mean": "29.23",
+    "granularity": "1"
+   },
+   "expected": "CONSISTENT",
+   "why": "documented GRIM inconsistency under round-half rules, but truncating the float mean (e.g. 1462/50 = 29.24 stored as 29.2399999...) prints the same digits, so TRIALGEIST correctly refuses to prove it",
+   "numbers_seen_in": "secondary (Nick Brown transcription)"
+  },
+  {
+   "id": "el_refaeey_50_4.43",
+   "paper": {
+    "citation": "El Refaeey A, Selem A, Badawy A. Reprod Biomed Online 2014;29:119-124",
+    "doi": "10.1016/j.rbmo.2014.03.011",
+    "retraction_url": "https://pubmed.ncbi.nlm.nih.gov/37683569/",
+    "pmcid": null
+   },
+   "evidence_urls": [
+    "http://steamtraen.blogspot.com/2021/10/a-catastrophic-failure-of-peer-review.html"
+   ],
+   "location": "Table 1 infertility duration, control arm",
+   "claim": {
+    "kind": "mean",
+    "label": "Table 1 infertility duration, control arm",
+    "n": 50,
+    "mean": "4.43",
+    "granularity": "1"
+   },
+   "expected": "CONSISTENT",
+   "why": "documented GRIM inconsistency under round-half rules, but truncating the float mean (e.g. 1462/50 = 29.24 stored as 29.2399999...) prints the same digits, so TRIALGEIST correctly refuses to prove it",
+   "numbers_seen_in": "secondary (Nick Brown transcription)"
+  },
+  {
+   "id": "abou_khalil_female_63.4",
+   "paper": {
+    "citation": "Abou-Khalil R, Andary J, El-Hayek E. BMJ Nutr Prev Health 2024;7:61-67",
+    "doi": "10.1136/bmjnph-2023-000823",
+    "pmcid": "PMC11221284",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12957198/"
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12322552/"
+   ],
+   "location": "Table 1, female, 15 mL ACV group (n=30)",
+   "claim": {
+    "kind": "percent",
+    "label": "Female, group 3",
+    "n": 30,
+    "count": 19,
+    "percent": "63.4"
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "19/D x 100 never prints as 63.4% for any D <= 30",
+   "numbers_seen_in": "original"
+  },
+  {
+   "id": "prevent_taha8_egfr_134",
+   "paper": {
+    "citation": "Attar A et al. PREVENT-TAHA8. BMJ 2025;391:e083382",
+    "doi": "10.1136/bmj-2024-083382",
+    "pmcid": "PMC12570275",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13036884/"
+   },
+   "evidence_urls": [
+    "https://retractionwatch.com/2025/11/06/sleuths-flag-complete-mismatch-in-data-of-bmj-stem-cell-study/"
+   ],
+   "location": "Table 1, eGFR <60, WJ-MSC arm (n=136): 18 (134)",
+   "claim": {
+    "kind": "percent",
+    "label": "eGFR<60 WJ-MSC",
+    "n": 136,
+    "count": 18,
+    "percent": "134"
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "a subset percentage above 100",
+   "numbers_seen_in": "original"
+  },
+  {
+   "id": "prevent_taha8_egfr_1",
+   "paper": {
+    "citation": "Attar A et al. PREVENT-TAHA8. BMJ 2025;391:e083382",
+    "doi": "10.1136/bmj-2024-083382",
+    "pmcid": "PMC12570275",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13036884/"
+   },
+   "evidence_urls": [
+    "https://retractionwatch.com/2025/11/06/sleuths-flag-complete-mismatch-in-data-of-bmj-stem-cell-study/"
+   ],
+   "location": "Table 1, eGFR <60, control arm (n=260): 39 (1)",
+   "claim": {
+    "kind": "percent",
+    "label": "eGFR<60 control",
+    "n": 260,
+    "count": 39,
+    "percent": "1"
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "39 of at most 260 is at least 15%",
+   "numbers_seen_in": "original"
+  },
+  {
+   "id": "samaha_ivm_ct_pooled",
+   "paper": {
+    "citation": "Samaha AA et al. Viruses 2021;13:989",
+    "pmcid": "PMC8226630",
+    "doi": "10.3390/v13060989",
+    "retraction_url": null
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC8226630/"
+   ],
+   "location": "Table 2 vs Table 4, ivermectin arm day-0 Ct",
+   "claim": {
+    "kind": "mean_partition",
+    "label": "Ivermectin day-0 Ct",
+    "overall_mean": "15.13",
+    "parts": [
+     [
+      25,
+      "15.46"
+     ],
+     [
+      25,
+      "15.47"
+     ]
+    ]
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "the arm mean is below both of its sex subgroup means",
+   "numbers_seen_in": "original",
+   "e2e": false,
+   "e2e_note": "cross-table subgroup pooling (Table 2 vs Table 4) is not auto-extracted yet"
+  },
+  {
+   "id": "samaha_male_ct_pooled",
+   "paper": {
+    "citation": "Samaha AA et al. Viruses 2021;13:989",
+    "pmcid": "PMC8226630",
+    "doi": "10.3390/v13060989",
+    "retraction_url": null
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC8226630/"
+   ],
+   "location": "Table 3 vs Table 4, male day-0 Ct",
+   "claim": {
+    "kind": "mean_partition",
+    "label": "Male day-0 Ct",
+    "overall_mean": "15.27",
+    "parts": [
+     [
+      25,
+      "13.99"
+     ],
+     [
+      25,
+      "15.47"
+     ]
+    ]
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "the male mean is not the average of the two male arm means",
+   "numbers_seen_in": "original",
+   "e2e": false,
+   "e2e_note": "cross-table subgroup pooling (Table 2 vs Table 4) is not auto-extracted yet"
+  },
+  {
+   "id": "mccoy_comorbid_placebo",
+   "paper": {
+    "citation": "McCoy J, Goren A, Cadegiani FA et al. Front Med 2021;8:668698",
+    "pmcid": "PMC8326462",
+    "doi": "10.3389/fmed.2021.668698",
+    "retraction_url": null
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC8326462/"
+   ],
+   "location": "Table 1, no. of coexisting conditions, placebo (N=134)",
+   "claim": {
+    "kind": "count_sum",
+    "label": "Coexisting conditions placebo",
+    "total": 134,
+    "counts": [
+     84,
+     20,
+     24
+    ],
+    "exhaustive": true
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "exhaustive categories 0/1/2+ sum to 128, not 134",
+   "numbers_seen_in": "original",
+   "e2e": false,
+   "e2e_note": "category-sum conservation needs knowing the rows are exhaustive; not auto-extracted"
+  },
+  {
+   "id": "elgazzar_g3_stay_sd",
+   "paper": {
+    "citation": "Elgazzar A et al. Research Square preprint rs-100956 v3 (withdrawn)",
+    "doi": "10.21203/rs.3.rs-100956/v3",
+    "retraction_url": null,
+    "pmcid": null
+   },
+   "evidence_urls": [
+    "https://www.researchsquare.com/article/rs-100956/v3"
+   ],
+   "location": "Table 6 group III hospital stay 6 +/- 8 with Table 4 range 4-7",
+   "claim": {
+    "kind": "mean",
+    "label": "Group III hospital stay",
+    "n": 100,
+    "mean": "6",
+    "sd": "8",
+    "scale_min": "4",
+    "scale_max": "7"
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "an SD of 8 is impossible for values confined to 4-7",
+   "numbers_seen_in": "original"
+  },
+  {
+   "id": "abu_hashim_nulliparous_p",
+   "paper": {
+    "citation": "Abu Hashim H, Shokeir T, Badawy A. Fertil Steril 2010",
+    "doi": "10.1016/j.fertnstert.2009.07.985",
+    "retraction_url": null,
+    "pmcid": null
+   },
+   "evidence_urls": [
+    "http://steamtraen.blogspot.com/2021/10/a-catastrophic-failure-of-peer-review.html"
+   ],
+   "location": "Table 1 Nulliparous 100/123 vs 106/127, p=0.83",
+   "claim": {
+    "kind": "two_by_two",
+    "label": "Nulliparous",
+    "n1": 123,
+    "n2": 127,
+    "events1": 100,
+    "events2": 106,
+    "p_value": "0.83"
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "no standard 2x2 test gives this p-value for these counts",
+   "numbers_seen_in": "secondary (Nick Brown transcription)"
+  },
+  {
+   "id": "abu_hashim_multiparous_p",
+   "paper": {
+    "citation": "Abu Hashim H, Shokeir T, Badawy A. Fertil Steril 2010",
+    "doi": "10.1016/j.fertnstert.2009.07.985",
+    "retraction_url": null,
+    "pmcid": null
+   },
+   "evidence_urls": [
+    "http://steamtraen.blogspot.com/2021/10/a-catastrophic-failure-of-peer-review.html"
+   ],
+   "location": "Table 1 Multiparous 100/123 vs 106/127, p=0.48",
+   "claim": {
+    "kind": "two_by_two",
+    "label": "Multiparous",
+    "n1": 123,
+    "n2": 127,
+    "events1": 100,
+    "events2": 106,
+    "p_value": "0.48"
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "no standard 2x2 test gives this p-value for these counts",
+   "numbers_seen_in": "secondary (Nick Brown transcription)"
+  },
+  {
+   "id": "boldt_icu_median",
+   "paper": {
+    "citation": "Boldt J et al. Intensive Care Med 2009;35:462-470",
+    "doi": "10.1007/s00134-008-1299-1",
+    "retraction_url": null,
+    "pmcid": null
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC4575810/"
+   ],
+   "location": "ICU stay, unbalanced group: median 13, range 14-444",
+   "claim": {
+    "kind": "median_range",
+    "label": "ICU stay",
+    "median": "13",
+    "min": "14",
+    "max": "444",
+    "granularity": "1"
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "ICU stay in whole days: a median of 13 (at most 13.5) is below a minimum of 14",
+   "numbers_seen_in": "secondary (Cole et al. BMJ 2015)"
+  },
+  {
+   "id": "abou_khalil_male_36.6",
+   "paper": {
+    "citation": "Abou-Khalil R, Andary J, El-Hayek E. BMJ Nutr Prev Health 2024;7:61-67",
+    "doi": "10.1136/bmjnph-2023-000823",
+    "pmcid": "PMC11221284",
+    "retraction_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12957198/"
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12322552/"
+   ],
+   "location": "Table 1, male, 15 mL ACV group (n=30)",
+   "claim": {
+    "kind": "percent",
+    "label": "Male, group 3",
+    "n": 30,
+    "count": 11,
+    "percent": "36.6"
+   },
+   "expected": "CONSISTENT",
+   "why": "11/30 = 36.666...% prints as 36.6 under truncation, so it is not a proof (its complement 63.4 is)",
+   "numbers_seen_in": "original"
+  },
+  {
+   "id": "proxalutamide_diarrhea_28",
+   "paper": {
+    "citation": "McCoy J, Goren A, Cadegiani FA et al. Front Med 2021;8:668698",
+    "doi": "10.3389/fmed.2021.668698",
+    "pmcid": "PMC8326462",
+    "retraction_url": null
+   },
+   "evidence_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC8326462/"
+   ],
+   "location": "Table 3 (TEAEs), diarrhea, proxalutamide (N=134): 39 (28)",
+   "claim": {
+    "kind": "percent",
+    "label": "Diarrhea, proxalutamide",
+    "n": 134,
+    "count": 39,
+    "percent": "28"
+   },
+   "expected": "PROVEN_IMPOSSIBLE",
+   "why": "39/D >= 29.1% for every D <= 134; found independently by TRIALGEIST, not in the documenting sources",
+   "numbers_seen_in": "original"
+  }
+ ]
+}

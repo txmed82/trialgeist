@@ -187,8 +187,12 @@ def proof_interval(
     ivs = [convention_interval(r, c) for c in conventions]
     lo = min(i.lo for i in ivs)
     hi = max(i.hi for i in ivs)
+    # Cascaded rounding (e.g. 53.846 -> 53.85 -> 53.9, common in spreadsheet
+    # pipelines) can move a printed value up to 5/9 of a unit from the truth
+    # instead of 1/2: widen by unit/18 on both sides.
+    cascade = r.unit / 18
     pad = slack * (max(abs(lo), abs(hi)) + r.unit)
-    lo, hi = lo - pad, hi + pad
+    lo, hi = lo - cascade - pad, hi + cascade + pad
     if nonnegative and lo < 0:
         lo = Fraction(0)
     return Interval(lo, hi, True, True)

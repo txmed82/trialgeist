@@ -22,15 +22,15 @@ from pathlib import Path
 HULL_SRC = '''\
 def hull(s, nonneg=False):
     """Closed interval of true values that print as s under half-up,
-    half-even, half-down or truncation, widened by 1e-9 relative slack."""
+    half-even, half-down, truncation or cascaded rounding, plus float slack."""
     s = s.strip().replace("\\u00b7", ".").replace("\\u2212", "-").rstrip("%").strip()
     neg = s.startswith("-"); s = s.lstrip("+-")
     d = len(s.split(".")[1]) if "." in s else 0
     v = -F(s) if neg else F(s); h = F(1, 2 * 10**d)
     lo = v - 2 * h if (neg or v == 0) else v - h
     hi = v + h if neg else v + 2 * h
-    pad = F(1, 10**9) * (max(abs(lo), abs(hi)) + 2 * h)
-    lo, hi = lo - pad, hi + pad
+    pad = F(1, 10**9) * (max(abs(lo), abs(hi)) + 2 * h)  # float slack
+    lo, hi = lo - h / 9 - pad, hi + h / 9 + pad  # h/9: cascaded rounding (x.x46 -> x.x5 -> x.x)
     return (max(lo, F(0)) if nonneg else lo), hi
 '''
 

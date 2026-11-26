@@ -217,3 +217,43 @@ print(f"VERIFIED: no whole-number denominator gives {{K}} = {{PCT}}%.")
 '''
     f.certificate = render(f.id, "PERCENT_ANY_DENOMINATOR", claim, inputs, assumptions, body)
     return f
+
+
+def percent_partition_any_check(n_max: int, percents: list[str], label: str = "",
+                                provenance: list[Provenance] | None = None) -> Finding:
+    """Exhaustive categories given only as percentages of one unknown denominator D <= n_max.
+
+    Missing data can shrink D below the header N, so every D in [1, n_max] is
+    tried; the claim is impossible only if no D admits integer counts that
+    reproduce every percentage and add up to D.
+    """
+    rs = [parse_reported(p) for p in percents]
+    ivs = [proof_interval(r, nonnegative=True) for r in rs]
+    inputs = {"label": label, "N_max": n_max, "percents": [r.text for r in rs]}
+    assumptions = ["the categories are mutually exclusive and exhaustive shares of one group",
+                   f"that group has at most N={n_max} members (missing data allowed)"]
+    common: dict[str, Any] = dict(engine=ENGINE, check="percent_partition_any", inputs=inputs, provenance=provenance,
+                                  assumptions=assumptions)
+    for d in range(1, n_max + 1):
+        rg = [_k_range(d, iv.lo, iv.hi) for iv in ivs]
+        if all(x is not None for x in rg) and sum(a for a, _ in rg) <= d <= sum(b for _, b in rg):
+            return make_finding(**common, tier=Tier.CONSISTENT, title=f"Percentages partition some D <= {n_max}: {label}",
+                                detail=f"D={d} works")
+    claim = (f"No group size D <= {n_max} has integer counts that reproduce {[r.text for r in rs]} and add up to D.")
+    f = make_finding(**common, tier=Tier.PROVEN_IMPOSSIBLE, title=f"Percentages {'/'.join(r.text for r in rs)} cannot "
+                     f"partition any group of <= {n_max}" + (f" ({label})" if label else ""), detail=claim)
+    body = f'''from fractions import Fraction as F
+from math import ceil, floor
+NMAX, PCTS = {n_max}, {[r.text for r in rs]!r}
+{HULL_SRC}
+for d in range(1, NMAX + 1):
+    ks = []
+    for p in PCTS:  # counts k with 100*k/d inside the printed interval
+        lo, hi = hull(p, nonneg=True)
+        ks.append((max(0, ceil(lo * d / 100)), min(d, floor(hi * d / 100))))
+    if all(a <= b for a, b in ks) and sum(a for a, _ in ks) <= d <= sum(b for _, b in ks):
+        print("NOT VERIFIED: D =", d, "works"); raise SystemExit(1)
+print(f"VERIFIED: for every D in 1..{{NMAX}}, the percentages {{PCTS}} have no integer counts summing to D.")
+'''
+    f.certificate = render(f.id, "PERCENT_PARTITION_ANY", claim, inputs, assumptions, body)
+    return f

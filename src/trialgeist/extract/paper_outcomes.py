@@ -42,5 +42,5 @@ def paper_from_text(text: str, page_of=None) -> PaperClaims:
 
 
 def paper_from_pdf(path: str) -> PaperClaims:
-    doc = pymupdf.open(path)
-    return paper_from_text("\n".join(p.get_text() for p in doc))
+    with pymupdf.open(path) as doc:
+        return paper_from_text("\n".join(p.get_text() for p in doc))

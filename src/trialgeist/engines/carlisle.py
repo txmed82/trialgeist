@@ -88,13 +88,15 @@ def rounded_diff_midp(m1: float, m2: float, se1: float, se2: float, mu: float, h
     P(|R| > |r|) + P(|R| = |r|)/2 is close to uniform under the null.
     """
     import numpy as np
+    from scipy.signal import fftconvolve
 
     js = np.arange(math.floor((mu - 9 * max(se1, se2)) / h) - 1, math.ceil((mu + 9 * max(se1, se2)) / h) + 2)
     p1, p2 = (stats.norm.cdf((js * h + h / 2 - mu) / se) - stats.norm.cdf((js * h - h / 2 - mu) / se) for se in (se1, se2))
-    d = np.abs(js[:, None] - js[None, :])
-    w = p1[:, None] * p2[None, :]
+    # distribution of R = J1 - J2 (index G-1 is R = 0): a convolution, O(G) memory instead of a G x G grid
+    pr = np.convolve(p1, p2[::-1]) if len(js) <= 4000 else np.clip(fftconvolve(p1, p2[::-1]), 0, None)
+    k = np.abs(np.arange(pr.size) - (len(js) - 1))
     r = abs(round(m1 / h) - round(m2 / h))
-    gt, eq, tot = float(w[d > r].sum()), float(w[d == r].sum()), float(w.sum())
+    gt, eq, tot = float(pr[k > r].sum()), float(pr[k == r].sum()), float(pr.sum())
     return min(1.0, max(0.0, (gt + 0.5 * eq) / tot))
 
 
@@ -161,8 +163,9 @@ def carlisle_check(cont: list[ContinuousVar], cat: list[CategoricalVar], design:
                    provenance: list[Provenance] | None = None) -> Finding:
     used_c = [v for v in cont if not _is_stratum(v.name, design.strata) and continuous_usable(v)]
     used_k = [v for v in cat if not _is_stratum(v.name, design.strata)]
-    pvals = {v.name: continuous_p(v) for v in used_c}
-    pvals.update({v.name: categorical_p(v) for v in used_k})
+    cluster = design.randomization == "cluster"  # individual-level tests are invalid; don't compute them
+    pvals = {} if cluster else {v.name: continuous_p(v) for v in used_c}
+    pvals.update({} if cluster else {v.name: categorical_p(v) for v in used_k})
     inputs: dict[str, Any] = {
         "label": label, "randomization": design.randomization, "strata": design.strata,
         "continuous": [v.__dict__ for v in used_c], "categorical": [v.__dict__ for v in used_k],
@@ -212,6 +215,7 @@ Requires numpy + scipy.
 """
 import math, numpy as np
 from scipy import stats
+from scipy.signal import fftconvolve
 CONT = {cv!r}  # name, means, sds, ns, mean decimals, sd decimals
 CAT = {kv!r}
 Z_OBS = {z_obs!r}
@@ -225,8 +229,9 @@ def p_cont(m, s, n, h):  # rounding-aware two-sided mid-p (2 arms) or ANOVA F
     mu, se = (n[0] * m[0] + n[1] * m[1]) / N, [sp / math.sqrt(x) for x in n]
     js = np.arange(math.floor((mu - 9 * max(se)) / h) - 1, math.ceil((mu + 9 * max(se)) / h) + 2)
     p1, p2 = [stats.norm.cdf((js * h + h / 2 - mu) / e) - stats.norm.cdf((js * h - h / 2 - mu) / e) for e in se]
-    d = np.abs(js[:, None] - js[None, :]); w = p1[:, None] * p2[None, :]; r = abs(round(m[0] / h) - round(m[1] / h))
-    return float((w[d > r].sum() + 0.5 * w[d == r].sum()) / w.sum())
+    pr = np.clip(fftconvolve(p1, p2[::-1]), 0, None); k = np.abs(np.arange(pr.size) - (len(js) - 1))  # law of J1 - J2
+    r = abs(round(m[0] / h) - round(m[1] / h))
+    return float((pr[k > r].sum() + 0.5 * pr[k == r].sum()) / pr.sum())
 
 def p_cat(t):
     if len(t) == 2 and len(t[0]) == 2:

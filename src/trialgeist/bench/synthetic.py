@@ -80,13 +80,13 @@ def km(obs):
 def grim_feasible_wide(n: int, v: Fraction, d: int) -> bool:
     """Independent brute force with a hull wider than the engine's."""
     h = Fraction(1, 2 * 10**d)
-    lo, hi = v - 2 * h - Fraction(1, 10**6), v + 2 * h + Fraction(1, 10**6)
+    lo, hi = v - 3 * h - Fraction(1, 10**6), v + 3 * h + Fraction(1, 10**6)
     return any(lo <= Fraction(s, n) <= hi for s in range(math.floor(lo * n) - 1, math.ceil(hi * n) + 2))
 
 
 def pct_any_denominator_wide(k: int, p: Fraction, d: int) -> bool:
     h = Fraction(1, 2 * 10**d)
-    lo, hi = p - 2 * h - Fraction(1, 10**6), p + 2 * h + Fraction(1, 10**6)
+    lo, hi = p - 3 * h - Fraction(1, 10**6), p + 3 * h + Fraction(1, 10**6)
     if lo <= 0:
         return True
     return any(lo <= Fraction(100 * k, D) <= hi for D in range(max(k, 1), math.ceil(100 * k / lo) + 2))
@@ -186,6 +186,8 @@ def make_trial(seed: int, out_dir: Path, corruption: str | None = None) -> Trial
     out_dir.mkdir(parents=True, exist_ok=True)
     small = corruption in ("grim_mean", "km_risk_table", "km_big_drop") or rnd.random() < 0.4
     n1, n2 = (rnd.randint(20, 90), rnd.randint(20, 90)) if small else (rnd.randint(60, 350), rnd.randint(60, 350))
+    if corruption == "grim_mean":  # GRIM has power only when N < ~45 at 2 decimals
+        n1, n2 = rnd.randint(12, 30), rnd.randint(12, 30)
     arms = [("Treatment", n1), ("Control", n2)]
     complete = small or rnd.random() < 0.5
     trial = Trial(seed, corruption, out_dir / f"trial_{seed:04d}_{corruption or 'clean'}.pdf")
@@ -304,10 +306,10 @@ def make_trial(seed: int, out_dir: Path, corruption: str | None = None) -> Trial
     if corruption and trial.corrupted_label is None:
         raise ValueError(f"corruption {corruption} not applicable for seed {seed}")
 
-    doc = pymupdf.open()
-    render_table1(doc.new_page(width=612, height=792), rows, arms, foot)
-    render_km(doc.new_page(width=612, height=792), km_arms)
-    doc.save(trial.pdf)
+    with pymupdf.open() as doc:
+        render_table1(doc.new_page(width=612, height=792), rows, arms, foot)
+        render_km(doc.new_page(width=612, height=792), km_arms)
+        doc.save(trial.pdf)
     trial.meta = {"n": [n1, n2], "complete": complete}
     return trial
 

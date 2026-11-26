@@ -16,16 +16,22 @@ re-derives the contradiction from the printed digits.
 ## Phases
 
 - [x] P0 repo scaffold (uv, py3.13, z3, ortools, pymupdf)
-- [ ] P1 typed schemas + verdict tiers + certificate emitter
-- [ ] P2 exact cores: rounding, GRIM/GRIMMER, SPRITE-SAT, percentages + sums, 2x2 contingency, KM-SAT
-- [ ] P3 PDF text/table extraction with bbox provenance; vector KM extraction
-- [ ] P4 ClinicalTrials.gov v2 + history differ
-- [ ] P5 Carlisle-Stouffer baseline engine (STATISTICALLY_EXTREME only)
-- [ ] P6 CLI `trialgeist scan` + report writer
-- [ ] P7 Gate 1 synthetic torture
-- [ ] P8 Gate 2 positive controls
-- [ ] P9 Gate 3 negative controls
-- [ ] P10 `trialgeist serve` local UI (PDF overlay + export certificate)
+- [x] P1 typed schemas + verdict tiers + certificate emitter
+- [x] P2 exact cores: rounding, GRIM/GRIMMER, Bhatia-Davis, SPRITE-SAT, percentages + sums + partitions, 2x2 contingency, KM-SAT, pooled-mean and median/range consistency
+- [x] P3 PDF text/table extraction with bbox provenance; vector KM extraction; PMC JATS XML tables
+- [x] P4 ClinicalTrials.gov v2 + history differ
+- [x] P5 Carlisle-Stouffer baseline engine (STATISTICALLY_EXTREME only)
+- [x] P6 CLI `trialgeist scan|check|verify|serve` + report writer
+- [x] P7 Gate 1 synthetic torture
+- [x] P8 Gate 2 positive controls: 23 documented impossibilities across 8 retracted/withdrawn papers + 4 conservative refusals; end-to-end rediscovery from PMC XML for 4 papers
+- [x] P9 Gate 3 negative controls: 31 OA RCTs (NEJM, Lancet, Lancet Oncol/Neurol, BMJ, Nat Med, PLoS Med, JNNP...), PDF + XML
+- [x] P10 `trialgeist serve` local UI (PDF overlay + export certificate)
+
+## Open items
+
+- Cross-table checks (subgroup pooling across Table 2 vs Table 4, exhaustive category sums) are engines but not auto-extracted.
+- Raster KM figures are refused (only vector paths are read). Most corpus KM figures are embedded images, so KM-SAT is exercised mainly by Gate 1.
+- Registry discordance needs network; Gate 1 covers it with fixtures.
 
 ## Soundness rules (decisions log)
 
@@ -47,3 +53,11 @@ re-derives the contradiction from the printed digits.
    (D in [n, N]) before a percentage mismatch is called impossible.
 6. LLMs are never in the trust path. Extraction is deterministic regex /
    geometry with page+bbox provenance.
+
+7. Column header N convicts a cell only when every other cell in that column
+   (>= 5) is exactly count/N. Two or more misfits mean another denominator is
+   in use, so nothing is claimed. Numbers-at-risk rows ("111 (0)") are never
+   read as n (%).
+8. Gate 3 tolerates a proof on a clean paper only if it is a hand-verified
+   real typo recorded in the manifest (`known_true_impossibilities`), e.g.
+   BMJ 2021;372:n84 Table 1 "5 (5)" of n=65.

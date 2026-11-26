@@ -1,0 +1,795 @@
+{
+ "cases": [
+  {
+   "case_id": "olgun_keles_2024_cureus",
+   "citation": "Olgun Kele\u015f B, Kaya M. The Effect of Topical Benzydamine Hydrochloride and Cuff Pressure Monitorization on Postoperative Sore Throat Due to Intubation. Cureus. 2024;16(2):e53725.",
+   "doi_or_url": "https://doi.org/10.7759/cureus.53725",
+   "retraction_status": "retracted",
+   "retraction_notice_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/",
+   "open_access_original_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10846847/",
+   "forensic_source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12826944/",
+   "check_type": "percentage",
+   "items": [
+    {
+     "description": "Table 2, Time 0h, Group 2 (n=70), Mild POST percentage",
+     "N": 70,
+     "reported": "15.0",
+     "decimals": 1,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "10/70 = 14.2857% -> 14.3%",
+        "11/70 = 15.7143% -> 15.7%"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 2, Time 0h, Group 2 (n=70), Moderate POST percentage",
+     "N": 70,
+     "reported": "2.1",
+     "decimals": 1,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "1/70 = 1.4286% -> 1.4%",
+        "2/70 = 2.8571% -> 2.9%"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 2, Time 0h, Group 3 (n=70), Mild POST percentage",
+     "N": 70,
+     "reported": "34.8",
+     "decimals": 1,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "24/70 = 34.2857% -> 34.3%",
+        "25/70 = 35.7143% -> 35.7%"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 2, Time 0h, Group 3 (n=70), Moderate POST percentage",
+     "N": 70,
+     "reported": "10.1",
+     "decimals": 1,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "7/70 = 10.0%",
+        "8/70 = 11.4286% -> 11.4%"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 2, Time 0h, Group 3 (n=70), Severe POST percentage",
+     "N": 70,
+     "reported": "9.4",
+     "decimals": 1,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "6/70 = 8.5714% -> 8.6%",
+        "7/70 = 10.0%"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 3, POST incidence, Group 3 (n=70)",
+     "N": 70,
+     "reported": "66.9",
+     "decimals": 1,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "46/70 = 65.7143% -> 65.7%",
+        "47/70 = 67.1429% -> 67.1%"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 3, Hoarseness incidence, Group 1 (n=70)",
+     "N": 70,
+     "reported": "15.1",
+     "decimals": 1,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "10/70 = 14.2857% -> 14.3%",
+        "11/70 = 15.7143% -> 15.7%"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 3, Hoarseness incidence, Group 2 (n=70)",
+     "N": 70,
+     "reported": "17.2",
+     "decimals": 1,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "12/70 = 17.1429% -> 17.1%",
+        "13/70 = 18.5714% -> 18.6%"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 3, Hoarseness incidence, Group 3 (n=70)",
+     "N": 70,
+     "reported": "71.9",
+     "decimals": 1,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "50/70 = 71.4286% -> 71.4%",
+        "51/70 = 72.8571% -> 72.9%"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 3, Dysphagia incidence, Group 1 (n=70)",
+     "N": 70,
+     "reported": "15.8",
+     "decimals": 1,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "11/70 = 15.7143% -> 15.7%",
+        "12/70 = 17.1429% -> 17.1%"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 3, Dysphagia incidence, Group 2 (n=70)",
+     "N": 70,
+     "reported": "19.0",
+     "decimals": 1,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "13/70 = 18.5714% -> 18.6%",
+        "14/70 = 20.0%"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 3, Dysphagia incidence, Group 3 (n=70)",
+     "N": 70,
+     "reported": "70.2",
+     "decimals": 1,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "49/70 = 70.0%",
+        "50/70 = 71.4286% -> 71.4%"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    }
+   ],
+   "source_quote": "Original PMC10846847 Table 2 (Group 1, 2, 3 each n=70): Time 0h Group 2 Mild 15.0%, Moderate 2.1%; Group 3 Mild 34.8%, Moderate 10.1%, Severe 9.4%. Table 3: POST Group 3 66.9%; Hoarseness Group 1 15.1%, Group 2 17.2%, Group 3 71.9%; Dysphagia Group 1 15.8%, Group 2 19.0%, Group 3 70.2%. Retraction notice PMC12826944: 'The published results include multiple mathematically impossible percentages with missing raw counts despite being reported as n (%).'",
+   "number_seen_in": "original",
+   "why_impossible_claimed": "With N=70 patients per arm, every valid percentage must equal 100*k/70 for integer k (step size ~1.4286%). At 1 decimal place, none of the 12 reported percentages corresponds to any integer numerator k.",
+   "confidence_notes": "Highest-confidence deterministic positive control: both the open-access original full text (PMC10846847) and the Cureus retraction notice (PMC12826944, Jan 22, 2026) explicitly confirm the impossible percentages for n=70."
+  },
+  {
+   "case_id": "el_refaeey_2014_rbmo",
+   "citation": "El Refaeey A, Selem A, Badawy A. Combined coenzyme Q10 and clomiphene citrate for ovulation induction in clomiphene-citrate-resistant polycystic ovary syndrome. Reproductive BioMedicine Online. 2014;29(1):119-124.",
+   "doi_or_url": "https://doi.org/10.1016/j.rbmo.2014.03.011",
+   "retraction_status": "retracted",
+   "retraction_notice_url": "https://pubmed.ncbi.nlm.nih.gov/37683569/",
+   "open_access_original_url": null,
+   "forensic_source_url": "http://steamtraen.blogspot.com/2021/10/a-catastrophic-failure-of-peer-review.html",
+   "check_type": "grim_mean",
+   "items": [
+    {
+     "description": "Table 1, Age (years), CoQ10 + clomiphene group (N=51)",
+     "N": 51,
+     "reported": "27.54",
+     "decimals": 2,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": 1,
+     "extra": {
+      "reported_sd": "6.31",
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "1404/51 = 27.52941 -> 27.53",
+        "1405/51 = 27.54902 -> 27.55"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 1, Age (years), Control group (N=50)",
+     "N": 50,
+     "reported": "29.23",
+     "decimals": 2,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": 1,
+     "extra": {
+      "reported_sd": "6.21",
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "1461/50 = 29.22",
+        "1462/50 = 29.24"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 1, Infertility duration (years), Control group (N=50)",
+     "N": 50,
+     "reported": "4.43",
+     "decimals": 2,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": 1,
+     "extra": {
+      "reported_sd": "1.91",
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "221/50 = 4.42",
+        "222/50 = 4.44"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    }
+   ],
+   "source_quote": "Nick Brown mansoura_main.xls (t tests sheet, rows 144 & 146, DOI 10.1016/j.rbmo.2014.03.011): Table 1 Age: M1=27.54, SD1=6.31, N1=51; M2=29.23, SD2=6.21, N2=50; Table 1 Infertility: M1=4.31, SD1=1.86, N1=51; M2=4.43, SD2=1.91, N2=50. Blog summary note: 'Couple of wrong p values; GRIM inconsistencies.'",
+   "number_seen_in": "secondary",
+   "why_impossible_claimed": "For N=50 integer-valued observations (age in whole years, infertility duration in whole years), every exact mean k/50 terminates in an even hundredths digit (.00, .02, ..., .98), making 29.23 and 4.43 impossible. For N=51, 1404/51 rounds to 27.53 and 1405/51 rounds to 27.55, making 27.54 impossible.",
+   "confidence_notes": "Retracted in 2023 (PMID 37683569) as part of the Mansoura University ob-gyn RCT integrity investigation (Bordewijk & Mol 2021; Nick Brown 2021). Assumes integer-year granularity for age and infertility duration; if age/duration were recorded in fractional years (e.g., months), GRIM would not apply."
+  },
+  {
+   "case_id": "abou_khalil_2024_bmjnph",
+   "citation": "Abou-Khalil R, Andary J, El-Hayek E. Apple cider vinegar for weight management in Lebanese adolescents and young adults with overweight and obesity: a randomised, double-blind, placebo-controlled study. BMJ Nutrition, Prevention & Health. 2024;7(1):61-67.",
+   "doi_or_url": "https://doi.org/10.1136/bmjnph-2023-000823",
+   "retraction_status": "retracted",
+   "retraction_notice_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12957198/",
+   "open_access_original_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11221284/",
+   "forensic_source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12322552/",
+   "check_type": "percentage",
+   "items": [
+    {
+     "description": "Table 1, Gender Male (%), Group 3 (15 mL ACV, n=30), printed as 36.6 (n=11)",
+     "N": 30,
+     "reported": "36.6",
+     "decimals": 1,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "printed_count": 11,
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "10/30 = 33.3333% -> 33.3%",
+        "11/30 = 36.6667% -> 36.7%"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 1, Gender Female (%), Group 3 (15 mL ACV, n=30), printed as 63.4 (n=19)",
+     "N": 30,
+     "reported": "63.4",
+     "decimals": 1,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "printed_count": 19,
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "nearest_fractions": [
+        "19/30 = 63.3333% -> 63.3%",
+        "20/30 = 66.6667% -> 66.7%"
+       ],
+       "verdict": "impossible"
+      }
+     }
+    }
+   ],
+   "source_quote": "Original PMC11221284 Table 1 (Group 3, n=30): 'Gender (%)' Male '36.6 (n=11)', Female '63.4 (n=19)'. Also Table 1 vs Table 3 Week 0 baseline contradictions (e.g., Group 3 FBS 119.9\u00b17.2 vs 119.9\u00b112.2; Group 4 FBS 113.6\u00b112.5 vs 118.6\u00b112.5). Critiqued by Malbouby, Trexler, Heathers (PMC12322552) and retracted in PMC12957198 after BMJ independent statistical review.",
+   "number_seen_in": "original",
+   "why_impossible_claimed": "For N=30, 11/30 = 36.6667% rounds to 36.7% (not 36.6%) and 19/30 = 63.3333% rounds to 63.3% (not 63.4%) under both half-up and half-even rounding. No integer k out of 30 produces 36.6% or 63.4% at 1 decimal place.",
+   "confidence_notes": "Note that 36.6% could arise from truncation of 36.666...% followed by computing 100 - 36.6 = 63.4%, which itself violates standard rounding for both cells. The article also contains multiple Table 1 vs Table 3 baseline mean/SD contradictions and was retracted by BMJ in September 2025 (PMC12957198)."
+  },
+  {
+   "case_id": "prevent_taha8_attar_2025_bmj",
+   "citation": "Attar A, Mirhosseini SA, Mathur A, et al. Prevention of acute myocardial infarction induced heart failure by intracoronary infusion of mesenchymal stem cells: phase 3 randomised clinical trial (PREVENT-TAHA8). BMJ. 2025;391:e083382.",
+   "doi_or_url": "https://doi.org/10.1136/bmj-2024-083382",
+   "retraction_status": "retracted",
+   "retraction_notice_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13036884/",
+   "open_access_original_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12570275/",
+   "forensic_source_url": "https://retractionwatch.com/2025/11/06/sleuths-flag-complete-mismatch-in-data-of-bmj-stem-cell-study/",
+   "check_type": "percentage",
+   "items": [
+    {
+     "description": "Table 1, eGFR <60 mm/min/1.73 m2, WJ-MSC (n=136), printed as 18 (134)",
+     "N": 136,
+     "reported": "134",
+     "decimals": 0,
+     "scale_min": 0,
+     "scale_max": 100,
+     "granularity": null,
+     "extra": {
+      "printed_count": 18,
+      "expected_pct": "13",
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "exact_fraction": "18/136 = 13.235% -> 13%",
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 1, eGFR <60 mm/min/1.73 m2, Control (n=260), printed as 39 (1)",
+     "N": 260,
+     "reported": "1",
+     "decimals": 0,
+     "scale_min": 0,
+     "scale_max": 100,
+     "granularity": null,
+     "extra": {
+      "printed_count": 39,
+      "expected_pct": "15",
+      "self_check": {
+       "possible_half_up": false,
+       "possible_half_even": false,
+       "exact_fraction": "39/260 = 15.000% -> 15% (1% would require k=2 or 3, contradicting k=39)",
+       "verdict": "impossible"
+      }
+     }
+    }
+   ],
+   "source_quote": "Original PMC12570275 Table 1 (WJ-MSC n=136, Control n=260, Total n=396): '| eGFR <60 mm/min/1.73 m2 | 18 (134) | 39 (1) | 57 (14) |'. Retracted March 31, 2026 (BMJ 2026;392:s579, PMC13036884) citing PubPeer thread C08779C45DB6E407DFAC85583BE9C4 and data irregularities.",
+   "number_seen_in": "original",
+   "why_impossible_claimed": "In Table 1, 18/136 is reported as 134% (impossible >100% and contradicts 18/136 = 13.2%) and 39/260 is reported as 1% (contradicts 39/260 = 15.0%).",
+   "confidence_notes": "Both cells are deterministically caught by k/N percentage validation (134% is impossible for any valid subset 0<=k<=136; 1% contradicts printed k=39 for N=260). These appear to be severe transcription/typesetting errors (e.g., 13% -> 134%, 15% -> 1%), alongside major raw-data integrity failures (including 127/396 patients violating the age <65 eligibility criterion per Dorothy Bishop's audit) that led to Expression of Concern (PMC12609181) and full retraction (PMC13036884)."
+  },
+  {
+   "case_id": "samaha_2021_viruses",
+   "citation": "Samaha AA, Mouawia H, Fawaz M, et al. Effects of a Single Dose of Ivermectin on Viral and Clinical Outcomes in Asymptomatic SARS-CoV-2 Infected Subjects: A Pilot Clinical Trial in Lebanon. Viruses. 2021;13(6):989.",
+   "doi_or_url": "https://doi.org/10.3390/v13060989",
+   "retraction_status": "retracted",
+   "retraction_notice_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8577689/",
+   "open_access_original_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8226630/",
+   "forensic_source_url": "https://gidmk.substack.com/p/how-do-we-deal-with-seriously-problematic",
+   "check_type": "sum_conservation",
+   "items": [
+    {
+     "description": "Subgroup mean conservation: Ivermectin Day 0 Ct-value overall (Table 2, N=50) vs Females (Table 4, n=25) and Males (Table 4, n=25)",
+     "N": 50,
+     "reported": "15.13",
+     "decimals": 2,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "subgroup_1": {
+       "label": "Ivermectin Females Day 0",
+       "n": 25,
+       "mean": "15.46",
+       "sd": "2.81"
+      },
+      "subgroup_2": {
+       "label": "Ivermectin Males Day 0",
+       "n": 25,
+       "mean": "15.47",
+       "sd": "1.87"
+      },
+      "self_check": {
+       "weighted_mean_range": [
+        15.46,
+        15.47
+       ],
+       "weighted_mean_midpoint": 15.465,
+       "reported_overall": 15.13,
+       "discrepancy": -0.335,
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Subgroup mean conservation: Male Day 0 Ct-value overall (Table 3, N=50) vs Control Males (Table 4, n=25) and Ivermectin Males (Table 4, n=25)",
+     "N": 50,
+     "reported": "15.27",
+     "decimals": 2,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "subgroup_1": {
+       "label": "Control Males Day 0",
+       "n": 25,
+       "mean": "13.99",
+       "sd": "2.42"
+      },
+      "subgroup_2": {
+       "label": "Ivermectin Males Day 0",
+       "n": 25,
+       "mean": "15.47",
+       "sd": "1.87"
+      },
+      "self_check": {
+       "weighted_mean_range": [
+        14.725,
+        14.735
+       ],
+       "weighted_mean_midpoint": 14.73,
+       "reported_overall": 15.27,
+       "discrepancy": 0.54,
+       "verdict": "impossible"
+      }
+     }
+    }
+   ],
+   "source_quote": "Original PMC8226630 Table 1: Control Male 25 (50%), Female 25 (50%); Ivermectin Male 25 (50%), Female 25 (50%). Table 2: 'Ct-value; Day zero | 14.20 \u00b1 2.48 | 15.13 \u00b1 2.07'. Table 3: 'Ct-value (Day zero) | Female 14.93 (2.71) | Male 15.27 (2.87)'. Table 4: 'Females Ct-value (Day zero) | Control 14.40 \u00b1 2.56 | Ivermectin 15.46 \u00b1 2.81'; 'Males Ct-value (Day zero) | Control 13.99 \u00b1 2.42 | Ivermectin 15.47 \u00b1 1.87'.",
+   "number_seen_in": "original",
+   "why_impossible_claimed": "Because the Ivermectin arm comprises exactly 25 females (mean 15.46) and 25 males (mean 15.47), the combined arm mean must lie in [15.460, 15.470] (midpoint 15.465); the reported overall Ivermectin mean of 15.13 is strictly lower than both constituent subgroup means. Likewise, combining 25 Control males (13.99) and 25 Ivermectin males (15.47) must yield 14.73, contradicting Table 3's reported 15.27.",
+   "confidence_notes": "Retracted October 26, 2021 (PMC8577689) after independent sleuths (Lawrence, Meyerowitz-Katz, Heathers, Brown, Sheldrick) exposed severe data duplication and statistical inconsistencies. All subgroup-mean conservation failures were verified directly in the open-access original PMC8226630."
+  },
+  {
+   "case_id": "mccoy_cadegiani_2021_frontmed",
+   "citation": "McCoy J, Goren A, Cadegiani FA, et al. Proxalutamide Reduces the Rate of Hospitalization for COVID-19 Male Outpatients: A Randomized Double-Blinded Placebo-Controlled Trial. Frontiers in Medicine. 2021;8:668698.",
+   "doi_or_url": "https://doi.org/10.3389/fmed.2021.668698",
+   "retraction_status": "retracted",
+   "retraction_notice_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9226906/",
+   "open_access_original_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8326462/",
+   "forensic_source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9226906/",
+   "check_type": "sum_conservation",
+   "items": [
+    {
+     "description": "Table 1, No. of coexisting conditions (0, 1, 2+), Placebo column (header N=134)",
+     "N": 134,
+     "reported": "84, 20, 24",
+     "decimals": 0,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": 1,
+     "extra": {
+      "category_counts": [
+       84,
+       20,
+       24
+      ],
+      "category_pcts": [
+       "63",
+       "15",
+       "18"
+      ],
+      "computed_sum": 128,
+      "reported_N": 134,
+      "self_check": {
+       "sum_equals_N": false,
+       "missing_count": 6,
+       "pct_sum": 96,
+       "verdict": "impossible_without_unreported_missing"
+      }
+     }
+    },
+    {
+     "description": "Table 1, No. of coexisting conditions (0, 1, 2+), Overall column (header N=268)",
+     "N": 268,
+     "reported": "158, 49, 55",
+     "decimals": 0,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": 1,
+     "extra": {
+      "category_counts": [
+       158,
+       49,
+       55
+      ],
+      "category_pcts": [
+       "59",
+       "18",
+       "21"
+      ],
+      "computed_sum": 262,
+      "reported_N": 268,
+      "self_check": {
+       "sum_equals_N": false,
+       "missing_count": 6,
+       "pct_sum": 98,
+       "verdict": "impossible_without_unreported_missing"
+      }
+     }
+    }
+   ],
+   "source_quote": "Original PMC8326462 Table 1 (Overall N = 268, Proxalutamide N = 134, Placebo N = 134): 'No. of coexisting conditions, no. (%)' -> 0: Overall 158 (59), Proxalutamide 74 (55), Placebo 84 (63); 1: Overall 49 (18), Proxalutamide 29 (22), Placebo 20 (15); 2+: Overall 55 (21), Proxalutamide 31 (23), Placebo 24 (18).",
+   "number_seen_in": "original",
+   "why_impossible_claimed": "The mutually exclusive and exhaustive baseline categories (0, 1, 2+ coexisting conditions) sum to 128 in the Placebo arm (header N=134) and 262 Overall (header N=268), omitting 6 subjects while still computing percentages against N=134 and N=268 (so Placebo percentages sum to only 96%).",
+   "confidence_notes": "Retracted June 10, 2022 (PMC9226906). Six placebo patients are noted in the text as lost to follow-up and Table 3 changes Placebo N to 128; thus this is a classic Table 1 denominator/missingness conservation failure rather than an impossible single-cell fraction."
+  },
+  {
+   "case_id": "elgazzar_2020_ivermectin",
+   "citation": "Elgazzar A, Hany B, Youssef SA, Hafez M, Moussa H, Eltaweel A. Efficacy and Safety of Ivermectin for Treatment and prophylaxis of COVID-19 Pandemic. Research Square preprint v3. 2020.",
+   "doi_or_url": "https://doi.org/10.21203/rs.3.rs-100956/v3",
+   "retraction_status": "withdrawn",
+   "retraction_notice_url": "https://doi.org/10.21203/rs.3.rs-100956/v3",
+   "open_access_original_url": "https://www.researchsquare.com/article/rs-100956/v3",
+   "forensic_source_url": "http://steamtraen.blogspot.com/2021/07/Some-problems-with-the-data-from-a-Covid-study.html",
+   "check_type": "sum_conservation",
+   "items": [
+    {
+     "description": "Table 6 vs Table 4 contradiction & range-SD impossibility: Group III (n=100) Hospital stay days reported as 6 \u00b1 8 in Table 6 vs 6 \u00b1 1 (range 4\u20137) in Table 4",
+     "N": 100,
+     "reported": "6\u00b18",
+     "decimals": 0,
+     "scale_min": 4,
+     "scale_max": 7,
+     "granularity": 1,
+     "extra": {
+      "table_4_mean_sd": "6 \u00b1 1",
+      "table_4_range": [
+       4,
+       7
+      ],
+      "self_check": {
+       "max_possible_sd_on_range_4_to_7": 1.5076,
+       "min_unrounded_sd_for_reported_8": 7.5,
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Table 4 Group IV (n=100) Recovery time & Hospital stay: Mean \u00b1 SD = 18 \u00b1 8, Range = 9\u201325 (checked as Nick Brown SPRITE case)",
+     "N": 100,
+     "reported": "18 \u00b18",
+     "decimals": 0,
+     "scale_min": 9,
+     "scale_max": 25,
+     "granularity": 1,
+     "extra": {
+      "range": [
+       9,
+       25
+      ],
+      "self_check": {
+       "max_possible_sample_sd_at_mean_18_on_9_to_25": 7.9772,
+       "min_unrounded_sd_for_reported_8": 7.5,
+       "verdict": "not_reproducible"
+      }
+     }
+    }
+   ],
+   "source_quote": "Original v3_Elgazzar.pdf Table 4 (Group III n=100, Group IV n=100): 'Recovery time &Hospital stay (days) | Range: 4 -6 | 6 \u2013 31 | 4 \u2013 7 | 9 \u2013 25 | Mean \u00b1SD: 5 \u00b1 1 | 15\u00b1 8 | 6 \u00b1 1 | 18 \u00b18'. Table 6 (Summary of outcomes, Severe Ivermectin = Group III): 'Hospital stay ( days) mean\u00b1SD: 6\u00b18; RT-PCR (days) mean\u00b1S.D: 6\u00b1 1'.",
+   "number_seen_in": "original",
+   "why_impossible_claimed": "In Table 6, Group III hospital stay is printed as mean \u00b1 SD = 6 \u00b1 8 days, contradicting Table 4's 6 \u00b1 1 and violating Popoviciu's inequality on the reported range [4, 7] (maximum possible sample SD for N=100 on [4, 7] is 1.51 << 7.5). Conversely, Group IV's 18 \u00b1 8 on range [9, 25] is extreme (requiring a U-shaped bimodal distribution) but mathematically feasible at 0-decimal rounding (max SD 7.98 >= 7.5), as Nick Brown updated on 2021-07-16.",
+   "confidence_notes": "Withdrawn by Research Square on July 14, 2021 following forensic exposure by Jack Lawrence, Nick Brown, Kyle Sheldrick, and Gideon Meyerowitz-Katz. Including Group IV's 18 \u00b1 8 marked as 'not_reproducible' for strict impossibility at 0 decimals provides a key boundary test case against false-positive rounding bugs."
+  },
+  {
+   "case_id": "abu_hashim_2010_fertnstert",
+   "citation": "Abu Hashim H, Shokeir T, Badawy A. Letrozole versus combined metformin and clomiphene citrate for ovulation induction in clomiphene-resistant women with polycystic ovary syndrome: a randomized controlled trial. Fertility and Sterility. 2010;94(4):1405-1409.",
+   "doi_or_url": "https://doi.org/10.1016/j.fertnstert.2009.07.985",
+   "retraction_status": "retracted",
+   "retraction_notice_url": null,
+   "open_access_original_url": null,
+   "forensic_source_url": "http://steamtraen.blogspot.com/2021/10/a-catastrophic-failure-of-peer-review.html",
+   "check_type": "contingency",
+   "items": [
+    {
+     "description": "Table 1, Nulliparous (100/123 vs 106/127) vs complementary row Multiparous (23/123 vs 21/127) reported chi-square and p-values",
+     "N": 250,
+     "reported": "Nulliparous: chi2=0.28, p=0.83; Multiparous: chi2=0.87, p=0.48",
+     "decimals": 2,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": 1,
+     "extra": {
+      "table_2x2": [
+       [
+        100,
+        106
+       ],
+       [
+        23,
+        21
+       ]
+      ],
+      "exact_pearson_chi2": 0.202,
+      "exact_pearson_p": 0.653,
+      "self_check": {
+       "complementary_rows_must_match": true,
+       "reported_chi2_nulliparous": 0.28,
+       "reported_chi2_multiparous": 0.87,
+       "reported_p_nulliparous": 0.83,
+       "reported_p_multiparous": 0.48,
+       "verdict": "impossible"
+      }
+     }
+    }
+   ],
+   "source_quote": "Nick Brown mansoura_main.xls (chisq sheet, rows 780-781, DOI 10.1016/j.fertnstert.2009.07.985, Status 2021-10-25: Retracted): Nulliparous N1=123 (100/23), N2=127 (106/21), calc chi2=0.202 (p=0.653), Orig chi2=0.28, Orig p=0.83; Multiparous N1=123 (23/100), N2=127 (21/106), calc chi2=0.202 (p=0.653), Orig chi2=0.87, Orig p=0.48.",
+   "number_seen_in": "secondary",
+   "why_impossible_claimed": "Nulliparous and Multiparous are exact logical complements of the same 2x2 table ([[100, 106], [23, 21]] vs [[23, 21], [100, 106]]), so their chi-square statistics and p-values must be identical (Pearson chi2=0.202, p=0.653). Reporting two different chi-square values (0.28 vs 0.87) and p-values (0.83 vs 0.48) \u2014 neither matching the counts \u2014 is mathematically impossible.",
+   "confidence_notes": "Retracted Fertility and Sterility trial (Bordewijk ID H02) transcribed in Nick Brown's open mansoura_main.xls dataset accompanying his October 2021 Mansoura forensic analysis."
+  },
+  {
+   "case_id": "boldt_2009_icm_cole",
+   "citation": "Boldt J, Suttner S, Brosch C, Lehmann A, R\u00f6hm K, Mengistu A. The influence of a balanced volume replacement concept on inflammation, endothelial activation, and kidney integrity in elderly cardiac surgery patients. Intensive Care Medicine. 2009;35(3):462-470.",
+   "doi_or_url": "https://doi.org/10.1007/s00134-008-1299-1",
+   "retraction_status": "retracted",
+   "retraction_notice_url": null,
+   "open_access_original_url": null,
+   "forensic_source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4575810/",
+   "check_type": "sum_conservation",
+   "items": [
+    {
+     "description": "Order-statistic impossibility: Median ICU stay in unbalanced group reported as 13 days with range 14 to 444 days",
+     "N": null,
+     "reported": "median=13, range=14-444",
+     "decimals": 0,
+     "scale_min": 14,
+     "scale_max": 444,
+     "granularity": 1,
+     "extra": {
+      "median": 13,
+      "range_min": 14,
+      "range_max": 444,
+      "self_check": {
+       "median_within_range": false,
+       "verdict": "impossible"
+      }
+     }
+    },
+    {
+     "description": "Internal factual contradiction: Baseline base excess in balanced group reported as 1.04 (SD 0.3) in Abstract vs 1.16 (SD 0.3) in Results",
+     "N": null,
+     "reported": "Abstract: 1.04 (SD 0.3) vs Results: 1.16 (SD 0.3)",
+     "decimals": 2,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "self_check": {
+       "values_consistent": false,
+       "verdict": "impossible"
+      }
+     }
+    }
+   ],
+   "source_quote": "Cole et al. 2015 BMJ (PMC4575810), Table 1 citing Ref 17 (Boldt et al., Intensive Care Med 2009): 'Impossible summary statistics | Median ICU stay in unbalanced group is 13 days. ICU stay ranged from 14 to 444 days 17 | Median must lie within range.' And 'Factual discrepancies | Abstract: Base excess was 1.04 (SD 0.3) in balanced group at baseline. 17 Results: Base excess was 1.16 (SD 0.3) in balanced group at baseline 17'.",
+   "number_seen_in": "secondary",
+   "why_impossible_claimed": "For any non-empty real-valued dataset, the sample median must satisfy min <= median <= max. A reported median of 13 days with a reported range of 14 to 444 days is mathematically impossible.",
+   "confidence_notes": "Retracted trial from the Joachim Boldt misconduct cohort, documented verbatim in Cole et al.'s peer-reviewed BMJ blinded case-control study of 50 retracted clinical trials (PMC4575810)."
+  },
+  {
+   "case_id": "saitoh_2003_bja_carlisle",
+   "citation": "Saitoh Y, Kaneda K, Hattori H, Nakajima H, Akatu M, Murakawa M. Monitoring of neuromuscular block after administration of vecuronium in patients with diabetes mellitus. British Journal of Anaesthesia. 2003;90(4):480-486.",
+   "doi_or_url": "https://doi.org/10.1093/bja/aeg085",
+   "retraction_status": "retracted",
+   "retraction_notice_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6644205/",
+   "open_access_original_url": null,
+   "forensic_source_url": "https://onlinelibrary.wiley.com/doi/10.1111/anae.13650/abstract",
+   "check_type": "carlisle_only",
+   "items": [
+    {
+     "description": "Carlisle & Loadsman (2017) Stouffer baseline-variable distribution p-values (Row 23, Table 1)",
+     "N": null,
+     "reported": "continuous p=0.019, categorical p=0.073, combined p=0.00028",
+     "decimals": 5,
+     "scale_min": null,
+     "scale_max": null,
+     "granularity": null,
+     "extra": {
+      "continuous_p": 0.019,
+      "categorical_p": 0.073,
+      "combined_p": 0.00028,
+      "self_check": {
+       "deterministic_impossibility": false,
+       "verdict": "statistical_signal_only"
+      }
+     }
+    }
+   ],
+   "source_quote": "Carlisle JB & Loadsman JA, Anaesthesia 2017;72:17-27, Table 1 row 23: '23 | 2003 | BJA | 90 | 480 | Saitoh | Continuous: 0.019 | Categorical: 0.073 | Combined: 0.00028'. Confirmed retracted online 11/29/2018 (print Jan-19) in PMC6644205 Appendix 1.",
+   "number_seen_in": "secondary",
+   "why_impossible_claimed": "Baseline variable means and categorical counts across randomized arms are far closer together than expected under true random allocation (combined Carlisle-Stouffer p = 0.00028; probabilistic evidence of non-random sampling/fabrication rather than deterministic arithmetic proof).",
+   "confidence_notes": "Included specifically as a 'carlisle_only' benchmark case (statistical, not deterministic proof) from the retracted Yuhji Saitoh anesthesiology cohort analyzed by Carlisle & Loadsman (2017)."
+  }
+ ],
+ "files_written": []
+}

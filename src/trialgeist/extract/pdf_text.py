@@ -31,11 +31,16 @@ DEC = r"\d+[.\u00b7]\d+"
 NPCT_RE = re.compile(r"(?<![\d.\u00b7/\-\u2013])(\d{1,6})\s*\(\s*(" + NUM + r")\s*(%?)\s*\)")
 MEANSD_RE = re.compile(r"(?<![\d.\u00b7])([\-\u2212]?" + DEC + r")\s*(?:\(\s*(" + DEC + r")\s*\)|\u00b1\s*(" + DEC + r"))")
 HEADER_N_RE = re.compile(r"\(?\s*[nN]\s*=\s*(\d[\d,]*)\s*\)?")
-PCT_CONTEXT_RE = re.compile(r"\b(no|n|number)\.?\s*\(\s*%\s*\)|\(\s*%\s*\)", re.I)
+PCT_CONTEXT_RE = re.compile(r"\b(no|n|number)\.?\s*\(\s*%\s*\)|\(\s*%\s*\)|\bnumbers?\s*\(\s*percent(age)?s?\s*\)", re.I)
+PCTN_RE = re.compile(r"(?<![\d.])(" + NUM + r")\s*%?\s*\(\s*n\s*=\s*(\d{1,6})\s*\)")  # "36.6 (n=11)": percent first
 MEDIAN_CONTEXT_RE = re.compile(r"median|IQR|interquartile|range", re.I)
 UNIT_LABEL_RE = re.compile(r"\b(mean|SD|median|IQR|yr|years?|kg|cm|mg|mmol|ml|score)\b", re.I)
 MEAN_CONTEXT_RE = re.compile(r"mean\s*(\(|\u00b1|\+/-)\s*(SD|s\.d\.)|mean\s*\(\s*SD\s*\)", re.I)
 UNSAFE_PCT_RE = re.compile(r"weighted|imput|estimated percentage|survey", re.I)
+BASELINE_CAPTION_RE = re.compile(r"^\s*Table\s*\d+\b.{0,80}(baseline|characteristics of (the )?(patients|participants))", re.I)
+SKIP_BASELINE_ROW_RE = re.compile(r"geometric|median|IQR|interquartile", re.I)
+OF_BEFORE_RE = re.compile(r"(\bof|\bout of|/|\bin)\s*$", re.I)
+RISK_CONTEXT_RE = re.compile(r"\bat[- ]risk\b|\bcensored\b|\bno\.? at risk", re.I)
 COMPLETE_RE = re.compile(r"no missing (baseline )?data|complete data (were|was) available for all", re.I)
 
 # Bounded integer instruments: (pattern, min, max, granularity)
@@ -115,7 +120,11 @@ def rows_from_page(page: pymupdf.Page, tol: float = 2.5) -> list[Row]:
 
 
 def load_pages(path: str) -> list[PageText]:
-    doc = pymupdf.open(path)
+    with pymupdf.open(path) as doc:
+        return _load_pages(doc)
+
+
+def _load_pages(doc) -> list[PageText]:
     out = []
     for i, page in enumerate(doc):
         rows = rows_from_page(page)
@@ -138,6 +147,8 @@ def _context(rows: list[Row], idx: int, x: float, back: int = 40) -> tuple[str |
     for j in range(idx, max(-1, idx - back - 1), -1):
         t = rows[j].label_before(x) if j == idx else rows[j].text
         seen.append(t)
+        if RISK_CONTEXT_RE.search(rows[j].text):  # numbers-at-risk rows: "111 (0)" is at-risk (censored)
+            return "risk", " | ".join(seen)
         kinds = [(MEAN_CONTEXT_RE, "mean"), (MEDIAN_CONTEXT_RE, "median"), (PCT_CONTEXT_RE, "pct")]
         hits = [(m.start(), k) for rx, k in kinds for m in [rx.search(t)] if m]
         if hits:
@@ -148,9 +159,14 @@ def _context(rows: list[Row], idx: int, x: float, back: int = 40) -> tuple[str |
     return None, " | ".join(seen)
 
 
+CAPTION_RE = re.compile(r"^\s*(Table|Figure|Fig\.)\s*\d", re.I)
+
+
 def _header_n(pt: PageText, x: float, y: float) -> tuple[int | None, int | None]:
-    """(column N nearest above, max N on page above) for a cell at (x, y)."""
-    above = [(xc, yy, n) for xc, yy, n in pt.header_ns if yy < y]
+    """(column N nearest above, max N above) for a cell at (x, y), within the same table."""
+    caps = [r.y for r in pt.rows if r.y < y and CAPTION_RE.match(r.text)]
+    top = max(caps) if caps else -1.0
+    above = [(xc, yy, n) for xc, yy, n in pt.header_ns if top < yy < y]
     if not above:
         return None, None
     col = [h for h in above if abs(h[0] - x) < 45]
@@ -158,8 +174,35 @@ def _header_n(pt: PageText, x: float, y: float) -> tuple[int | None, int | None]
     return col_n, max(n for _, _, n in above)
 
 
+def _exact(c) -> bool:
+    from ..engines.counts import percent_check
+    from ..verdict import Tier
+
+    return c.count <= c.n and percent_check(c.n, c.percent, c.count, denominator_exact=True).tier is Tier.CONSISTENT
+
+
+def _confirmed_cells(cells: list[tuple[int, object]]) -> list:
+    """Cells the column header N can convict.
+
+    Header N bounds a cell's denominator only if the rows share the column's
+    population and unit of analysis.  The column has to prove that itself:
+    every OTHER cell (at least 5 of them) must be exactly count/N.  So a
+    column convicts at most one cell, an isolated outlier in an otherwise
+    perfect column.  Two or more misfits mean the percentages use some other
+    denominator (randomised vs analysed population, events, safety set) and
+    nothing is claimed.
+    """
+    ok = [_exact(c) for _, c in cells]
+    bad = [j for j, v in enumerate(ok) if not v]
+    if len(bad) != 1 or len(cells) - 1 < 5:
+        return []
+    c = cells[bad[0]][1]
+    return [c] if c.count <= c.n else []
+
+
 def extract_claims(path: str) -> list:
     claims: list = []
+    column_cells: dict[tuple[int, int], list] = {}
     for pt in load_pages(path):
         pct_unsafe = bool(UNSAFE_PCT_RE.search(pt.text))
         complete = bool(COMPLETE_RE.search(pt.text))
@@ -178,12 +221,15 @@ def extract_claims(path: str) -> list:
                     count, pct = int(m.group(1)), m.group(2)
                     if float(pct.replace("\u00b7", ".")) > 100:
                         continue
-                    col_n, max_n = _header_n(pt, (bb[0] + bb[2]) / 2, row.y)
+                    if OF_BEFORE_RE.search(text[: m.start()]):
+                        continue  # "18 of 254 (7.1%)": the printed number is a denominator
+                    col_n, _ = _header_n(pt, (bb[0] + bb[2]) / 2, row.y)
                     prov = [Provenance(source="pdf", page=pt.index, bbox=bb, text=m.group(0), note=ctx[:200])]
                     label = row.label_before(bb[0])[:80]
                     claims.append(PercentClaim(label=label, count=count, percent=pct, n=None, provenance=prov))
-                    if max_n is not None and count <= max_n:
-                        claims.append(PercentClaim(label=label, count=count, percent=pct, n=max_n, provenance=prov))
+                    if col_n is not None:  # every cell votes, including ones that exceed N
+                        column_cells.setdefault((pt.index, col_n), []).append(
+                            (i, PercentClaim(label=label, count=count, percent=pct, n=col_n, provenance=prov)))
             # ---- mean (SD) on bounded integer instruments
             for m in MEANSD_RE.finditer(text):
                 bb = row.span_bbox(m.start(), m.end())
@@ -204,6 +250,8 @@ def extract_claims(path: str) -> list:
                 else:
                     claims.append(MeanClaim(label=label[:80], n=col_n or 2, n_min=2, n_exact=False, mean=mean, sd=sd,
                                             granularity=g, scale_min=lo, scale_max=hi, provenance=prov))
+    for cells in column_cells.values():
+        claims.extend(_confirmed_cells(cells))
     return claims
 
 
@@ -219,11 +267,21 @@ def extract_baseline(path: str):
     design = detect_design(re.sub(r"\s+", " ", doc_text))
     out = []
     for pt in pages:
-        if not re.search(r"baseline|characteristics", pt.text, re.I):
+        cap = next((i for i, r in enumerate(pt.rows) if BASELINE_CAPTION_RE.search(r.text)), None)
+        if cap is None:
             continue
+        end = next((i for i in range(cap + 1, len(pt.rows)) if re.match(r"\s*Table\s*\d", pt.rows[i].text)), len(pt.rows))
+        y0, y1 = pt.rows[cap].y, (pt.rows[end].y if end < len(pt.rows) else 1e9)
+        arm_ns = sorted({n for x, y, n in pt.header_ns if y0 <= y < y1})
+        if len(arm_ns) == 3 and arm_ns[0] + arm_ns[1] == arm_ns[2]:
+            arm_ns = arm_ns[:2]  # drop a Total column
+        if len([h for h in pt.header_ns if y0 <= h[1] < y1 and h[2] in arm_ns]) != 2:
+            continue  # Carlisle needs exactly two clearly labelled randomized arms
         vars_: list[BaselineVar] = []
         boxes = []
-        for i, row in enumerate(pt.rows):
+        for i, row in enumerate(pt.rows[cap + 1:end], start=cap + 1):
+            if SKIP_BASELINE_ROW_RE.search(row.text):
+                continue
             ms = list(MEANSD_RE.finditer(row.text))
             nps = list(NPCT_RE.finditer(row.text))
             if len(ms) == 2 and not nps:

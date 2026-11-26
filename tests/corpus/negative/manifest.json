@@ -1,226 +1,602 @@
 [
-  {
-    "pmcid": "PMC7383595",
-    "doi": "10.1056/NEJMoa2021436",
-    "nct_id": "NCT04381936",
-    "journal": "N Engl J Med",
-    "year": 2021,
-    "title": "Dexamethasone in Hospitalized Patients with Covid-19",
-    "license": "PMC-PHE-COVID19",
-    "has_km_curve": true,
-    "has_mean_sd_table": true,
-    "pdf_sha256": "a55eb4ebac0e00af63142c512a0fccf7f4897c445087bf0217c1f5acab5d9544",
-    "pdf_bytes": 663868,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC7383595.1/PMC7383595.1.pdf"
-  },
-  {
-    "pmcid": "PMC8084355",
-    "doi": "10.1016/S0140-6736(21)00676-0",
-    "nct_id": "NCT04381936",
-    "journal": "Lancet",
-    "year": 2021,
-    "title": "Tocilizumab in patients admitted to hospital with COVID-19 (RECOVERY): a randomised, controlled, open-label, platform trial",
-    "license": "CC BY",
-    "has_km_curve": true,
-    "has_mean_sd_table": true,
-    "pdf_sha256": "d8d3efb0c5660e9bc2cb40b6ecbcea6e4752f39fdcaed8bcc7e83346daf5cfd9",
-    "pdf_bytes": 794895,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8084355.1/PMC8084355.1.pdf"
-  },
-  {
-    "pmcid": "PMC7723445",
-    "doi": "10.1016/S0140-6736(20)32661-1",
-    "nct_id": "NCT04324606",
-    "journal": "Lancet",
-    "year": 2021,
-    "title": "Safety and efficacy of the ChAdOx1 nCoV-19 vaccine (AZD1222) against SARS-CoV-2: an interim analysis of four randomised controlled trials in Brazil, South Africa, and the UK",
-    "license": "CC BY",
-    "has_km_curve": true,
-    "has_mean_sd_table": false,
-    "pdf_sha256": "2bfb94b10445fb4219ebf622d918871e50de796b2d4f2cf2078df3552c340b28",
-    "pdf_bytes": 598318,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC7723445.1/PMC7723445.1.pdf"
-  },
-  {
-    "pmcid": "PMC4800035",
-    "doi": "10.1016/S0140-6736(15)01037-5",
-    "nct_id": "NCT00268476",
-    "journal": "Lancet",
-    "year": 2016,
-    "title": "Addition of docetaxel, zoledronic acid, or both to first-line long-term hormone therapy in prostate cancer (STAMPEDE): survival results from an adaptive, multiarm, multistage, platform randomised controlled trial",
-    "license": "CC BY",
-    "has_km_curve": true,
-    "has_mean_sd_table": false,
-    "pdf_sha256": "3353576ccc229ecc3239a6217f919e136d1c25c28825135ba075602476887355",
-    "pdf_bytes": 710596,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC4800035.1/PMC4800035.1.pdf"
-  },
-  {
-    "pmcid": "PMC4655321",
-    "doi": "10.1016/S0140-6736(15)00257-3",
-    "nct_id": "NCT02369081",
-    "journal": "Lancet",
-    "year": 2015,
-    "title": "Spironolactone versus placebo, bisoprolol, and doxazosin to determine the optimal treatment for drug-resistant hypertension (PATHWAY-2): a randomised, double-blind, crossover trial",
-    "license": "CC BY",
-    "has_km_curve": false,
-    "has_mean_sd_table": true,
-    "pdf_sha256": "9c1f41e919585da2f031cce371a0bcffaa892ca0ebb1509d5990a28ef5ca249f",
-    "pdf_bytes": 504578,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC4655321.1/PMC4655321.1.pdf"
-  },
-  {
-    "pmcid": "PMC7815251",
-    "doi": "10.1136/bmj.n84",
-    "nct_id": "NCT04403685",
-    "journal": "BMJ",
-    "year": 2021,
-    "title": "Effect of tocilizumab on clinical outcomes at 15 days in patients with severe or critical coronavirus disease 2019: randomised controlled trial",
-    "license": "CC BY-NC",
-    "has_km_curve": false,
-    "has_mean_sd_table": true,
-    "pdf_sha256": "6c4c9e91a3baccfbc93c686790acc77ba74b64cbe62a1cee41814fd36c2de5c2",
-    "pdf_bytes": 422691,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC7815251.1/PMC7815251.1.pdf"
-  },
-  {
-    "pmcid": "PMC8515466",
-    "doi": "10.1136/bmj.n2400",
-    "nct_id": "NCT04362085",
-    "journal": "BMJ",
-    "year": 2021,
-    "title": "Effectiveness of therapeutic heparin versus prophylactic heparin on death, mechanical ventilation, or intensive care unit admission in moderately ill patients with covid-19 admitted to hospital: RAPID randomised clinical trial",
-    "license": "CC BY-NC",
-    "has_km_curve": false,
-    "has_mean_sd_table": true,
-    "pdf_sha256": "e4cf9cbbdf46ae85d70de10cc685f3402785a44cf0c4560dd4e7a21d02aebc5a",
-    "pdf_bytes": 530886,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8515466.1/PMC8515466.1.pdf"
-  },
-  {
-    "pmcid": "PMC10427418",
-    "doi": "10.1038/s41591-023-02465-7",
-    "nct_id": "NCT03653507",
-    "journal": "Nat Med",
-    "year": 2023,
-    "title": "Zolbetuximab plus CAPOX in CLDN18.2-positive gastric or gastroesophageal junction adenocarcinoma: the randomized, phase 3 GLOW trial",
-    "license": "CC BY",
-    "has_km_curve": true,
-    "has_mean_sd_table": false,
-    "pdf_sha256": "30c21b8d8cd877a3c4ef0f47d5237cb4659da45cdf0ff28fb7524b1fbd50695e",
-    "pdf_bytes": 5311936,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC10427418.1/PMC10427418.1.pdf"
-  },
-  {
-    "pmcid": "PMC8205851",
-    "doi": "10.1038/s41591-021-01336-3",
-    "nct_id": "NCT03537014",
-    "journal": "Nat Med",
-    "year": 2021,
-    "title": "MDMA-assisted therapy for severe PTSD: a randomized, double-blind, placebo-controlled phase 3 study",
-    "license": "CC BY",
-    "has_km_curve": false,
-    "has_mean_sd_table": true,
-    "pdf_sha256": "f412a0d6ff8ab3f3942293bbfcf0ecc300a385f556038b1839d9977a29188214",
-    "pdf_bytes": 1545823,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8205851.1/PMC8205851.1.pdf"
-  },
-  {
-    "pmcid": "PMC8604725",
-    "doi": "10.1038/s41591-021-01536-x",
-    "nct_id": "NCT03030235",
-    "journal": "Nat Med",
-    "year": 2021,
-    "title": "The SGLT2 inhibitor dapagliflozin in heart failure with preserved ejection fraction: a multicenter randomized trial",
-    "license": "CC BY",
-    "has_km_curve": false,
-    "has_mean_sd_table": true,
-    "pdf_sha256": "6c7295007a7fdbbb2f7891c6b13038d56b421dcb1bdef4b235fae2dedd9a1884",
-    "pdf_bytes": 3094562,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8604725.1/PMC8604725.1.pdf"
-  },
-  {
-    "pmcid": "PMC12283154",
-    "doi": "10.3171/2024.10.JNS241643",
-    "nct_id": "NCT04557618",
-    "journal": "J Neurosurg",
-    "year": 2025,
-    "title": "Auricular vagus nerve stimulation for mitigation of inflammation and vasospasm in subarachnoid hemorrhage: a single-institution randomized controlled trial",
-    "license": "CC BY-NC-ND",
-    "has_km_curve": false,
-    "has_mean_sd_table": true,
-    "pdf_sha256": "aa6ee524571cab476f62e646d7e3e2de075dbfb1f13b97766ec04b3dfb045d85",
-    "pdf_bytes": 13212253,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC12283154.2/PMC12283154.2.pdf"
-  },
-  {
-    "pmcid": "PMC6116794",
-    "doi": "10.1161/STROKEAHA.118.022255",
-    "nct_id": "NCT01032239",
-    "journal": "Stroke",
-    "year": 2018,
-    "title": "Effect of Intrathecal Baclofen on Pain and Quality of Life in Poststroke Spasticity",
-    "license": "CC BY",
-    "has_km_curve": false,
-    "has_mean_sd_table": true,
-    "pdf_sha256": "1847cb692766cbfe0898f5381afb8e6934296b48851dd61f89a7972661de8f12",
-    "pdf_bytes": 1131043,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6116794.1/PMC6116794.1.pdf"
-  },
-  {
-    "pmcid": "PMC8211182",
-    "doi": "10.1371/journal.pmed.1003621",
-    "nct_id": "NCT03747055",
-    "journal": "PLoS Med",
-    "year": 2021,
-    "title": "Effectiveness of Group Problem Management Plus, a brief psychological intervention for adults affected by humanitarian disasters in Nepal: A cluster randomized controlled trial",
-    "license": "CC BY",
-    "has_km_curve": false,
-    "has_mean_sd_table": true,
-    "pdf_sha256": "644122bcc2e4192864f3570539435290bafe5bb903916ff9ec1f1cba24dd0f84",
-    "pdf_bytes": 1849926,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8211182.1/PMC8211182.1.pdf"
-  },
-  {
-    "pmcid": "PMC6611563",
-    "doi": "10.1371/journal.pmed.1002852",
-    "nct_id": "NCT02300896",
-    "journal": "PLoS Med",
-    "year": 2019,
-    "title": "Assessing the impact of physical exercise on cognitive function in older medical patients during acute hospitalization: Secondary analysis of a randomized trial",
-    "license": "CC BY",
-    "has_km_curve": false,
-    "has_mean_sd_table": true,
-    "pdf_sha256": "98ad876ac3dd2c18e66c6c84e5ef0d12c42332829ab9a60acaf5a8d586e467bf",
-    "pdf_bytes": 1219446,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6611563.1/PMC6611563.1.pdf"
-  },
-  {
-    "pmcid": "PMC11015654",
-    "doi": "10.1186/s12916-024-03383-2",
-    "nct_id": "NCT03687762",
-    "journal": "BMC Med",
-    "year": 2024,
-    "title": "The effects of telehealth-delivered mindfulness meditation, cognitive therapy, and behavioral activation for chronic low back pain: a randomized clinical trial",
-    "license": "CC BY",
-    "has_km_curve": false,
-    "has_mean_sd_table": true,
-    "pdf_sha256": "1a8ae57384db7ae9fffafdeea7612b2bbd528984a792b4c9a4363a8948e37f31",
-    "pdf_bytes": 2021853,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC11015654.1/PMC11015654.1.pdf"
-  },
-  {
-    "pmcid": "PMC6343350",
-    "doi": "10.1186/s12916-019-1253-5",
-    "nct_id": "NCT02298036",
-    "journal": "BMC Med",
-    "year": 2019,
-    "title": "Clinical and economic outcomes of remotely delivered cognitive behaviour therapy versus treatment as usual for repeat unscheduled care users with severe health anxiety: a multicentre randomised controlled trial",
-    "license": "CC BY",
-    "has_km_curve": false,
-    "has_mean_sd_table": true,
-    "pdf_sha256": "508d44221dca5fcd9f6ac119c88694e11ceaa2b779bc8d0a89589154d7137dd8",
-    "pdf_bytes": 1122805,
-    "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6343350.1/PMC6343350.1.pdf"
+ {
+  "pmcid": "PMC7383595",
+  "doi": "10.1056/NEJMoa2021436",
+  "nct_id": "NCT04381936",
+  "journal": "N Engl J Med",
+  "year": 2021,
+  "title": "Dexamethasone in Hospitalized Patients with Covid-19",
+  "license": "PMC-PHE-COVID19",
+  "has_km_curve": true,
+  "has_mean_sd_table": true,
+  "pdf_sha256": "a55eb4ebac0e00af63142c512a0fccf7f4897c445087bf0217c1f5acab5d9544",
+  "pdf_bytes": 663868,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC7383595.1/PMC7383595.1.pdf"
+ },
+ {
+  "pmcid": "PMC8084355",
+  "doi": "10.1016/S0140-6736(21)00676-0",
+  "nct_id": "NCT04381936",
+  "journal": "Lancet",
+  "year": 2021,
+  "title": "Tocilizumab in patients admitted to hospital with COVID-19 (RECOVERY): a randomised, controlled, open-label, platform trial",
+  "license": "CC BY",
+  "has_km_curve": true,
+  "has_mean_sd_table": true,
+  "pdf_sha256": "d8d3efb0c5660e9bc2cb40b6ecbcea6e4752f39fdcaed8bcc7e83346daf5cfd9",
+  "pdf_bytes": 794895,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8084355.1/PMC8084355.1.pdf"
+ },
+ {
+  "pmcid": "PMC7723445",
+  "doi": "10.1016/S0140-6736(20)32661-1",
+  "nct_id": "NCT04324606",
+  "journal": "Lancet",
+  "year": 2021,
+  "title": "Safety and efficacy of the ChAdOx1 nCoV-19 vaccine (AZD1222) against SARS-CoV-2: an interim analysis of four randomised controlled trials in Brazil, South Africa, and the UK",
+  "license": "CC BY",
+  "has_km_curve": true,
+  "has_mean_sd_table": false,
+  "pdf_sha256": "2bfb94b10445fb4219ebf622d918871e50de796b2d4f2cf2078df3552c340b28",
+  "pdf_bytes": 598318,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC7723445.1/PMC7723445.1.pdf"
+ },
+ {
+  "pmcid": "PMC4800035",
+  "doi": "10.1016/S0140-6736(15)01037-5",
+  "nct_id": "NCT00268476",
+  "journal": "Lancet",
+  "year": 2016,
+  "title": "Addition of docetaxel, zoledronic acid, or both to first-line long-term hormone therapy in prostate cancer (STAMPEDE): survival results from an adaptive, multiarm, multistage, platform randomised controlled trial",
+  "license": "CC BY",
+  "has_km_curve": true,
+  "has_mean_sd_table": false,
+  "pdf_sha256": "3353576ccc229ecc3239a6217f919e136d1c25c28825135ba075602476887355",
+  "pdf_bytes": 710596,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC4800035.1/PMC4800035.1.pdf"
+ },
+ {
+  "pmcid": "PMC4655321",
+  "doi": "10.1016/S0140-6736(15)00257-3",
+  "nct_id": "NCT02369081",
+  "journal": "Lancet",
+  "year": 2015,
+  "title": "Spironolactone versus placebo, bisoprolol, and doxazosin to determine the optimal treatment for drug-resistant hypertension (PATHWAY-2): a randomised, double-blind, crossover trial",
+  "license": "CC BY",
+  "has_km_curve": false,
+  "has_mean_sd_table": true,
+  "pdf_sha256": "9c1f41e919585da2f031cce371a0bcffaa892ca0ebb1509d5990a28ef5ca249f",
+  "pdf_bytes": 504578,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC4655321.1/PMC4655321.1.pdf"
+ },
+ {
+  "pmcid": "PMC7815251",
+  "doi": "10.1136/bmj.n84",
+  "nct_id": "NCT04403685",
+  "journal": "BMJ",
+  "year": 2021,
+  "title": "Effect of tocilizumab on clinical outcomes at 15 days in patients with severe or critical coronavirus disease 2019: randomised controlled trial",
+  "license": "CC BY-NC",
+  "has_km_curve": false,
+  "has_mean_sd_table": true,
+  "pdf_sha256": "6c4c9e91a3baccfbc93c686790acc77ba74b64cbe62a1cee41814fd36c2de5c2",
+  "pdf_bytes": 422691,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC7815251.1/PMC7815251.1.pdf",
+  "known_true_impossibilities": [
+   {
+    "location": "Table 1, Other immunosuppressants*, tocilizumab group (n=65)",
+    "printed": "5 (5)",
+    "why": "5/D >= 7.7% for every D <= 65; the PDF and the XML both print 5 (5) and every other cell in the column is exactly count/65, so this is a typographical error in the published table (likely 5 (8)), not an extraction artefact",
+    "verified_by": "manual check of PDF page 4 text and JATS XML, 2026-11-26"
+   }
+  ]
+ },
+ {
+  "pmcid": "PMC8515466",
+  "doi": "10.1136/bmj.n2400",
+  "nct_id": "NCT04362085",
+  "journal": "BMJ",
+  "year": 2021,
+  "title": "Effectiveness of therapeutic heparin versus prophylactic heparin on death, mechanical ventilation, or intensive care unit admission in moderately ill patients with covid-19 admitted to hospital: RAPID randomised clinical trial",
+  "license": "CC BY-NC",
+  "has_km_curve": false,
+  "has_mean_sd_table": true,
+  "pdf_sha256": "e4cf9cbbdf46ae85d70de10cc685f3402785a44cf0c4560dd4e7a21d02aebc5a",
+  "pdf_bytes": 530886,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8515466.1/PMC8515466.1.pdf"
+ },
+ {
+  "pmcid": "PMC10427418",
+  "doi": "10.1038/s41591-023-02465-7",
+  "nct_id": "NCT03653507",
+  "journal": "Nat Med",
+  "year": 2023,
+  "title": "Zolbetuximab plus CAPOX in CLDN18.2-positive gastric or gastroesophageal junction adenocarcinoma: the randomized, phase 3 GLOW trial",
+  "license": "CC BY",
+  "has_km_curve": true,
+  "has_mean_sd_table": false,
+  "pdf_sha256": "30c21b8d8cd877a3c4ef0f47d5237cb4659da45cdf0ff28fb7524b1fbd50695e",
+  "pdf_bytes": 5311936,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC10427418.1/PMC10427418.1.pdf"
+ },
+ {
+  "pmcid": "PMC8205851",
+  "doi": "10.1038/s41591-021-01336-3",
+  "nct_id": "NCT03537014",
+  "journal": "Nat Med",
+  "year": 2021,
+  "title": "MDMA-assisted therapy for severe PTSD: a randomized, double-blind, placebo-controlled phase 3 study",
+  "license": "CC BY",
+  "has_km_curve": false,
+  "has_mean_sd_table": true,
+  "pdf_sha256": "f412a0d6ff8ab3f3942293bbfcf0ecc300a385f556038b1839d9977a29188214",
+  "pdf_bytes": 1545823,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8205851.1/PMC8205851.1.pdf"
+ },
+ {
+  "pmcid": "PMC8604725",
+  "doi": "10.1038/s41591-021-01536-x",
+  "nct_id": "NCT03030235",
+  "journal": "Nat Med",
+  "year": 2021,
+  "title": "The SGLT2 inhibitor dapagliflozin in heart failure with preserved ejection fraction: a multicenter randomized trial",
+  "license": "CC BY",
+  "has_km_curve": false,
+  "has_mean_sd_table": true,
+  "pdf_sha256": "6c7295007a7fdbbb2f7891c6b13038d56b421dcb1bdef4b235fae2dedd9a1884",
+  "pdf_bytes": 3094562,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8604725.1/PMC8604725.1.pdf"
+ },
+ {
+  "pmcid": "PMC12283154",
+  "doi": "10.3171/2024.10.JNS241643",
+  "nct_id": "NCT04557618",
+  "journal": "J Neurosurg",
+  "year": 2025,
+  "title": "Auricular vagus nerve stimulation for mitigation of inflammation and vasospasm in subarachnoid hemorrhage: a single-institution randomized controlled trial",
+  "license": "CC BY-NC-ND",
+  "has_km_curve": false,
+  "has_mean_sd_table": true,
+  "pdf_sha256": "aa6ee524571cab476f62e646d7e3e2de075dbfb1f13b97766ec04b3dfb045d85",
+  "pdf_bytes": 13212253,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC12283154.2/PMC12283154.2.pdf"
+ },
+ {
+  "pmcid": "PMC6116794",
+  "doi": "10.1161/STROKEAHA.118.022255",
+  "nct_id": "NCT01032239",
+  "journal": "Stroke",
+  "year": 2018,
+  "title": "Effect of Intrathecal Baclofen on Pain and Quality of Life in Poststroke Spasticity",
+  "license": "CC BY",
+  "has_km_curve": false,
+  "has_mean_sd_table": true,
+  "pdf_sha256": "1847cb692766cbfe0898f5381afb8e6934296b48851dd61f89a7972661de8f12",
+  "pdf_bytes": 1131043,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6116794.1/PMC6116794.1.pdf"
+ },
+ {
+  "pmcid": "PMC8211182",
+  "doi": "10.1371/journal.pmed.1003621",
+  "nct_id": "NCT03747055",
+  "journal": "PLoS Med",
+  "year": 2021,
+  "title": "Effectiveness of Group Problem Management Plus, a brief psychological intervention for adults affected by humanitarian disasters in Nepal: A cluster randomized controlled trial",
+  "license": "CC BY",
+  "has_km_curve": false,
+  "has_mean_sd_table": true,
+  "pdf_sha256": "644122bcc2e4192864f3570539435290bafe5bb903916ff9ec1f1cba24dd0f84",
+  "pdf_bytes": 1849926,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8211182.1/PMC8211182.1.pdf"
+ },
+ {
+  "pmcid": "PMC6611563",
+  "doi": "10.1371/journal.pmed.1002852",
+  "nct_id": "NCT02300896",
+  "journal": "PLoS Med",
+  "year": 2019,
+  "title": "Assessing the impact of physical exercise on cognitive function in older medical patients during acute hospitalization: Secondary analysis of a randomized trial",
+  "license": "CC BY",
+  "has_km_curve": false,
+  "has_mean_sd_table": true,
+  "pdf_sha256": "98ad876ac3dd2c18e66c6c84e5ef0d12c42332829ab9a60acaf5a8d586e467bf",
+  "pdf_bytes": 1219446,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6611563.1/PMC6611563.1.pdf"
+ },
+ {
+  "pmcid": "PMC11015654",
+  "doi": "10.1186/s12916-024-03383-2",
+  "nct_id": "NCT03687762",
+  "journal": "BMC Med",
+  "year": 2024,
+  "title": "The effects of telehealth-delivered mindfulness meditation, cognitive therapy, and behavioral activation for chronic low back pain: a randomized clinical trial",
+  "license": "CC BY",
+  "has_km_curve": false,
+  "has_mean_sd_table": true,
+  "pdf_sha256": "1a8ae57384db7ae9fffafdeea7612b2bbd528984a792b4c9a4363a8948e37f31",
+  "pdf_bytes": 2021853,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC11015654.1/PMC11015654.1.pdf"
+ },
+ {
+  "pmcid": "PMC6343350",
+  "doi": "10.1186/s12916-019-1253-5",
+  "nct_id": "NCT02298036",
+  "journal": "BMC Med",
+  "year": 2019,
+  "title": "Clinical and economic outcomes of remotely delivered cognitive behaviour therapy versus treatment as usual for repeat unscheduled care users with severe health anxiety: a multicentre randomised controlled trial",
+  "license": "CC BY",
+  "has_km_curve": false,
+  "has_mean_sd_table": true,
+  "pdf_sha256": "508d44221dca5fcd9f6ac119c88694e11ceaa2b779bc8d0a89589154d7137dd8",
+  "pdf_bytes": 1122805,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6343350.1/PMC6343350.1.pdf"
+ },
+ {
+  "pmcid": "PMC10579091",
+  "doi": "10.1038/s41591-023-02565-4",
+  "pmid": "37709999",
+  "nct_id": "NCT04077437",
+  "journal": "Nature Medicine",
+  "year": 2023,
+  "title": "MDMA-assisted therapy for moderate to severe PTSD: a randomized, placebo-controlled phase 3 trial",
+  "license": "https://creativecommons.org/licenses/by/4.0/Open Access This article is licensed under a Creative Commons Attribution 4.0 International License, which permits use, sharing, adaptation, distribution an",
+  "has_km_curve": false,
+  "pdf_sha256": "6ef8fdf015a60bc1c81a3306db831f74ce1d195d08379d947e1d6028e1011242",
+  "pdf_bytes": 5603728,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC10579091.1/",
+  "retraction_check": {
+   "crossref_updates": [
+    "correction"
+   ],
+   "pubmed_pubtypes": [
+    "Randomized Controlled Trial",
+    "Clinical Trial, Phase III",
+    "Journal Article",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "checked": "2026-11-26"
   }
+ },
+ {
+  "pmcid": "PMC11750088",
+  "doi": "10.1371/journal.pmed.1004510",
+  "pmid": "39836656",
+  "nct_id": "NCT04069247",
+  "journal": "PLOS Medicine",
+  "year": 2025,
+  "title": "Effectiveness of app-based cognitive behavioral therapy for insomnia on preventing major depressive disorder in youth with insomnia and subclinical depression: A randomized clinical trial",
+  "license": "https://creativecommons.org/licenses/by/4.0/This is an open access article distributed under the terms of the Creative Commons Attribution License, which permits unrestricted use, distribution, and re",
+  "has_km_curve": false,
+  "pdf_sha256": "e4e860a92b932ff6fc1ea508e25a584786f0f8f47790668d0c7f2ea520132f89",
+  "pdf_bytes": 1379820,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC11750088.1/",
+  "retraction_check": {
+   "crossref_updates": [],
+   "pubmed_pubtypes": [
+    "Journal Article",
+    "Randomized Controlled Trial",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "checked": "2026-11-26"
+  }
+ },
+ {
+  "pmcid": "PMC5256149",
+  "doi": "10.1136/jnnp-2016-314117",
+  "pmid": "27756804",
+  "nct_id": "NCT01745692",
+  "journal": "Journal of Neurology, Neurosurgery, and Psychiatry",
+  "year": 2017,
+  "title": "Endovascular therapy for acute ischaemic stroke: the Pragmatic Ischaemic Stroke Thrombectomy Evaluation (PISTE) randomised, controlled trial",
+  "license": "https://creativecommons.org/licenses/by/4.0/This is an Open Access article distributed in accordance with the terms of the Creative Commons Attribution (CC BY 4.0) license, which permits others to dis",
+  "has_km_curve": false,
+  "pdf_sha256": "1e5939e21279953ab2de0fed87fa1b3f907de5d50c89a87413de4d25979001b0",
+  "pdf_bytes": 521436,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC5256149.1/",
+  "retraction_check": {
+   "crossref_updates": [],
+   "pubmed_pubtypes": [
+    "Journal Article",
+    "Multicenter Study",
+    "Randomized Controlled Trial",
+    "Pragmatic Clinical Trial"
+   ],
+   "checked": "2026-11-26"
+  }
+ },
+ {
+  "pmcid": "PMC6152871",
+  "doi": "10.1371/journal.pmed.1002660",
+  "pmid": "30248105",
+  "nct_id": "NCT02017340",
+  "journal": "PLoS Medicine",
+  "year": 2018,
+  "title": "Nilvadipine in mild to moderate Alzheimer disease: A randomised controlled trial",
+  "license": "https://creativecommons.org/licenses/by/4.0/This is an open access article distributed under the terms of the Creative Commons Attribution License, which permits unrestricted use, distribution, and re",
+  "has_km_curve": false,
+  "pdf_sha256": "c4029924033d0f3eabd42f3635a972e5f906f34d6046bfa552149833bc8225fd",
+  "pdf_bytes": 4736024,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6152871.1/",
+  "retraction_check": {
+   "crossref_updates": [],
+   "pubmed_pubtypes": [
+    "Clinical Trial, Phase III",
+    "Journal Article",
+    "Multicenter Study",
+    "Randomized Controlled Trial",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "checked": "2026-11-26"
+  }
+ },
+ {
+  "pmcid": "PMC6394073",
+  "doi": "10.1186/s12916-019-1278-9",
+  "pmid": "30813926",
+  "nct_id": "NCT02634736",
+  "journal": "BMC Medicine",
+  "year": 2019,
+  "title": "The effectiveness and cost-effectiveness of strength and balance Exergames to reduce falls risk for people aged 55 years and older in UK assisted living facilities: a multi-centre, cluster randomised controlled trial",
+  "license": "https://creativecommons.org/licenses/by/4.0/Open AccessThis article is distributed under the terms of the Creative Commons Attribution 4.0 International License (http://creativecommons.org/licenses/by",
+  "has_km_curve": false,
+  "pdf_sha256": "a560a1baf730ac3303c456dc4ecfb68c9cdb42b42194752a66c6a3fc50fc7717",
+  "pdf_bytes": 1165807,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6394073.1/",
+  "retraction_check": {
+   "crossref_updates": [],
+   "pubmed_pubtypes": [
+    "Journal Article",
+    "Multicenter Study",
+    "Randomized Controlled Trial",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "checked": "2026-11-26"
+  }
+ },
+ {
+  "pmcid": "PMC7262788",
+  "doi": "10.1056/NEJMoa2007764",
+  "pmid": "32445440",
+  "nct_id": "NCT04280705",
+  "journal": "The New England Journal of Medicine",
+  "year": 2020,
+  "title": "Remdesivir for the Treatment of Covid-19 \u2014 Final Report",
+  "license": "http://www.nejmgroup.org/legal/terms-of-use.htm",
+  "has_km_curve": false,
+  "pdf_sha256": "97c696ae5dd5ab40d09371179c3fb7a112eb3e519c2cf8a8ab5183f426cc9166",
+  "pdf_bytes": 599575,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC7262788.1/",
+  "retraction_check": {
+   "crossref_updates": [],
+   "pubmed_pubtypes": [
+    "Clinical Trial, Phase III",
+    "Journal Article",
+    "Randomized Controlled Trial",
+    "Research Support, N.I.H., Extramural",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "checked": "2026-11-26"
+  }
+ },
+ {
+  "pmcid": "PMC7645733",
+  "doi": "10.1016/S1474-4422(19)30184-X",
+  "pmid": "31129065",
+  "nct_id": "NCT02966119",
+  "journal": "The Lancet. Neurology",
+  "year": 2019,
+  "title": "Effects of antiplatelet therapy on stroke risk by brain imaging features of intracerebral haemorrhage and cerebral small vessel diseases: subgroup analyses of the RESTART randomised, open-label trial",
+  "license": "https://creativecommons.org/licenses/by/4.0/This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/).",
+  "has_km_curve": true,
+  "pdf_sha256": "9f3eaf46709a31e5461f59b87b9ba9fdabdcdedfdd382ff02d7f9a30fe4bda66",
+  "pdf_bytes": 785000,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC7645733.1/",
+  "retraction_check": {
+   "crossref_updates": [],
+   "pubmed_pubtypes": [
+    "Journal Article",
+    "Randomized Controlled Trial",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "checked": "2026-11-26"
+  }
+ },
+ {
+  "pmcid": "PMC7745180",
+  "doi": "10.1056/NEJMoa2031994",
+  "pmid": "33306283",
+  "nct_id": "NCT04401579",
+  "journal": "The New England Journal of Medicine",
+  "year": 2020,
+  "title": "Baricitinib plus Remdesivir for Hospitalized Adults with Covid-19",
+  "license": "http://www.nejmgroup.org/legal/terms-of-use.htm",
+  "has_km_curve": false,
+  "pdf_sha256": "98dc04736ec1983afb51924f7bc8e1951b656956645ee5e00230c227954f7daf",
+  "pdf_bytes": 608939,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC7745180.1/",
+  "retraction_check": {
+   "crossref_updates": [],
+   "pubmed_pubtypes": [
+    "Comparative Study",
+    "Journal Article",
+    "Multicenter Study",
+    "Randomized Controlled Trial",
+    "Research Support, N.I.H., Extramural",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "checked": "2026-11-26"
+  }
+ },
+ {
+  "pmcid": "PMC7745181",
+  "doi": "10.1056/NEJMoa2034577",
+  "pmid": "33301246",
+  "nct_id": "NCT04368728",
+  "journal": "The New England Journal of Medicine",
+  "year": 2020,
+  "title": "Safety and Efficacy of the BNT162b2 mRNA Covid-19 Vaccine",
+  "license": "http://www.nejmgroup.org/legal/terms-of-use.htm",
+  "has_km_curve": false,
+  "pdf_sha256": "3247c3198e4540ac14cb6272ef4a19e8d006013582b060cb4e356e9989b49ac4",
+  "pdf_bytes": 810208,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC7745181.1/",
+  "retraction_check": {
+   "crossref_updates": [],
+   "pubmed_pubtypes": [
+    "Clinical Trial, Phase II",
+    "Clinical Trial, Phase III",
+    "Journal Article",
+    "Multicenter Study",
+    "Randomized Controlled Trial",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "checked": "2026-11-26"
+  }
+ },
+ {
+  "pmcid": "PMC8082275",
+  "doi": "10.1016/S1470-2045(21)00027-9",
+  "pmid": "33798493",
+  "nct_id": "NCT01926236",
+  "journal": "The Lancet. Oncology",
+  "year": 2021,
+  "title": "Second-line FOLFOX chemotherapy versus active symptom control for advanced biliary tract cancer (ABC-06): a phase 3, open-label, randomised, controlled trial",
+  "license": "https://creativecommons.org/licenses/by/4.0/This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/).",
+  "has_km_curve": false,
+  "pdf_sha256": "257ba4c15734c41b959a931d52528d9538f420f30537bdccfec71060cd749026",
+  "pdf_bytes": 1592355,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8082275.1/",
+  "retraction_check": {
+   "crossref_updates": [],
+   "pubmed_pubtypes": [
+    "Clinical Trial, Phase III",
+    "Comparative Study",
+    "Journal Article",
+    "Randomized Controlled Trial",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "checked": "2026-11-26"
+  }
+ },
+ {
+  "pmcid": "PMC8525034",
+  "doi": "10.1186/s13063-021-05690-y",
+  "pmid": "34663421",
+  "nct_id": "NCT03328351",
+  "journal": "Trials",
+  "year": 2021,
+  "title": "Effect of manual therapy with exercise in patients with chronic cervical radiculopathy: a randomized clinical trial",
+  "license": "https://creativecommons.org/licenses/by/4.0/Open AccessThis article is licensed under a Creative Commons Attribution 4.0 International License, which permits use, sharing, adaptation, distribution and",
+  "has_km_curve": false,
+  "pdf_sha256": "9c66e2b85b35e00fa2e77adddb59ec476ea286d15cf2f32bb2e5806ca0381b07",
+  "pdf_bytes": 860403,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8525034.1/",
+  "retraction_check": {
+   "crossref_updates": [],
+   "pubmed_pubtypes": [
+    "Journal Article",
+    "Randomized Controlled Trial"
+   ],
+   "checked": "2026-11-26"
+  }
+ },
+ {
+  "pmcid": "PMC8560642",
+  "doi": "10.1016/S1470-2045(21)00471-X",
+  "pmid": "34656227",
+  "nct_id": "NCT03063450",
+  "journal": "The Lancet. Oncology",
+  "year": 2021,
+  "title": "Nivolumab versus placebo in patients with relapsed malignant mesothelioma (CONFIRM): a multicentre, double-blind, randomised, phase 3 trial",
+  "license": "https://creativecommons.org/licenses/by/4.0/This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/).",
+  "has_km_curve": false,
+  "pdf_sha256": "80bcdd2d72c5d0e74234972f5272224a9ae8a2213f7130a9f275c3d5fbbf4b74",
+  "pdf_bytes": 617161,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8560642.1/",
+  "retraction_check": {
+   "crossref_updates": [
+    "erratum"
+   ],
+   "pubmed_pubtypes": [
+    "Clinical Trial, Phase III",
+    "Journal Article",
+    "Multicenter Study",
+    "Randomized Controlled Trial",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "checked": "2026-11-26"
+  }
+ },
+ {
+  "pmcid": "PMC8938265",
+  "doi": "10.1038/s41591-021-01659-1",
+  "pmid": "35228754",
+  "nct_id": "NCT04157751",
+  "journal": "Nature Medicine",
+  "year": 2022,
+  "title": "The SGLT2 inhibitor empagliflozin in patients hospitalized for acute heart failure: a multinational randomized trial",
+  "license": "https://creativecommons.org/licenses/by/4.0/Open Access This article is licensed under a Creative Commons Attribution 4.0 International License, which permits use, sharing, adaptation, distribution an",
+  "has_km_curve": false,
+  "pdf_sha256": "d0ee9b6bd909c7ef8bd41a7d1f19bf993d83d6497082f7062ad3f0599fd59811",
+  "pdf_bytes": 4294568,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8938265.1/",
+  "retraction_check": {
+   "crossref_updates": [],
+   "pubmed_pubtypes": [
+    "Journal Article",
+    "Randomized Controlled Trial",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "checked": "2026-11-26"
+  }
+ },
+ {
+  "pmcid": "PMC9223343",
+  "doi": "10.1371/journal.pmed.1004025",
+  "pmid": "35737665",
+  "nct_id": "NCT03720769",
+  "journal": "PLoS Medicine",
+  "year": 2022,
+  "title": "Effects of a WHO-guided digital health intervention for depression in Syrian refugees in Lebanon: A randomized controlled trial",
+  "license": "https://creativecommons.org/licenses/by/4.0/This is an open access article distributed under the terms of the Creative Commons Attribution License, which permits unrestricted use, distribution, and re",
+  "has_km_curve": true,
+  "pdf_sha256": "0c49ec71b3b11e928c2b4e5b181df2a5c47a78915f4f24698f60f038f254d8a0",
+  "pdf_bytes": 678060,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC9223343.1/",
+  "retraction_check": {
+   "crossref_updates": [
+    "correction"
+   ],
+   "pubmed_pubtypes": [
+    "Journal Article",
+    "Pragmatic Clinical Trial",
+    "Randomized Controlled Trial",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "checked": "2026-11-26"
+  }
+ },
+ {
+  "pmcid": "PMC9556320",
+  "doi": "10.1038/s41591-022-02026-4",
+  "pmid": "36216945",
+  "nct_id": "NCT03693430",
+  "journal": "Nature Medicine",
+  "year": 2022,
+  "title": "Two-year effects of semaglutide in adults with overweight or obesity: the STEP 5 trial",
+  "license": "https://creativecommons.org/licenses/by/4.0/Open Access This article is licensed under a Creative Commons Attribution 4.0 International License, which permits use, sharing, adaptation, distribution an",
+  "has_km_curve": false,
+  "pdf_sha256": "452e720839bef44e2f12d85bd2356c1d511421f81a3b0c1da406afc95837780d",
+  "pdf_bytes": 4642089,
+  "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC9556320.1/",
+  "retraction_check": {
+   "crossref_updates": [],
+   "pubmed_pubtypes": [
+    "Journal Article",
+    "Randomized Controlled Trial",
+    "Research Support, Non-U.S. Gov't"
+   ],
+   "checked": "2026-11-26"
+  }
+ }
 ]

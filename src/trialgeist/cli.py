@@ -11,13 +11,14 @@ app = typer.Typer(add_completion=False, help="Machine-verified mathematical fore
 
 
 @app.command()
-def scan(pdf: Path, nct: str = typer.Option(None, help="ClinicalTrials.gov ID (NCT########)"),
+def scan(pdf: Path = typer.Argument(..., help="trial PDF, PMC JATS .nxml/.xml, or claims .json"),
+         nct: str = typer.Option(None, help="ClinicalTrials.gov ID (NCT########)"),
          out: Path = typer.Option(Path("report"), help="output directory"),
          km_eps_pt: float = typer.Option(1.0, help="KM plotting tolerance in PDF points")):
-    """Scan a trial PDF and write report.md, report.json and certificates/."""
-    from .scan import scan_pdf, write_report
+    """Scan a trial PDF (or PMC XML) and write report.md, report.json and certificates/."""
+    from .scan import scan_any, write_report
 
-    rep = scan_pdf(pdf, nct=nct, km_eps_pt=km_eps_pt)
+    rep = scan_any(pdf, nct=nct, km_eps_pt=km_eps_pt) if str(pdf).lower().endswith(".pdf") else scan_any(pdf, nct=nct)
     write_report(rep, out)
     typer.echo((out / "report.md").read_text().split("\n## ")[0])
 
