@@ -1,0 +1,1559 @@
+[
+ {
+  "pmcid": "PMC13757918",
+  "pmid": "42978535",
+  "doi": "10.1080/0886022x.2026.2755136",
+  "title": "Effect of Kunxian capsule, a novel &lt;i&gt;Tripterygium wilfordii&lt;/i&gt; preparation, on reducing proteinuria and slowing renal function decline in diabetic kidney disease: a 48-week randomized controlled trial.",
+  "journal": "Renal failure",
+  "year": "2026",
+  "license": "cc by",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13757918.1/PMC13757918.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13757918.1/PMC13757918.1.xml",
+  "pdf_sha256": "a81995edb8e1f597c966929be80bf469a33b7fb884a1325dc3eaa30c833e2898",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 5,
+    "xref": 16,
+    "px": [
+     1850,
+     1662
+    ],
+    "rect_pt": [
+     75.6,
+     52.3,
+     519.6,
+     451.2
+    ]
+   },
+   {
+    "page": 7,
+    "xref": 27,
+    "px": [
+     1850,
+     694
+    ],
+    "rect_pt": [
+     75.6,
+     264.5,
+     519.6,
+     431.0
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13777004",
+  "pmid": "43006184",
+  "doi": "10.1161/circulationaha.125.078842",
+  "title": "Off-Pump Versus On-Pump Coronary Artery Bypass Grafting in Prefrail and Frail Patients: 30-Day and 1-Year Outcomes From the FRAGILE Randomized Trial.",
+  "journal": "Circulation",
+  "year": "2026",
+  "license": "cc by",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13777004.1/PMC13777004.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13777004.1/PMC13777004.1.xml",
+  "pdf_sha256": "d1224246ac21a407f78ea3ef02f5a8dd031572293b5511445eea43327c8fadce",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 5,
+    "xref": 13,
+    "px": [
+     1501,
+     1235
+    ],
+    "rect_pt": [
+     112.5,
+     69.1,
+     472.5,
+     365.4
+    ]
+   },
+   {
+    "page": 9,
+    "xref": 27,
+    "px": [
+     1501,
+     992
+    ],
+    "rect_pt": [
+     112.0,
+     442.6,
+     472.0,
+     680.5
+    ]
+   },
+   {
+    "page": 9,
+    "xref": 29,
+    "px": [
+     1501,
+     992
+    ],
+    "rect_pt": [
+     112.5,
+     66.5,
+     472.5,
+     304.4
+    ]
+   },
+   {
+    "page": 10,
+    "xref": 34,
+    "px": [
+     1501,
+     1194
+    ],
+    "rect_pt": [
+     112.4,
+     66.5,
+     472.6,
+     352.9
+    ]
+   },
+   {
+    "page": 11,
+    "xref": 39,
+    "px": [
+     1500,
+     993
+    ],
+    "rect_pt": [
+     112.5,
+     66.5,
+     472.5,
+     304.7
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "Comparative Study",
+    "research-article",
+    "Multicenter Study",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13594509",
+  "pmid": "42774398",
+  "doi": "10.2147/dddt.s621481",
+  "title": "Impact of Cipepofol versus Propofol on Long-Term Cardiovascular Outcomes After TAVR: An Extended Follow-Up of a Randomized Trial.",
+  "journal": "Drug design, development and therapy",
+  "year": "2026",
+  "license": "cc by-nc",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13594509.1/PMC13594509.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13594509.1/PMC13594509.1.xml",
+  "pdf_sha256": "f80ae7e8fdacfc9e8a870b98220bb460984f387cfdfc7fc57d34780b82058896",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 7,
+    "xref": 69,
+    "px": [
+     3842,
+     1792
+    ],
+    "rect_pt": [
+     187.2,
+     468.9,
+     495.0,
+     612.5
+    ]
+   },
+   {
+    "page": 8,
+    "xref": 81,
+    "px": [
+     5454,
+     5072
+    ],
+    "rect_pt": [
+     102.0,
+     54.7,
+     538.6,
+     460.8
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "Comparative Study",
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13731634",
+  "pmid": "42975671",
+  "doi": "10.1007/s00432-026-06654-y",
+  "title": "Coronary artery calcification is not associated with survival in advanced gastric and gastroesophageal junction cancer: a secondary analysis of the EXPAND trial.",
+  "journal": "Journal of cancer research and clinical oncology",
+  "year": "2026",
+  "license": "cc by",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13731634.1/PMC13731634.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13731634.1/PMC13731634.1.xml",
+  "pdf_sha256": "cfd16a7582bec01a2b7ab09f36cefcd816e8f4e2202543c9fd69a1b053090951",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 3,
+    "xref": 57,
+    "px": [
+     1524,
+     501
+    ],
+    "rect_pt": [
+     178.5,
+     253.6,
+     544.3,
+     373.9
+    ]
+   },
+   {
+    "page": 3,
+    "xref": 58,
+    "px": [
+     1524,
+     761
+    ],
+    "rect_pt": [
+     178.5,
+     58.0,
+     544.3,
+     240.6
+    ]
+   },
+   {
+    "page": 5,
+    "xref": 86,
+    "px": [
+     993,
+     777
+    ],
+    "rect_pt": [
+     306.1,
+     58.0,
+     544.3,
+     244.5
+    ]
+   },
+   {
+    "page": 6,
+    "xref": 107,
+    "px": [
+     2056,
+     1671
+    ],
+    "rect_pt": [
+     51.0,
+     58.0,
+     544.3,
+     459.0
+    ]
+   },
+   {
+    "page": 7,
+    "xref": 119,
+    "px": [
+     2056,
+     1670
+    ],
+    "rect_pt": [
+     51.0,
+     58.0,
+     544.3,
+     458.8
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "Clinical Trial, Phase III",
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13738187",
+  "pmid": "42991702",
+  "doi": "10.7717/peerj.21891",
+  "title": "Tetracaine hydrochloride gel delays and reduces catheter-related bladder discomfort after transurethral resection: a randomized controlled trial.",
+  "journal": "PeerJ",
+  "year": "2026",
+  "license": "cc by",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13738187.1/PMC13738187.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13738187.1/PMC13738187.1.xml",
+  "pdf_sha256": "e6916739ca666aa691998658436f28a22176b7c6adc3b4733aa8d4b7d41d5ee9",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 7,
+    "xref": 135,
+    "px": [
+     3231,
+     1898
+    ],
+    "rect_pt": [
+     184.3,
+     86.0,
+     572.0,
+     313.7
+    ]
+   },
+   {
+    "page": 10,
+    "xref": 141,
+    "px": [
+     3231,
+     1909
+    ],
+    "rect_pt": [
+     184.3,
+     86.0,
+     572.0,
+     315.1
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13433064",
+  "pmid": "42536549",
+  "doi": "10.1097/md.0000000000049937",
+  "title": "Application of gastric tube removal strategy based on the combination of Gugging Swallowing Screen (GUSS) and National Institutes of Health Stroke Scale (NIHSS) scores in patients following acute stroke: A randomized controlled trial.",
+  "journal": "Medicine",
+  "year": "2026",
+  "license": "cc by-nc",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13433064.1/PMC13433064.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13433064.1/PMC13433064.1.xml",
+  "pdf_sha256": "e6ea830e3ae0b2299d1ff2bef5433e29e76b17ba93b2233ada03645902a1558f",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 3,
+    "xref": 25,
+    "px": [
+     1746,
+     1419
+    ],
+    "rect_pt": [
+     154.5,
+     268.6,
+     454.5,
+     512.4
+    ]
+   },
+   {
+    "page": 5,
+    "xref": 36,
+    "px": [
+     2000,
+     948
+    ],
+    "rect_pt": [
+     64.5,
+     60.0,
+     544.5,
+     287.5
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13808753",
+  "pmid": "42439515",
+  "doi": "10.1093/ajrccm/aamag366",
+  "title": "Incretins predict response to enteral nutrition strategies in the Early versus Delayed Enteral Nutrition trial: a secondary analysis.",
+  "journal": "American journal of respiratory and critical care medicine",
+  "year": "2026",
+  "license": "cc by-nc",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13808753.1/PMC13808753.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13808753.1/PMC13808753.1.xml",
+  "pdf_sha256": "9f6f55769d813edb3d6821a272206d5fe1a94cb930d42e2e708a5d5c75d9821c",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 5,
+    "xref": 17,
+    "px": [
+     2000,
+     2417
+    ],
+    "rect_pt": [
+     54.8,
+     57.1,
+     534.8,
+     637.2
+    ]
+   },
+   {
+    "page": 7,
+    "xref": 25,
+    "px": [
+     2000,
+     1297
+    ],
+    "rect_pt": [
+     54.8,
+     358.9,
+     534.8,
+     670.2
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13658419",
+  "pmid": "42871156",
+  "doi": "10.2147/dddt.s640932",
+  "title": "Ilioinguinal-Transversus Abdominis Plane (I-TAP) Block with Liposomal Bupivacaine for Analgesia After Cesarean Delivery: A Randomized Controlled Trial.",
+  "journal": "Drug design, development and therapy",
+  "year": "2026",
+  "license": "cc by-nc",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13658419.1/PMC13658419.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13658419.1/PMC13658419.1.xml",
+  "pdf_sha256": "2e2b6da7c77cda92661605995b1e0487da86cd58bca237385265c071fef03e7e",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 8,
+    "xref": 71,
+    "px": [
+     4500,
+     3142
+    ],
+    "rect_pt": [
+     117.7,
+     54.6,
+     477.7,
+     306.0
+    ]
+   },
+   {
+    "page": 9,
+    "xref": 77,
+    "px": [
+     4500,
+     3165
+    ],
+    "rect_pt": [
+     134.7,
+     54.6,
+     494.7,
+     307.8
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "Randomized Controlled Trial",
+    "Journal Article",
+    "case-report"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13717765",
+  "pmid": "42947434",
+  "doi": "10.1080/13880209.2026.2753284",
+  "title": "Efficacy and safety of Lianhua Qingwen versus oseltamivir in children with influenza: a multicenter, randomized, double-blind, positive parallel-controlled study.",
+  "journal": "Pharmaceutical biology",
+  "year": "2026",
+  "license": "cc by-nc",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13717765.1/PMC13717765.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13717765.1/PMC13717765.1.xml",
+  "pdf_sha256": "88bb2a9e33de69c4f615223c7e08fae9f42d846788129c13e13e22d3b7390c58",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 5,
+    "xref": 13,
+    "px": [
+     1850,
+     1288
+    ],
+    "rect_pt": [
+     75.7,
+     56.0,
+     519.7,
+     365.1
+    ]
+   },
+   {
+    "page": 6,
+    "xref": 18,
+    "px": [
+     1700,
+     1203
+    ],
+    "rect_pt": [
+     93.7,
+     155.0,
+     501.7,
+     443.8
+    ]
+   },
+   {
+    "page": 7,
+    "xref": 23,
+    "px": [
+     1700,
+     1192
+    ],
+    "rect_pt": [
+     93.7,
+     56.0,
+     501.7,
+     342.1
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "Comparative Study",
+    "research-article",
+    "Multicenter Study",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13795454",
+  "pmid": "42910427",
+  "doi": "10.1161/strokeaha.126.057740",
+  "title": "Computed-Tomography Angiography-Based Carotid Plaque-RADS, Recurrent Vascular Events, and the Effect of Colchicine: An Imaging Substudy of the CONVINCE Randomized Trial.",
+  "journal": "Stroke",
+  "year": "2026",
+  "license": "cc by",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13795454.1/PMC13795454.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13795454.1/PMC13795454.1.xml",
+  "pdf_sha256": "cf782bc23b14e2cb3d557d382b792eed2415fdae4eb77863d6183f42520ad275",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 4,
+    "xref": 10,
+    "px": [
+     1087,
+     1890
+    ],
+    "rect_pt": [
+     308.1,
+     287.1,
+     528.9,
+     671.0
+    ]
+   },
+   {
+    "page": 6,
+    "xref": 22,
+    "px": [
+     2316,
+     782
+    ],
+    "rect_pt": [
+     58.5,
+     493.0,
+     526.5,
+     651.0
+    ]
+   },
+   {
+    "page": 7,
+    "xref": 28,
+    "px": [
+     2081,
+     992
+    ],
+    "rect_pt": [
+     58.4,
+     65.5,
+     526.6,
+     288.7
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Multicenter Study",
+    "Randomized Controlled Trial",
+    "Journal Article",
+    "Observational Study"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13662084",
+  "pmid": "42877103",
+  "doi": "10.3389/fimmu.2026.1908442",
+  "title": "Cardiovascular and mortality outcomes with JAK versus TNF inhibitors in rheumatoid arthritis: a target trial emulation (CARDINAL-RA).",
+  "journal": "Frontiers in immunology",
+  "year": "2026",
+  "license": "cc by",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13662084.1/PMC13662084.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13662084.1/PMC13662084.1.xml",
+  "pdf_sha256": "7e0e9b2dcd285d1c4b20780d3fb087a3b8b09d7813b4902a18454eebf3a4734e",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 9,
+    "xref": 850,
+    "px": [
+     3916,
+     3708
+    ],
+    "rect_pt": [
+     113.0,
+     83.0,
+     481.5,
+     431.9
+    ]
+   },
+   {
+    "page": 11,
+    "xref": 1060,
+    "px": [
+     4228,
+     3460
+    ],
+    "rect_pt": [
+     98.8,
+     83.0,
+     495.6,
+     407.7
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "Comparative Study",
+    "Research Support, Non-U.S. Gov't",
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13623508",
+  "pmid": "42810759",
+  "doi": "10.1111/iwj.71051",
+  "title": "Adjunctive Cold Atmospheric Plasma Therapy for Tracheostomy Wound Healing in Critically Ill Patients: A Pilot Randomised Controlled Trial.",
+  "journal": "International wound journal",
+  "year": "2026",
+  "license": "cc by-nc",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13623508.1/PMC13623508.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13623508.1/PMC13623508.1.xml",
+  "pdf_sha256": "315103ec11497027c51df2724a34312e167703148da7baa2baea7872841e3d15",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 7,
+    "xref": 19,
+    "px": [
+     2050,
+     802
+    ],
+    "rect_pt": [
+     51.7,
+     34.0,
+     543.6,
+     226.4
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13706688",
+  "pmid": "42930590",
+  "doi": "10.3390/medsci14060671",
+  "title": "Baseline Tumor Transcriptional Features and Event-Free Survival After Anti-CD19 CAR T-Cell Therapy with Axicabtagene Ciloleucel in Large B-Cell Lymphoma: An Exploratory Reanalysis of the Randomized ZUMA-7 Trial.",
+  "journal": "Medical sciences (Basel, Switzerland)",
+  "year": "2026",
+  "license": "cc by",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13706688.1/PMC13706688.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13706688.1/PMC13706688.1.xml",
+  "pdf_sha256": "d978cbc475f98126207b36d8d0106b3238318f8f128353fdbabb5a01621e693d",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 10,
+    "xref": 315,
+    "px": [
+     3290,
+     2812
+    ],
+    "rect_pt": [
+     166.4,
+     222.2,
+     553.3,
+     552.9
+    ]
+   },
+   {
+    "page": 14,
+    "xref": 349,
+    "px": [
+     3423,
+     4276
+    ],
+    "rect_pt": [
+     92.1,
+     71.9,
+     502.9,
+     585.0
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13714700",
+  "pmid": "42953556",
+  "doi": "10.2147/dddt.s644051",
+  "title": "Opioid-Free versus Opioid-Based Anesthesia for Quality of Recovery After Knee Arthroscopy: A Randomized Non-Inferiority Trial.",
+  "journal": "Drug design, development and therapy",
+  "year": "2026",
+  "license": "cc by-nc",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13714700.1/PMC13714700.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13714700.1/PMC13714700.1.xml",
+  "pdf_sha256": "aa906e7e551afc2a2c99baa611b9e0af656f4249347d4fe0fb1594aa61741b74",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 9,
+    "xref": 81,
+    "px": [
+     4500,
+     2826
+    ],
+    "rect_pt": [
+     134.7,
+     54.6,
+     494.7,
+     280.7
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "Comparative Study",
+    "Equivalence Trial",
+    "Randomized Controlled Trial",
+    "Journal Article",
+    "case-report"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13653501",
+  "pmid": "42669093",
+  "doi": "10.1093/cvr/cvag173",
+  "title": "Integrated management of atrial fibrillation with digital health support: a pooled analysis of individual participant data from the mAFA-II and MIRACLE-AF trials.",
+  "journal": "Cardiovascular research",
+  "year": "2026",
+  "license": "cc by",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13653501.1/PMC13653501.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13653501.1/PMC13653501.1.xml",
+  "pdf_sha256": "a97b26c8e756587ac4f9bccadb63cfc9dba8b703ca4d9bfe4a12e327dcc1d5f6",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 7,
+    "xref": 13,
+    "px": [
+     1410,
+     471
+    ],
+    "rect_pt": [
+     41.5,
+     501.6,
+     549.1,
+     671.1
+    ]
+   },
+   {
+    "page": 7,
+    "xref": 14,
+    "px": [
+     1100,
+     869
+    ],
+    "rect_pt": [
+     97.3,
+     68.5,
+     493.3,
+     381.4
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Multicenter Study",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13550685",
+  "pmid": "42108589",
+  "doi": "10.1093/neuonc/noag103",
+  "title": "Discrepancies in inter-rater agreement on resectability of recurrent glioblastoma: Complementary post-hoc analysis of the prospective, randomized DIRECTOR trial.",
+  "journal": "Neuro-oncology",
+  "year": "2026",
+  "license": "cc by-nc",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13550685.1/PMC13550685.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13550685.1/PMC13550685.1.xml",
+  "pdf_sha256": "d0e341535de235e37fa360d618a97e30fd3fb133c392d83ce70c3ca5321d91af",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 3,
+    "xref": 11,
+    "px": [
+     1663,
+     2364
+    ],
+    "rect_pt": [
+     83.5,
+     89.8,
+     482.5,
+     656.9
+    ]
+   },
+   {
+    "page": 8,
+    "xref": 37,
+    "px": [
+     1575,
+     2292
+    ],
+    "rect_pt": [
+     122.0,
+     85.8,
+     500.0,
+     635.9
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13629860",
+  "pmid": "42823088",
+  "doi": "10.1136/jitc-2026-016467",
+  "title": "Toripalimab consolidation after chemoradiotherapy in limited-stage small cell lung cancer: a phase II, randomized controlled study (GASTO-1052A).",
+  "journal": "Journal for immunotherapy of cancer",
+  "year": "2026",
+  "license": "cc by-nc",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13629860.1/PMC13629860.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13629860.1/PMC13629860.1.xml",
+  "pdf_sha256": "f26aeb76175b63e8a73314c65d599742d690f38ccb05db3c19a4711e8d2a2040",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 5,
+    "xref": 91,
+    "px": [
+     1035,
+     498
+    ],
+    "rect_pt": [
+     55.6,
+     67.9,
+     303.9,
+     187.4
+    ]
+   },
+   {
+    "page": 5,
+    "xref": 92,
+    "px": [
+     1035,
+     469
+    ],
+    "rect_pt": [
+     306.7,
+     71.8,
+     555.0,
+     184.2
+    ]
+   },
+   {
+    "page": 7,
+    "xref": 110,
+    "px": [
+     848,
+     543
+    ],
+    "rect_pt": [
+     72.9,
+     48.8,
+     276.2,
+     179.0
+    ]
+   },
+   {
+    "page": 7,
+    "xref": 111,
+    "px": [
+     838,
+     554
+    ],
+    "rect_pt": [
+     70.1,
+     190.3,
+     271.0,
+     323.1
+    ]
+   },
+   {
+    "page": 7,
+    "xref": 112,
+    "px": [
+     834,
+     543
+    ],
+    "rect_pt": [
+     307.7,
+     48.8,
+     507.7,
+     179.0
+    ]
+   },
+   {
+    "page": 7,
+    "xref": 113,
+    "px": [
+     865,
+     554
+    ],
+    "rect_pt": [
+     307.7,
+     190.3,
+     515.2,
+     323.1
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "Clinical Trial, Phase II",
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13599497",
+  "pmid": "42749856",
+  "doi": "10.1038/s41416-026-03621-9",
+  "title": "Menopausal hormone therapy and primary liver cancer: long-term follow-up of the women's health initiative randomized trials.",
+  "journal": "British journal of cancer",
+  "year": "2026",
+  "license": "cc by",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13599497.1/PMC13599497.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13599497.1/PMC13599497.1.xml",
+  "pdf_sha256": "a5c0df70608d07212e6465c01b4160393a8a0fbbf6989d15d9fe6d79f414a21d",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 11,
+    "xref": 311,
+    "px": [
+     1367,
+     1858
+    ],
+    "rect_pt": [
+     172.0,
+     62.0,
+     500.0,
+     507.7
+    ]
+   },
+   {
+    "page": 12,
+    "xref": 331,
+    "px": [
+     1364,
+     1843
+    ],
+    "rect_pt": [
+     172.4,
+     62.0,
+     499.6,
+     504.1
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13624796",
+  "pmid": "41837534",
+  "doi": "10.1093/ndt/gfag062",
+  "title": "Urinary dipstick findings and UTI risk with SGLT2 inhibitors: a post-hoc analysis of the CANVAS and CREDENCE trials.",
+  "journal": "Nephrology, dialysis, transplantation : official publication of the European Dialysis and Transplant Association - European Renal Association",
+  "year": "2026",
+  "license": "cc by",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13624796.1/PMC13624796.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13624796.1/PMC13624796.1.xml",
+  "pdf_sha256": "e35896f60bae5ed6e4747b6cb807e7082e658cbf499447b8dde623d366a88843",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 5,
+    "xref": 140,
+    "px": [
+     891,
+     724
+    ],
+    "rect_pt": [
+     86.5,
+     80.3,
+     300.4,
+     253.9
+    ]
+   },
+   {
+    "page": 5,
+    "xref": 141,
+    "px": [
+     891,
+     724
+    ],
+    "rect_pt": [
+     313.2,
+     79.6,
+     527.0,
+     253.3
+    ]
+   },
+   {
+    "page": 5,
+    "xref": 145,
+    "px": [
+     913,
+     742
+    ],
+    "rect_pt": [
+     76.9,
+     288.3,
+     296.0,
+     466.2
+    ]
+   },
+   {
+    "page": 5,
+    "xref": 146,
+    "px": [
+     913,
+     742
+    ],
+    "rect_pt": [
+     309.2,
+     288.3,
+     528.3,
+     466.2
+    ]
+   },
+   {
+    "page": 5,
+    "xref": 149,
+    "px": [
+     891,
+     724
+    ],
+    "rect_pt": [
+     85.9,
+     500.9,
+     299.7,
+     674.6
+    ]
+   },
+   {
+    "page": 5,
+    "xref": 150,
+    "px": [
+     891,
+     724
+    ],
+    "rect_pt": [
+     311.4,
+     500.9,
+     525.2,
+     674.6
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13772753",
+  "pmid": "43041969",
+  "doi": "10.2147/dddt.s640159",
+  "title": "A Randomised Controlled Trial of Tripterygium Wilfordii Polyglycoside in the Long-Term Treatment of Stage IV Diabetic Kidney Disease (DKD).",
+  "journal": "Drug design, development and therapy",
+  "year": "2026",
+  "license": "cc by-nc",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13772753.1/PMC13772753.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13772753.1/PMC13772753.1.xml",
+  "pdf_sha256": "98567325407cb9f6b9941dedd1023b424c717ca64d4d64c96c4d6271787c6258",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 11,
+    "xref": 93,
+    "px": [
+     4500,
+     2977
+    ],
+    "rect_pt": [
+     134.7,
+     54.6,
+     494.7,
+     292.8
+    ]
+   },
+   {
+    "page": 17,
+    "xref": 118,
+    "px": [
+     4500,
+     3563
+    ],
+    "rect_pt": [
+     134.7,
+     54.6,
+     494.7,
+     339.6
+    ]
+   },
+   {
+    "page": 17,
+    "xref": 119,
+    "px": [
+     4500,
+     3176
+    ],
+    "rect_pt": [
+     134.7,
+     383.7,
+     494.7,
+     637.7
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13658324",
+  "pmid": "42803951",
+  "doi": "10.1007/s00392-026-03030-1",
+  "title": "Effects of natriuresis-guided diuretic therapy in men and women with acute heart failure: insights from PUSH-AHF.",
+  "journal": "Clinical research in cardiology : official journal of the German Cardiac Society",
+  "year": "2026",
+  "license": "cc by",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13658324.1/PMC13658324.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13658324.1/PMC13658324.1.xml",
+  "pdf_sha256": "66d497628bd33637459dee83671cb5470668ba8b177274a7e2cd6abed68a1043",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 9,
+    "xref": 57,
+    "px": [
+     2035,
+     871
+    ],
+    "rect_pt": [
+     53.5,
+     57.8,
+     541.8,
+     266.7
+    ]
+   },
+   {
+    "page": 9,
+    "xref": 59,
+    "px": [
+     2035,
+     1220
+    ],
+    "rect_pt": [
+     53.5,
+     359.2,
+     541.8,
+     651.9
+    ]
+   },
+   {
+    "page": 11,
+    "xref": 88,
+    "px": [
+     2032,
+     947
+    ],
+    "rect_pt": [
+     53.9,
+     57.8,
+     541.4,
+     285.0
+    ]
+   },
+   {
+    "page": 12,
+    "xref": 102,
+    "px": [
+     2035,
+     1013
+    ],
+    "rect_pt": [
+     53.5,
+     57.8,
+     541.8,
+     300.9
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Multicenter Study",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13244661",
+  "pmid": "42257510",
+  "doi": "10.1111/ene.70659",
+  "title": "Progression to Wheelchair in Secondary Progressive Multiple Sclerosis and Impact of Siponimod: Post Hoc Analyses From the EXPAND Study.",
+  "journal": "European journal of neurology",
+  "year": "2026",
+  "license": "cc by-nc",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13244661.1/PMC13244661.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13244661.1/PMC13244661.1.xml",
+  "pdf_sha256": "24fd2bf3ebe02216867d069799d8d328f1e140cb8e117a5ef688ab11fd42eac9",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 3,
+    "xref": 5,
+    "px": [
+     1470,
+     788
+    ],
+    "rect_pt": [
+     121.2,
+     482.5,
+     474.0,
+     671.5
+    ]
+   },
+   {
+    "page": 4,
+    "xref": 9,
+    "px": [
+     1470,
+     782
+    ],
+    "rect_pt": [
+     121.2,
+     34.0,
+     474.0,
+     221.7
+    ]
+   },
+   {
+    "page": 4,
+    "xref": 10,
+    "px": [
+     1004,
+     685
+    ],
+    "rect_pt": [
+     46.8,
+     299.0,
+     287.7,
+     463.3
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "Clinical Trial, Phase III",
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13769637",
+  "pmid": "42885795",
+  "doi": "10.1161/jaha.126.051379",
+  "title": "Dapagliflozin After Transcatheter Aortic Valve Implantation According to Frailty in DapaTAVI Trial.",
+  "journal": "Journal of the American Heart Association",
+  "year": "2026",
+  "license": "cc by-nc",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13769637.1/PMC13769637.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13769637.1/PMC13769637.1.xml",
+  "pdf_sha256": "074029b5c006c7e560a20036381f950820eb691870f3b9b9e2e1584132ae4562",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 5,
+    "xref": 55,
+    "px": [
+     1967,
+     740
+    ],
+    "rect_pt": [
+     61.7,
+     506.5,
+     533.6,
+     684.0
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Multicenter Study",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13768524",
+  "pmid": "43024019",
+  "doi": "10.1007/s00432-026-06662-y",
+  "title": "Association of sex and age on outcomes of maintenance treatment in pati\u200bents with advanced esophagogastric adenocarcinoma: an exploratory analysis of the randomized AIO-YMO-0111-MATEO trial.",
+  "journal": "Journal of cancer research and clinical oncology",
+  "year": "2026",
+  "license": "cc by",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13768524.1/PMC13768524.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13768524.1/PMC13768524.1.xml",
+  "pdf_sha256": "846f49b38d33cf709232bd7e733f45fddd406ff973975a68693b85b5c030295c",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 5,
+    "xref": 63,
+    "px": [
+     2056,
+     2255
+    ],
+    "rect_pt": [
+     51.0,
+     58.0,
+     544.3,
+     599.2
+    ]
+   },
+   {
+    "page": 6,
+    "xref": 77,
+    "px": [
+     2056,
+     2190
+    ],
+    "rect_pt": [
+     51.0,
+     58.0,
+     544.3,
+     583.5
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "Equivalence Trial",
+    "research-article",
+    "Multicenter Study",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ },
+ {
+  "pmcid": "PMC13631492",
+  "pmid": "42753258",
+  "doi": "10.2196/84430",
+  "title": "Personalized Mobile App-Based Messaging and Step Tracking for Improving Walking Behavior in Adults: Randomized Controlled Trial.",
+  "journal": "JMIR mHealth and uHealth",
+  "year": "2026",
+  "license": "cc by",
+  "pdf_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13631492.1/PMC13631492.1.pdf",
+  "xml_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC13631492.1/PMC13631492.1.xml",
+  "pdf_sha256": "d6461020383fd1d20db41819823f6a747e2ba3230717dbc6e9ffc85c277ca88f",
+  "raster_figures_on_km_pages": [
+   {
+    "page": 7,
+    "xref": 104,
+    "px": [
+     1200,
+     971
+    ],
+    "rect_pt": [
+     56.7,
+     372.5,
+     538.6,
+     762.5
+    ]
+   },
+   {
+    "page": 11,
+    "xref": 140,
+    "px": [
+     644,
+     259
+    ],
+    "rect_pt": [
+     56.7,
+     255.4,
+     538.6,
+     449.2
+    ]
+   }
+  ],
+  "retraction_check": {
+   "europepmc_pubtypes": [
+    "research-article",
+    "Randomized Controlled Trial",
+    "Journal Article"
+   ],
+   "crossref_updates": [],
+   "checked": "2026-11-26"
+  },
+  "visually_confirmed_km": null
+ }
+]

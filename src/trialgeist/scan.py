@@ -37,7 +37,8 @@ def _dedupe(findings: list[Finding]) -> list[Finding]:
     return out
 
 
-def scan_pdf(pdf: str | Path, nct: str | None = None, km_eps_pt: float = 1.0, registry_fetch=None) -> Report:
+def scan_pdf(pdf: str | Path, nct: str | None = None, km_eps_pt: float = 1.0, registry_fetch=None,
+             raster: bool = True) -> Report:
     from .extract.km_vector import find_km_plots, plot_to_claims
     from .extract.pdf_text import extract_baseline, extract_claims
 
@@ -46,8 +47,19 @@ def scan_pdf(pdf: str | Path, nct: str | None = None, km_eps_pt: float = 1.0, re
     plots, notes = find_km_plots(pdf)
     for p in plots:
         claims += plot_to_claims(p, eps_pt=km_eps_pt)
+    rplots, rnotes = [], []
+    if raster:
+        from .extract.raster import find_raster_km, raster_claims
+
+        rplots, rnotes, figs = find_raster_km(pdf)
+        for rp in rplots:
+            claims += raster_claims(rp)
+        notes += rnotes
+        notes.append(f"{len(figs)} raster figure(s), {sum(f.km_candidate for f in figs)} on pages that mention survival or at-risk")
     findings = check_all(ClaimSet(source=pdf, claims=claims))
     notes.append(f"{len(plots)} vector KM plot(s) with numbers at risk analysed")
+    if rplots:
+        notes.append(f"{len(rplots)} raster KM panel(s) digitised ({sum(r.ocr_numbers for r in rplots)} with OCR-read numbers at risk: leads only)")
     if nct:
         from .registry.diff import registry_findings
         from .extract.paper_outcomes import paper_from_pdf
