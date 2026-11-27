@@ -69,3 +69,24 @@ def test_form_c_parenthetical_and_joined_totals():
                 "In all, 300 patients were randomized (150 to drug, 150 to placebo, of whom 3 withdrew).",
                 "The 78 were randomised to TAU and 78 to RCBT."]:
         assert one(bad) == [], bad
+
+
+def test_form_c_name_then_count_alternative():
+    # third ITEM_C_RE alternative: "<arm>: n = k"
+    assert one("Overall, 511 patients were randomised (placebo: n = 258; nilvadipine: n = 253).") == [(511, [258, 253])]
+    (c,) = allocation_claims("Overall, 511 patients were randomised (placebo: n = 258; nilvadipine: n = 250).")
+    assert check_claim(c)[0].tier is Tier.PROVEN_IMPOSSIBLE
+
+
+def test_provenance_keeps_the_whole_sentence_without_a_sentence_end():
+    text = ("In all, 530 patients were randomly assigned to empagliflozin (n = 265) or placebo (n = 265) "
+            "at 118 centers in 15 countries")
+    (c,) = allocation_claims(text)
+    assert c.provenance[0].text.endswith("15 countries")
+
+
+def test_design_screen():
+    from trialgeist.extract.consort import design_refused
+
+    assert design_refused("Methods. This was a cluster-randomised trial.")
+    assert not design_refused("Methods. Patients were individually randomised.")

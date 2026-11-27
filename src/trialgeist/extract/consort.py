@@ -74,6 +74,12 @@ REFUSE_DOC_RE = re.compile(r"cluster[\s-]+randomi|factorial|cross-?over|stepped[
 SENT_END_RE = re.compile(r";|\.(?=\s+[A-Z(\[]|\s*$)")
 
 
+def design_refused(doc_text: str) -> bool:
+    """Cluster, factorial, crossover, stepped-wedge or re-randomised designs: arm counts are not
+    one partition of one randomised total, so the whole document is skipped."""
+    return bool(REFUSE_DOC_RE.search(flatten(doc_text)))
+
+
 def _int(s: str) -> int:
     return int(s.replace(",", ""))
 
@@ -87,7 +93,8 @@ def flatten(text: str) -> str:
 def allocation_claims(text: str, source: str = "pdf", page: int | None = None,
                       doc_text: str | None = None) -> list[CountSumClaim]:
     """CountSum claims (exhaustive) for every randomisation sentence that enumerates its arms.
-    ``doc_text`` (the whole paper) is screened for cluster / factorial / crossover designs."""
+    ``doc_text`` (the whole paper) is screened for cluster / factorial / crossover designs;
+    callers scanning many pages should screen once with ``design_refused`` and pass None."""
     flat = flatten(text)
     if REFUSE_DOC_RE.search(flatten(doc_text) if doc_text is not None else flat):
         return []
@@ -160,7 +167,8 @@ def allocation_claims(text: str, source: str = "pdf", page: int | None = None,
             if not im:
                 counts = []
                 break
-            counts.append(_int(next(g for g in im.groups() if g)))
+            # NUM is the only capturing group in each alternative (_NAME and PEOPLE are non-capturing)
+            counts.append(_int(im.group(1) or im.group(2) or im.group(3)))
         if len(counts) < 2:
             continue
         total = _int(m.group(1))
@@ -170,7 +178,8 @@ def allocation_claims(text: str, source: str = "pdf", page: int | None = None,
 
 
 def _claim(flat, m, end, tail, total, counts, source, page) -> CountSumClaim:
-    sentence = flat[m.start(): end.start() + 1 if end else m.end() + len(tail)]
+    # tail may have had trailing locations stripped: slice the original text, not len(tail)
+    sentence = flat[m.start(): end.start() + 1 if end else min(len(flat), m.end() + 400)]
     return CountSumClaim(
         label="randomised allocation stated in the text", total=total, counts=counts, exhaustive=True,
         provenance=[Provenance(source=source, page=page, text=sentence[:400],
