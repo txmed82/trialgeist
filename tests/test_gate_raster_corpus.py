@@ -43,7 +43,10 @@ def test_raster_corpus_no_false_proofs(entry, capsys, tmp_path):
     known = entry.get("verified_errors", [])
 
     def matches(f, k):
-        return f.check == k["check"] and any(p.page == k["page"] - 1 for p in f.provenance)
+        # one panel feeds several KM engines (staircase KM-SAT, checkpoint, joint checkpoint):
+        # any of them may prove the recorded error; every such proof must still verify below
+        family = k.get("checks", [k["check"]])
+        return f.check in family and any(p.page == k["page"] - 1 for p in f.provenance)
 
     unexpected = [f for f in proofs if not any(matches(f, k) for k in known)]
     assert not unexpected, [(f.title, f.detail[:200]) for f in unexpected]

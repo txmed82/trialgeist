@@ -156,8 +156,10 @@ def km_checkpoint_joint_check(labels: list[str], curves: list[tuple[list, Any, A
     common: dict[str, Any] = dict(engine=ENGINE, check="km_checkpoint_joint", inputs=inputs, assumptions=assumptions,
                                   provenance=provenance)
     if len(cs) != len(rws) or not 2 <= len(cs) <= 4:
+        why = (f"{len(cs)} curves but {len(rws)} numbers-at-risk rows" if len(cs) != len(rws)
+               else f"{len(cs)} curves and rows; the joint check needs 2 to 4")
         return make_finding(**common, tier=Tier.INCONCLUSIVE, title=f"KM checkpoint assignment not checked ({label})",
-                            detail="the number of curves and of numbers-at-risk rows differ")
+                            detail=why)
     v = [[violation(rd, e, et, r) for r in rws] for rd, e, et in cs]
     witnesses = []
     for perm in permutations(range(len(rws))):

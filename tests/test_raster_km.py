@@ -230,6 +230,8 @@ def test_axis_scale_refuses_ambiguous_rising_axes():
     assert axis_scale(100, rising=False) == 0.01
     assert axis_scale(40, rising=True) == 0.01
     assert axis_scale(0.5, rising=True) is None   # 0-0.5 probability or 0-0.5 %: cannot tell
+    assert axis_scale(1000, rising=True) is None  # events per 1,000 persons: not a survival scale
+    assert axis_scale(250, rising=False) is None
     assert axis_scale(1.25, rising=False) is None  # neither a probability nor a percent top
 
 
@@ -258,6 +260,40 @@ def test_ocr_risk_rows_stay_with_their_own_panel():
     # a two-checkpoint table is still a table
     words3 = [w(60, 330, "risk"), w(100, 330, "50"), w(200, 330, "40")]
     assert [[n for _, n in r] for _, r in ocr_risk_rows(words3, p, ax)] == [[50, 40]]
+
+
+def test_level_shadows_are_dropped():
+    """A colour exported twice (or an anti-aliased edge) yields a second level curve on top of
+    a real arm; it must not count as an arm of its own."""
+    from trialgeist.extract.raster import LevelCurve, Trace, _drop_level_shadows
+
+    a = LevelCurve((200, 0, 0), [(float(x), 100 + x / 10) for x in range(0, 400, 4)], 2.0, True, False)
+    b = LevelCurve((0, 0, 200), [(float(x), 150 + x / 8) for x in range(0, 400, 4)], 2.0, True, False)
+    halo = LevelCurve((230, 120, 120), [(float(x), 101 + x / 10) for x in range(0, 400, 8)], 2.0, True, False)
+    assert _drop_level_shadows([a, halo, b], []) == [a, b]
+    t = Trace.__new__(Trace)
+    t.steps = [(float(x), 150 + (x - 4) / 8, 150 + x / 8) for x in range(4, 400, 4)]
+    assert _drop_level_shadows([a, b], [t]) == [a]
+
+
+def test_ocr_risk_rows_inside_the_frame():
+    """Some exports print the table inside the plot frame under the curves: read it only with
+    "at risk" on one line in the bottom third, and never below the frame."""
+    from trialgeist.extract.km_vector import Axis
+    from trialgeist.extract.raster import Panel, ocr_risk_rows
+
+    p = Panel(x0=100, y1=300, x1=500, y0=100, lw=2)
+    ax = Axis(a=0.0, b=0.1, residual=0.0, labels=[(100, 0.0), (200, 10.0), (300, 20.0), (400, 30.0)])
+    w = lambda x, y, t: (x - 8, y, x + 8, y + 12, t, 90)  # noqa: E731
+    table = [w(110, 250, "No."), w(130, 250, "at"), w(150, 250, "risk"),
+             w(100, 265, "50"), w(200, 265, "40"), w(300, 265, "30"),
+             w(100, 280, "45"), w(200, 280, "41"), w(300, 280, "22")]
+    rows = ocr_risk_rows(table + [w(100, 330, "9"), w(200, 330, "8"), w(300, 330, "7")], p, ax)
+    assert [[n for _, n in r] for _, r in rows] == [[50, 40, 30], [45, 41, 22]]
+    # "risk" alone (a curve label such as "high risk") is not a table
+    assert ocr_risk_rows([v for v in table if v[4] != "at"], p, ax) == []
+    # a label high in the panel (a legend) is not a table either
+    assert ocr_risk_rows([(x0, y - 120, x1, y1 - 120, t, c) for x0, y, x1, y1, t, c in table], p, ax) == []
 
 
 

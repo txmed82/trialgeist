@@ -41,10 +41,11 @@ re-derives the contradiction from the printed digits.
 
 ## Open items
 
-- Raster KM coverage on real figures is partial: in the latest full rescan of the 25 RC papers, 6 papers have read panels (30 panels, 25 rebuilt staircases + 25 level-only curves; was 4 papers / 9 panels before P17/P18). Remaining refusals, most common first:
+- Raster KM coverage on real figures is partial: in the latest full rescan of the 25 RC papers, 9 papers have read panels (33 panels, 29 rebuilt staircases + 27 level-only curves; was 4 papers / 9 panels before P17/P18). Remaining refusals, most common first:
   - x/y tick labels not read on an exact linear scale (rotated labels, labels off the tick grid)
   - no L-frame (boxed or axis-less plots)
-  - no numbers-at-risk table at all, or only inside the image (OCR leads)
+  - no numbers-at-risk table at all (tables boxed under the plot or printed inside the frame are read, as OCR leads)
+  - y axes that are not survival scales (events per 1,000 persons, counts) are refused
   - adjusted / competing-risk figures (skipped by design)
   - polyline or error-bar curves (refused by design)
   - ambiguous y scale on a rising curve (labels <= 1.5 cannot be told from a zoomed percent axis)

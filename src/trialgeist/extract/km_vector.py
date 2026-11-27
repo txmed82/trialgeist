@@ -380,7 +380,10 @@ def axis_scale(vmax: float, rising: bool) -> float | None:
     """Probability (1) or percent (0.01) y-axis from its largest label, or None if ambiguous.
     A falling KM curve starts at S = 1, so its axis tops out near 1 or near 100. A rising
     1 - S(t) axis may be zoomed: labels up to 1 can be probabilities or percentages
-    (0-1%), and reading a percent axis as probabilities would invent huge drops."""
+    (0-1%), and reading a percent axis as probabilities would invent huge drops.
+    Labels above 100 are neither (counts, events per 1,000 persons, mean cumulative events)."""
+    if vmax > 105:
+        return None
     if vmax > 1.5:
         return 0.01
     if vmax <= 1.05 and not rising:

@@ -159,7 +159,7 @@ def render_km(page, arms_data, horizon=36, step=6, rising=False, colors=None, wi
     for i, (name, steps, risk, cens) in enumerate(arms_data):
         col = (colors or COLORS)[i]
         if bands and steps:
-            n0 = max(n for _, n in risk)
+            n0 = max((n for _, n in risk), default=1)
             hw = lambda s: 1.96 * math.sqrt(max(float(s) * (1 - float(s)), 0) / max(n0 * float(s), 1))  # noqa: E731
             lv = [(Fraction(0), Fraction(1))] + [(t, a) for t, _, a in steps]
             lv.append((Fraction(horizon), lv[-1][1]))

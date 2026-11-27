@@ -936,7 +936,14 @@ def ocr_risk_rows(words, p: Panel, xaxis: Axis, bottom: float | None = None) -> 
     lab = [w for w in words if (RISK_LABEL_RE.search(w[4]) or w[4].lower() in ("risk", "at"))
            and w[1] >= p.y1 - 4 and (bottom is None or w[1] < bottom)]
     if not lab:
-        return []
+        # some exports draw the table inside the frame, under the curves: a "... at risk"
+        # label in the bottom third of the panel, with "at" and "risk" on one line
+        low = [w for w in words if p.y1 - 0.35 * (p.y1 - p.y0) <= w[1] < p.y1 and p.x0 - 200 <= w[0] <= p.x1]
+        risk = [w for w in low if w[4].lower().strip(":") == "risk"]
+        lab = [w for w in risk if any(v[4].lower() == "at" and abs(v[1] - w[1]) < 0.6 * (w[3] - w[1]) and v[0] < w[0] for v in low)]
+        if not lab:
+            return []
+        bottom = p.y1 - p.lw if bottom is None else min(bottom, p.y1 - p.lw)
     top = min(w[1] for w in lab) - 4
     ints = [w for w in words if re.fullmatch(r"\d[\d,]*", w[4]) and w[1] >= top and w[5] >= 60
             and (bottom is None or w[3] <= bottom) and p.x0 - 15 <= (w[0] + w[2]) / 2 <= p.x1 + 15]
@@ -1047,6 +1054,7 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
             elif (lv := level_curve(m, p, c, why)) is not None:
                 levels.append(lv)  # too dense to rebuild drop by drop: read its level only
         traces = _drop_shadows(traces)
+        levels = _drop_level_shadows(levels, traces)
         # one panel is falling or rising; arms read in both orientations mean one of the
         # readings is wrong, and 1 - v applied to the wrong arms would invent contradictions
         sure = {t.rising for t in traces} | {lv.rising_ok for lv in levels if lv.rising_ok != lv.falling_ok}
@@ -1076,8 +1084,12 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
                        fig.rect[0] + p.x0 * sx, fig.rect[0] + p.x1 * sx)
         ocr = False
         if not rr:
-            below = [q.y0 for q in panels if q.y0 > p.y1 and q.x0 < p.x1 and p.x0 < q.x1]
-            rr, ocr = ocr_risk_rows(words, p, xaxis, min(below, default=None)), True
+            below = sorted((q for q in panels if q.y0 > p.y1 and q.x0 < p.x1 and p.x0 < q.x1), key=lambda q: q.y0)
+            rr, ocr = ocr_risk_rows(words, p, xaxis, below[0].y0 if below else None), True
+            if not rr and below and below[0].y1 - below[0].y0 < 0.6 * (p.y1 - p.y0):
+                # a numbers-at-risk table drawn in its own box under the plot (ggsurvplot
+                # risk.table): read inside it, never past the next panel
+                rr = ocr_risk_rows(words, p, xaxis, below[1].y0 if len(below) > 1 else None)
         if not rr:
             notes.append(f"page {fig.page + 1}: raster KM panel without numbers at risk")
             continue
@@ -1157,6 +1169,8 @@ def level_curve(mask: np.ndarray, p: Panel, color=(0, 0, 0), why: list | None = 
     lw = float(np.median(singles))
     pts = [(x + ox, oy + (r[0][0] + r[0][1]) / 2) for x, r in enumerate(runs) if len(r) == 1 and r[0][1] - r[0][0] + 1 <= lw + 2]
     if len(pts) < 20:
+        if why is not None:
+            why.append(("levels: too few clean single-stroke columns", len(pts), lw))
         return None
     tol = max(lw / 2 + 1.5, 2.0)
     ys = np.array([y for _, y in pts])
@@ -1339,6 +1353,46 @@ def _drop_shadows(traces: list[Trace]) -> list[Trace]:
             shadow = True
         if not shadow:
             keep.append(t)
+    return keep
+
+
+def _trace_y(t: Trace, x: float) -> float:
+    """Pixel row of a staircase at column x (the plateau in force there)."""
+    y = t.steps[0][1]
+    for sx, _, a in t.steps:
+        if sx > x:
+            break
+        y = a
+    return y
+
+
+def _drop_level_shadows(levels: list[LevelCurve], traces: list[Trace]) -> list[LevelCurve]:
+    """A level curve lying on another arm (a colour exported twice, anti-aliased edge pixels)
+    is a shadow: it would take a legend label and a risk row from a real arm and change the
+    arm count of the joint check.  Mostly coinciding with a staircase, or with a level curve
+    that has more points, drops it."""
+    def near(lv, ys_at):
+        tol = max(lv.lw, 3.0)
+        return sum(1 for x, y in lv.points if (z := ys_at(x)) is not None and abs(z - y) <= tol)
+
+    def level_at(other):
+        xs = np.array([x for x, _ in other.points])
+        ys = np.array([y for _, y in other.points])
+
+        def f(x):
+            i = int(np.searchsorted(xs, x))
+            cand = [j for j in (i - 1, i) if 0 <= j < len(xs) and abs(xs[j] - x) <= 3]
+            return float(ys[cand[0]]) if cand else None
+        return f
+
+    keep = []
+    for i, lv in enumerate(levels):
+        n = len(lv.points)
+        shadow = any(t.steps and near(lv, lambda x, t=t: _trace_y(t, x)) >= 0.6 * n for t in traces)
+        shadow = shadow or any(j != i and (len(o.points), -j) > (n, -i) and near(lv, level_at(o)) >= 0.6 * n
+                               for j, o in enumerate(levels))
+        if not shadow:
+            keep.append(lv)
     return keep
 
 
