@@ -185,7 +185,7 @@ Authoritative dates from `/api/v2/studies/NCT04280705`:
 
 ## 6. Saved Test Fixtures
 
-All fixtures live in `/Users/colin/src/trialgeist/tests/fixtures/ctgov/` as unmodified compacted JSON responses (< 215 KB each):
+All fixtures live in `tests/fixtures/ctgov/` as unmodified compacted JSON responses (< 215 KB each):
 
 - `NCT04280705_current.json` — `/api/v2/studies/NCT04280705`
 - `NCT04280705_history.json` — `/api/int/studies/NCT04280705/history`

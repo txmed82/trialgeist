@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    name: Soundness + synthetic gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+      - run: uv sync --locked
+      - name: Unit soundness tests and Gate 1 (synthetic trials)
+        run: uv run pytest -q -rfE --ignore=tests/test_gate2_positive.py --ignore=tests/test_gate3_negative.py
+      - name: Package builds and the CLI runs
+        run: |
+          uv build
+          uv tool install dist/*.whl
+          trialgeist --help
+
+  corpus:
+    name: Real-paper gates (retracted + clean RCTs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+      - run: uv sync --locked
+      - uses: actions/cache@v4
+        with:
+          path: tests/corpus
+          key: corpus-${{ hashFiles('tests/corpus/negative/manifest.json', 'research/positive_controls.json') }}
+      - name: Fetch open-access corpus from the PMC OA bucket
+        run: uv run python scripts/fetch_corpus.py
+      - name: Gate 2 (documented impossibilities) and Gate 3 (no false proofs)
+        run: uv run pytest -q -rfE tests/test_gate2_positive.py tests/test_gate3_negative.py

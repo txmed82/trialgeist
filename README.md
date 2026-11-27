@@ -11,7 +11,7 @@ re-deriving the contradiction from the printed digits. The certificate never
 imports TRIALGEIST.
 
 ```
-uv tool install .            # or: pipx install .
+pipx install git+https://github.com/txmed82/trialgeist   # or, from a checkout: uv tool install .
 trialgeist scan paper.pdf --nct NCT01234567 --out report/
 trialgeist scan paper.nxml --out report/        # PMC JATS XML: exact table cells
 trialgeist check claims.json --out report/      # hand-entered or reviewed claims
