@@ -298,6 +298,77 @@ def x_ticks(img: np.ndarray, p: Panel) -> list[float]:
     return sorted(set(out))
 
 
+def y_ticks(img: np.ndarray, p: Panel) -> list[float]:
+    """Centres of tick marks sticking out left of the y-axis line."""
+    dark = img.astype(np.int16).mean(axis=2) < 140
+    n = max(4, p.lw)
+    x1 = p.x0 - p.lw - 1
+    if x1 - n < 0:
+        return []
+    left = dark[max(0, p.y0 - 2): p.y1 + 3, x1 - n: x1].all(axis=1)
+    return [max(0, p.y0 - 2) + (a + b) / 2 for a, b in _runs(left) if b - a + 1 <= 3 * p.lw + 3]
+
+
+def _ocr_label(crop: np.ndarray, scale: int) -> tuple[str, float] | None:
+    """One tick label: tesseract single-line mode with a numeric whitelist.  None unless
+    exactly one confident numeric token is read."""
+    exe = shutil.which("tesseract")
+    if not exe or crop.size == 0 or crop.min() > 200:
+        return None
+    c = np.repeat(np.repeat(crop, scale, axis=0), scale, axis=1) if scale > 1 else crop
+    c = np.pad(c, ((15, 15), (15, 15), (0, 0)), constant_values=255)
+    with tempfile.TemporaryDirectory() as td:
+        f = Path(td) / "t.ppm"
+        with open(f, "wb") as fh:
+            fh.write(b"P6 %d %d 255\n" % (c.shape[1], c.shape[0]))
+            fh.write(np.ascontiguousarray(c, dtype=np.uint8).tobytes())
+        try:
+            r = subprocess.run([exe, str(f), "-", "--psm", "7", "-c", "tessedit_char_whitelist=0123456789.-%",
+                                "tsv"], capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.TimeoutExpired):
+            return None
+    toks = []
+    for line in r.stdout.splitlines()[1:]:
+        q = line.split("\t")
+        if len(q) >= 12 and q[11].strip():
+            toks.append((q[11].strip(), float(q[10])))
+    if len(toks) != 1 or toks[0][1] < 60 or not NUM_TOKEN.match(toks[0][0]):
+        return None
+    return toks[0]
+
+
+def tick_axis(img: np.ndarray, p: Panel, ticks: list[float], axis: str) -> Axis | None:
+    """Fallback calibration: OCR the label next to each detected tick mark on its own.
+    Full-figure OCR drops isolated one-digit labels ("0", "6"); a crop centred on the tick
+    reads them, and the label position is the tick itself.  The same exact-linearity rule
+    applies, so a misread or a spurious tick refuses the axis rather than bending it."""
+    if len(ticks) < 3:
+        return None
+    h, w = img.shape[:2]
+    height, width = p.y1 - p.y0, p.x1 - p.x0
+    scale = 3 if height < 600 else 2
+    gap = max(4, p.lw) + 2
+    pairs = []
+    for i, t in enumerate(ticks):
+        near = min([abs(t - u) for j, u in enumerate(ticks) if j != i] or [60.0])
+        half = 0.48 * near
+        if half < 6:
+            continue  # two marks this close are not both ticks; read neither
+        if axis == "x":
+            y0 = p.y1 + p.lw + gap
+            crop = img[y0: int(min(h, y0 + max(18, 0.09 * height))), int(max(0, t - half)): int(min(w, t + half))]
+        else:
+            x1 = p.x0 - p.lw - gap
+            crop = img[int(max(0, t - half)): int(min(h, t + half)), int(max(0, x1 - 0.2 * width)): max(0, x1)]
+        got = _ocr_label(crop, scale)
+        v = _val(got[0]) if got else None
+        if v is not None:
+            pairs.append((t, v))
+    if len(pairs) < 3:
+        return None
+    return _linear(sorted(pairs), want_negative=(axis == "y"))
+
+
 def calibrate_panel(p: Panel, words, ticks: list[float] | None = None) -> tuple[Axis | None, Axis | None, list[str]]:
     notes = []
     num = [(x0, y0, x1, y1, _val(t), c) for x0, y0, x1, y1, t, c in words if NUM_TOKEN.match(t) and c >= 50]
@@ -401,7 +472,8 @@ def ink_mask(img: np.ndarray, c: tuple[int, int, int], hs=None) -> np.ndarray:
         h, sat, mn = hs if hs is not None else _hue_sat(img)
         dh = np.abs(h - h0)
         dh = np.minimum(dh, 1 - dh)
-        m |= (dh < 0.06) & (sat > 0.3) & (mn < 170)
+        # never lighter than the line itself: a band's tint of the SAME hue is not the line
+        m |= (dh < 0.06) & (sat > 0.3) & (mn < min(170, min(c) + 100))
     return m
 
 
@@ -574,7 +646,8 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
     panels = find_panels(img)
     if not panels:
         return [], [f"page {fig.page + 1}: raster figure without a detectable plot frame"]
-    words = ocr_words(clean_for_ocr(img, panels))
+    cleaned = clean_for_ocr(img, panels)
+    words = ocr_words(cleaned)
     if not words:
         why = "OCR returned no text" if shutil.which("tesseract") else "needs OCR for its axis labels (install tesseract)"
         return [], [f"page {fig.page + 1}: raster figure: {why}"]
@@ -585,7 +658,12 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
     out = []
     page = doc[fig.page]
     for p in panels:
-        xaxis, yaxis, n = calibrate_panel(p, words, x_ticks(img, p))
+        xt = x_ticks(img, p)
+        xaxis, yaxis, n = calibrate_panel(p, words, xt)
+        if xaxis is None and (xaxis := tick_axis(cleaned, p, xt, "x")) is not None:
+            n = [m for m in n if not m.startswith("x tick")]
+        if yaxis is None and (yaxis := tick_axis(cleaned, p, y_ticks(img, p), "y")) is not None:
+            n = [m for m in n if not m.startswith("y tick")]
         if not xaxis or not yaxis:
             notes += [f"page {fig.page + 1}: raster panel: {m}" for m in n]
             continue
@@ -595,6 +673,7 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
         hs = _hue_sat(img)
         masks = [ink_mask(img, c, hs) & ~text_mask for c in colors]
         del hs
+        colors, masks = _drop_tints(colors, masks)
         colors, masks = _drop_halos(colors, masks)
         masks = _exclusive(img, colors, masks)
         if not masks:
@@ -660,6 +739,27 @@ def _exclusive(img: np.ndarray, colors, masks) -> list[np.ndarray]:
                 others |= c
         out.append(m & ~(_dilate(others, 3) & ~cores[i]))
     return out
+
+
+def _drop_tints(colors, masks):
+    """A chromatic colour that is a clearly lighter shade of the same hue as a darker,
+    more saturated curve colour is that curve's confidence band, band edge or error bars,
+    not another arm.  Its stepped edge would otherwise be digitised as a survival curve.
+    (Two arms drawn in light and dark shades of one hue are refused, never misread.)"""
+    hsv = [_hsv(c) for c in colors]
+    keep = []
+    for i, c in enumerate(colors):
+        hi, si, _ = hsv[i]
+        tint = False
+        for j, d in enumerate(colors):
+            hj, sj, _ = hsv[j]
+            dh = min(abs(hi - hj), 1 - abs(hi - hj))
+            if j != i and si > 0.2 and sj > 0.3 and dh < 0.07 and min(c) > min(d) + 50 and sj >= si:
+                tint = True
+                break
+        if not tint:
+            keep.append(i)
+    return [colors[i] for i in keep], [masks[i] for i in keep]
 
 
 def _drop_halos(colors, masks):
