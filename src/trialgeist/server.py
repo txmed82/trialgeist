@@ -127,6 +127,7 @@ class Handler(BaseHTTPRequestHandler):
                 if pno >= len(doc):
                     return self._send(404, b"no page", "text/plain")
                 png = doc[pno].get_pixmap(matrix=pymupdf.Matrix(SCALE, SCALE)).tobytes("png")
+            pymupdf.TOOLS.store_shrink(100)  # a long studio session must not accumulate decoded images
             return self._send(200, png, "image/png")
         m = re.fullmatch(r"/api/cert/([0-9a-f]{16})/([\w\-]+)", u.path)
         if m and m.group(1) in STATE:

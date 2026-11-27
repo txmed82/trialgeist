@@ -18,7 +18,7 @@ from .engines.counts import count_sum_check, percent_check, percent_partition_ch
 from .engines.grim_grimmer import bhatia_davis_check, grim_check, grimmer_check
 from .engines.km_vector_sat import KMStep, km_check_any_row
 from .engines.sprite_sat import sprite_check
-from .verdict import Finding, Provenance
+from .verdict import Tier, Finding, Provenance
 
 
 class _Claim(BaseModel):
@@ -82,6 +82,7 @@ class KMStepIn(BaseModel):
     t: str
     before: str
     after: str
+    dt: str = "0"  # extra time tolerance for this drop only
 
 
 class KMRiskRow(BaseModel):
@@ -99,6 +100,7 @@ class KMArmClaim(_Claim):
     eps: str = "0.002"
     eps_t: str = "0"
     total_events: int | None = None
+    ocr_numbers: bool = False  # numbers at risk read by OCR from an image: never more than a lead
 
 
 class BaselineVar(BaseModel):
@@ -200,10 +202,18 @@ def check_claim(c) -> list[Finding]:
         return [contingency_check(c.n1, c.n2, c.events1, c.events2, c.pct1, c.pct2, c.rr, c.odds_ratio, c.rd_percent,
                                   c.estimate_is_crude, c.p_value, tuple(c.tests) if c.tests else None, c.label, c.provenance)]
     if isinstance(c, KMArmClaim):
-        steps = [KMStep(Fraction(s.t), Fraction(s.before), Fraction(s.after)) for s in c.steps]
+        steps = [KMStep(Fraction(s.t), Fraction(s.before), Fraction(s.after), Fraction(s.dt)) for s in c.steps]
         rows = [(r.risk_times, r.at_risk) for r in c.alternatives] or [(c.risk_times, c.at_risk)]
         rows3 = [([Fraction(t) for t in ts], list(ns), c.total_events) for ts, ns in rows]
-        return [km_check_any_row(c.label, steps, Fraction(c.eps), Fraction(c.eps_t), rows3, c.provenance)]
+        f = km_check_any_row(c.label, steps, Fraction(c.eps), Fraction(c.eps_t), rows3, c.provenance)
+        if c.ocr_numbers and f.tier is Tier.PROVEN_IMPOSSIBLE:
+            # the arithmetic is proven, but OCR may have misread a digit of the at-risk table
+            f.tier, f.certificate = Tier.INCONCLUSIVE, None
+            f.title = "Lead (OCR-read numbers at risk): " + f.title
+            f.detail = ("The curve and the numbers at risk as read by OCR contradict each other; check every "
+                        "at-risk number against the figure before relying on this. " + f.detail)
+            f.assumptions.append("numbers at risk were read by OCR from a raster image and are not verified")
+        return [f]
     if isinstance(c, MeanPartitionClaim):
         from .engines.consistency import mean_partition_check
 

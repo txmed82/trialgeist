@@ -9,3 +9,5 @@ report/
 dist/
 .worktrees/
 /tests/corpus/positive/
+/tests/corpus/raster/*/
+!/tests/corpus/raster/manifest.json

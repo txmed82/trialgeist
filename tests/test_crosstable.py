@@ -102,3 +102,79 @@ def test_engines_certificates(tmp_path):
         ok, secs, out = run_certificate(f.certificate, tmp_path, f.id)
         assert ok and "VERIFIED" in out and secs < 2, out
         assert len(f.certificate.splitlines()) < 80
+
+
+# ---------------------------------------------------------------- PDF grids
+
+
+def _table_pdf(tmp_path, rows, name="t.pdf", heads=("Drug", "Placebo", "Total"), ns=(60, 58, 118)):
+    """Typeset a baseline table the way journals do: caption, two-line header, indented categories."""
+    import pymupdf
+
+    path = tmp_path / name
+    with pymupdf.open() as doc:
+        page = doc.new_page(width=612, height=792)
+        page.insert_text((50, 60), "Table 1. Baseline characteristics", fontsize=10)
+        xs = (260, 360, 460)
+        for x, h, n in zip(xs, heads, ns):
+            page.insert_text((x, 84), h, fontsize=9)
+            page.insert_text((x, 96), f"(n = {n})", fontsize=9)
+        y = 114
+        for label, cells, indent in rows:
+            page.insert_text((50 + 10 * indent, y), label, fontsize=9)
+            for x, c in zip(xs, cells or ()):
+                page.insert_text((x, y), c, fontsize=9)
+            y += 13
+        doc.save(path)
+    return path
+
+
+ROWS = [
+    ("Age, years, mean (SD)", ("61.2 (8.1)", "60.4 (7.9)", "60.8 (8.0)"), 0),
+    ("Sex, n (%)", None, 0),
+    ("Female", ("27 (45.0)", "25 (43.1)", "52 (44.1)"), 1),
+    ("Male", ("33 (55.0)", "33 (56.9)", "66 (55.9)"), 1),
+    ("Smoking status", None, 0),
+    ("Never", ("30 (50.0)", "29 (50.0)", "59 (50.0)"), 1),
+    ("Former", ("20 (33.3)", "19 (32.8)", "39 (33.1)"), 1),
+    ("Current", ("10 (16.7)", "10 (17.2)", "20 (16.9)"), 1),
+    ("BMI, kg/m2, median (IQR)", ("27 (24-30)", "28 (25-31)", "27 (25-31)"), 0),
+]
+
+
+def test_pdf_grid_structure(tmp_path):
+    from trialgeist.extract.crosstable import pdf_grids
+    from trialgeist.extract.pdf_text import load_pages
+
+    grids = pdf_grids(load_pages(str(_table_pdf(tmp_path, ROWS))))
+    assert len(grids) == 1
+    g = grids[0]
+    assert g.col_n == {1: 60, 2: 58, 3: 118}
+    assert "Total" in g.col_head[3]
+    rows = {r.label: r for r in g.rows}
+    assert rows["Female"].cells == {1: "27 (45.0)", 2: "25 (43.1)", 3: "52 (44.1)"}
+    assert rows["Female"].section == rows["Male"].section >= 0
+    assert rows["Never"].section == rows["Current"].section != rows["Female"].section
+    assert rows["Age, years, mean (SD)"].section == -1
+
+
+def test_pdf_grid_clean_table_is_silent(tmp_path):
+    from trialgeist.extract.crosstable import pdf_grids
+    from trialgeist.extract.pdf_text import load_pages
+
+    claims = [c for g in pdf_grids(load_pages(str(_table_pdf(tmp_path, ROWS)))) for c in grid_claims(g)]
+    assert {c.kind for c in claims} >= {"arm_total", "common_denominator", "mean_partition"}
+    assert not proven(claims)
+
+
+def test_pdf_grid_catches_bad_total_and_bad_category(tmp_path):
+    from trialgeist.extract.crosstable import pdf_grids
+    from trialgeist.extract.pdf_text import load_pages
+
+    bad = list(ROWS)
+    bad[2] = ("Female", ("27 (45.0)", "25 (43.1)", "55 (46.6)"), 1)  # 27 + 25 != 55 in the Total column
+    bad[7] = ("Current", ("10 (16.7)", "12 (17.2)", "20 (16.9)"), 1)  # 12/D = 17.2% needs D ~ 70 > 58
+    claims = [c for g in pdf_grids(load_pages(str(_table_pdf(tmp_path, bad, "bad.pdf")))) for c in grid_claims(g)]
+    found = proven(claims)
+    assert any("Female" in (p.note or "") + (p.text or "") for f in found for p in f.provenance)
+    assert any("Current" in (p.note or "") for f in found for p in f.provenance)

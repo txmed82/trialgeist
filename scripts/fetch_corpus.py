@@ -42,6 +42,16 @@ def main() -> int:
         if m.get("pdf_sha256") and pdf.exists() and hashlib.sha256(pdf.read_bytes()).hexdigest() != m["pdf_sha256"]:
             print(f"  {pid}: sha256 mismatch (PMC may have re-issued the PDF)")
             bad += 1
+    ras = ROOT / "tests" / "corpus" / "raster"  # bitmap KM figures (scripts/build_raster_corpus.py)
+    if (ras / "manifest.json").exists():
+        for m in json.loads((ras / "manifest.json").read_text()):
+            pid, d = m["pmcid"], ras / m["pmcid"]
+            fetch(m["pdf_url"], d / "paper.pdf")
+            fetch(m["xml_url"], d / "paper.nxml")
+            pdf = d / "paper.pdf"
+            if m.get("pdf_sha256") and pdf.exists() and hashlib.sha256(pdf.read_bytes()).hexdigest() != m["pdf_sha256"]:
+                print(f"  {pid}: sha256 mismatch (PMC may have re-issued the PDF)")
+                bad += 1
     pos = ROOT / "tests" / "corpus" / "positive"
     controls = json.loads((ROOT / "research" / "positive_controls.json").read_text())["controls"]
     for pid in sorted({c["paper"]["pmcid"] for c in controls if c["paper"].get("pmcid")}):
