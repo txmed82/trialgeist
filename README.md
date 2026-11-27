@@ -106,6 +106,7 @@ geometry, or JATS markup), and every claim keeps page and bbox provenance.
 | G3 | `tests/test_gate3_negative.py` | 30+ open-access RCTs (PDF and XML) give 0 `PROVEN_IMPOSSIBLE` (four genuine typos found in them are recorded in the manifest) |
 | R | `tests/test_raster_gate.py` | synthetic KM figures rasterised at 110-300 dpi, JPEG quality 60-95, falling and rising, 0.6-1.4 pt lines: >= 60% digitised with 0 false proofs; >= 50% of planted risk-table edits caught where the edited curve was read |
 | RC | `tests/test_gate_raster_corpus.py` | 25 retraction-checked OA RCTs with bitmap KM figures give 0 `PROVEN_IMPOSSIBLE` |
+| C | `tests/test_consort.py` | prose allocation sentences: total vs enumerated arms, N-1/N convention pairs, two-word crossover spellings, page-break sentences read across the seam |
 
 Raster figures need `tesseract` on PATH (`brew install tesseract`, `apt install tesseract-ocr`);
 without it they are inventoried and skipped with a note.

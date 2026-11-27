@@ -258,3 +258,52 @@ def test_ocr_risk_rows_stay_with_their_own_panel():
     # a two-checkpoint table is still a table
     words3 = [w(60, 330, "risk"), w(100, 330, "50"), w(200, 330, "40")]
     assert [[n for _, n in r] for _, r in ocr_risk_rows(words3, p, ax)] == [[50, 40]]
+
+
+
+def _render_axes(xlabels, ylabels, grey=(0.45, 0.45, 0.45), size=7, title=True):
+    """A survminer-style frame with no tick marks and small grey labels, rasterised."""
+    from trialgeist.extract.raster import Panel
+
+    doc = pymupdf.open()
+    page = doc.new_page(width=300, height=220)
+    x0, x1, y0, y1 = 60, 280, 20, 170
+    page.draw_line((x0, y1), (x1, y1), color=(0, 0, 0), width=1)
+    page.draw_line((x0, y0), (x0, y1), color=(0, 0, 0), width=1)
+    for i, s in enumerate(xlabels):
+        x = x0 + 10 + i * (x1 - x0 - 20) / (len(xlabels) - 1)
+        page.insert_text((x - 1.9 * len(s), y1 + 12), s, fontsize=size, color=grey)
+    for i, s in enumerate(ylabels):
+        y = y0 + 5 + i * (y1 - y0 - 10) / (len(ylabels) - 1)
+        page.insert_text((x0 - 6 - 3.9 * len(s), y + 2.5), s, fontsize=size, color=grey)
+    if title:
+        page.insert_text((150, y1 + 30), "Time (months)", fontsize=8, color=(0, 0, 0))
+        page.insert_text((22, 130), "Survival probability", fontsize=8, color=(0, 0, 0), rotate=90)
+    pix = page.get_pixmap(dpi=200)
+    img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)[:, :, :3].copy()
+    k = 200 / 72
+    return img, Panel(x0=int(x0 * k) + 1, y1=int(y1 * k), x1=int(x1 * k), y0=int(y0 * k), lw=2), k
+
+
+def test_blob_axis_reads_small_grey_labels_without_tick_marks():
+    from trialgeist.extract.raster import blob_axis
+
+    img, p, k = _render_axes(["0", "10", "20", "30"], ["1.00", "0.75", "0.50", "0.25", "0.00"])
+    ax = blob_axis(img, p, "x")
+    assert ax is not None and [v for _, v in ax.labels] == [0, 10, 20, 30]
+    # the scale is exact: label i sits at x0 + 10 + i * 200/3 points
+    assert abs(ax.value((60 + 10 + 200 / 3) * k) - 10) < 0.15
+    ay = blob_axis(img, p, "y")
+    assert ay is not None and sorted(v for _, v in ay.labels) == [0, 0.25, 0.5, 0.75, 1.0]
+    assert abs(ay.value((20 + 5 + 2 * 140 / 4) * k) - 0.5) < 0.01
+
+
+def test_blob_axis_refuses_labels_that_are_not_on_one_linear_scale():
+    from trialgeist.extract.raster import blob_axis
+
+    # evenly spaced labels whose values are not (a categorical or log axis): no scale
+    img, p, _ = _render_axes(["0", "4", "8", "12", "24", "48"], ["6", "4", "2", "0"], title=False)
+    assert blob_axis(img, p, "x") is None
+    # control: the same layout with linear values is read, so the refusal above is the rule
+    img, p, _ = _render_axes(["0", "4", "8", "12", "16", "20"], ["6", "4", "2", "0"], title=False)
+    assert blob_axis(img, p, "x") is not None

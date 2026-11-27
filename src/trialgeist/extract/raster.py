@@ -319,7 +319,7 @@ def y_ticks(img: np.ndarray, p: Panel) -> list[float]:
     return [max(0, p.y0 - 2) + (a + b) / 2 for a, b in _runs(left) if b - a + 1 <= 3 * p.lw + 3]
 
 
-def _ocr_label(crop: np.ndarray, scale: int) -> tuple[str, float] | None:
+def _ocr_label(crop: np.ndarray, scale: int, min_conf: float = 60) -> tuple[str, float] | None:
     """One tick label: tesseract single-line mode with a numeric whitelist.  None unless
     exactly one confident numeric token is read."""
     exe = shutil.which("tesseract")
@@ -342,7 +342,7 @@ def _ocr_label(crop: np.ndarray, scale: int) -> tuple[str, float] | None:
         q = line.split("\t")
         if len(q) >= 12 and q[11].strip():
             toks.append((q[11].strip(), float(q[10])))
-    if len(toks) != 1 or toks[0][1] < 60 or not NUM_TOKEN.match(toks[0][0]):
+    if len(toks) != 1 or toks[0][1] < min_conf or not NUM_TOKEN.match(toks[0][0]):
         return None
     return toks[0]
 
@@ -407,6 +407,128 @@ def tick_axis(img: np.ndarray, p: Panel, ticks: list[float], axis: str) -> Axis 
     if len(pairs) < 3:
         return None
     return _linear(sorted(pairs), want_negative=(axis == "y"))
+
+
+def _bands(v: np.ndarray, gap: int) -> list[tuple[int, int]]:
+    """Inclusive runs of True, merging runs separated by at most ``gap`` False entries."""
+    idx = np.flatnonzero(v)
+    if not len(idx):
+        return []
+    out, a, b = [], int(idx[0]), int(idx[0])
+    for i in idx[1:]:
+        if i - b > gap + 1:
+            out.append((a, b))
+            a = int(i)
+        b = int(i)
+    out.append((a, b))
+    return out
+
+
+def _binarised(crop: np.ndarray, target_h: int, q: float) -> np.ndarray:
+    """Grey label crop -> bilinear upscale to ``target_h`` px glyphs -> black/white at the
+    level ``q`` between its darkest and lightest pixel.  Small grey anti-aliased labels
+    (ggplot / survminer exports) defeat tesseract at their native size."""
+    g = crop.astype(np.float32).mean(axis=2)
+    h, w = g.shape
+    f = max(1.0, target_h / max(1, h))
+    H, W = int(round(h * f)), int(round(w * f))
+    ys = np.clip((np.arange(H) + 0.5) / f - 0.5, 0, h - 1)
+    xs = np.clip((np.arange(W) + 0.5) / f - 0.5, 0, w - 1)
+    y0, x0 = np.floor(ys).astype(int), np.floor(xs).astype(int)
+    y1, x1 = np.minimum(y0 + 1, h - 1), np.minimum(x0 + 1, w - 1)
+    wy, wx = (ys - y0)[:, None], (xs - x0)[None, :]
+    up = (g[y0][:, x0] * (1 - wy) * (1 - wx) + g[y0][:, x1] * (1 - wy) * wx
+          + g[y1][:, x0] * wy * (1 - wx) + g[y1][:, x1] * wy * wx)
+    lo, hi = float(up.min()), float(up.max())
+    b = np.where(up < lo + q * (hi - lo), 0, 255).astype(np.uint8)
+    return np.repeat(b[:, :, None], 3, axis=2)
+
+
+def _ocr_blob(crop: np.ndarray) -> str | None:
+    """One label blob read under a few binarisations; the first confident numeric read wins.
+    Its value is only ever used through the exact-linearity rule of ``_linear``."""
+    if crop.size == 0 or crop.min() > 200:
+        return None
+    for target_h, q in ((48, 0.5), (64, 0.6), (40, 0.4)):
+        got = _ocr_label(_binarised(crop, target_h, q), 1, min_conf=80)
+        if got is not None:
+            return got[0]
+    return None
+
+
+BLOB_MISS_LIMIT = 6  # consecutive unreadable blobs before an axis band is abandoned
+
+
+def blob_axis(img: np.ndarray, p: Panel, axis: str) -> Axis | None:
+    """Third calibration route, for axes without usable tick marks or with labels too small
+    or grey for tesseract: find each label as a blob of ink in the band of labels nearest the
+    axis, read every blob on its own, and place it at the centre of its ink.  Positions come
+    from pixels, values from OCR, and only an exact linear scale through >= 3 of them is
+    accepted (one interior misread may be dropped among >= 4), as for the other routes."""
+    h, w = img.shape[:2]
+    height, width = p.y1 - p.y0, p.x1 - p.x0
+    dark = img.astype(np.int16).mean(axis=2) < 200
+    pairs = []
+    if axis == "x":
+        ya, xa = p.y1 + p.lw + 2, max(0, p.x0 - 30)
+        strip = dark[ya: min(h, ya + int(0.2 * height) + 20), xa: min(w, p.x1 + 30)]
+        rows = _bands(strip.any(axis=1), 2)
+        if not rows:
+            return None
+        r0, r1 = rows[0]  # the label row nearest the axis (titles and risk tables lie further down)
+        gh = r1 - r0 + 1
+        if gh < 5 or gh > 0.15 * height + 10:
+            return None
+        misses = 0
+        for c0, c1 in _bands(strip[r0: r1 + 1].any(axis=0), max(3, int(0.6 * gh))):
+            if c1 - c0 + 1 > 6 * gh:
+                continue  # a run of text or two merged labels: skip it, keep the rest
+            crop = img[ya + max(0, r0 - 2): ya + r1 + 3, xa + max(0, c0 - 2): xa + c1 + 3]
+            v = _val(t) if (t := _ocr_blob(crop)) else None
+            if v is not None:
+                pairs.append((xa + (c0 + c1) / 2, v))
+                misses = 0
+            elif (misses := misses + 1) >= BLOB_MISS_LIMIT:
+                return None  # a band of unreadable blobs is not a label row; bound the OCR cost
+        return _linear(pairs, want_negative=False) if len(pairs) >= 3 else None
+    xb = p.x0 - p.lw - 2
+    ya, xa = max(0, p.y0 - 15), max(0, xb - int(0.25 * width))
+    if xb - xa < 5:
+        return None
+    strip = dark[ya: min(h, p.y1 + 15), xa: xb]
+    cols = _bands(strip.any(axis=0), 1)  # glyph gaps are re-merged below, line by line
+    if not cols:
+        return None
+    # labels nearest the axis: merge column bands right to left while their gaps stay within
+    # a glyph width ("1" and "0" of "10" are one label), stopping at the axis-title gap
+    rows_ink = _bands(strip[:, cols[-1][0]: cols[-1][1] + 1].any(axis=1), 2)
+    gh = int(np.median([b - a + 1 for a, b in rows_ink])) if rows_ink else 0
+    if gh < 5:
+        return None
+    c0, c1 = cols[-1]
+    for a, b in reversed(cols[:-1]):
+        if c0 - b - 1 > 0.6 * gh:
+            break
+        # merge only glyphs on the same label lines; a rotated axis title close to the labels
+        # is one tall run (or runs on other lines) and stops the merge
+        cur = _bands(strip[:, c0: c1 + 1].any(axis=1), 2)
+        cand = _bands(strip[:, a: b + 1].any(axis=1), 2)
+        if not all(r1 - r0 + 1 <= 1.6 * gh and any(r0 <= s1 and s0 <= r1 for s0, s1 in cur) for r0, r1 in cand):
+            break
+        c0 = a
+    band = strip[:, c0: c1 + 1]
+    misses = 0
+    for r0, r1 in _bands(band.any(axis=1), 2):
+        if not (0.6 * gh <= r1 - r0 + 1 <= 1.6 * gh):
+            continue  # not one line of label text
+        crop = img[ya + max(0, r0 - 2): ya + r1 + 3, xa + max(0, c0 - 2): xa + c1 + 3]
+        v = _val(t) if (t := _ocr_blob(crop)) else None
+        if v is not None:
+            pairs.append((ya + (r0 + r1) / 2, v))
+            misses = 0
+        elif (misses := misses + 1) >= BLOB_MISS_LIMIT:
+            return None
+    return _linear(pairs, want_negative=True) if len(pairs) >= 3 else None
 
 
 def calibrate_panel(p: Panel, words, ticks: list[float] | None = None) -> tuple[Axis | None, Axis | None, list[str]]:
@@ -875,6 +997,10 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
         if xaxis is None and (xaxis := tick_axis(cleaned, p, xt, "x")) is not None:
             n = [m for m in n if not m.startswith("x tick")]
         if yaxis is None and (yaxis := tick_axis(cleaned, p, y_ticks(img, p), "y")) is not None:
+            n = [m for m in n if not m.startswith("y tick")]
+        if xaxis is None and (xaxis := blob_axis(cleaned, p, "x")) is not None:
+            n = [m for m in n if not m.startswith("x tick")]
+        if yaxis is None and (yaxis := blob_axis(cleaned, p, "y")) is not None:
             n = [m for m in n if not m.startswith("y tick")]
         if not xaxis or not yaxis:
             notes += [f"page {fig.page + 1}: raster panel: {m}" for m in n]

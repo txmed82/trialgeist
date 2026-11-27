@@ -47,7 +47,8 @@ re-derives the contradiction from the printed digits.
 
   Every refusal is sound; widening coverage is the remaining work. Gate R (synthetic, known truth) is the
   binding quality metric: 37/40 figures digitised, 0 false proofs, 9/14 planted edits caught where the
-  edited curve was digitised.
+  edited curve was digitised. (Figures as of CI run 45961402012 on abec255; the live numbers are printed
+  by `tests/test_raster_gate.py` and the RC job summary, which win when they disagree.)
 - Inter-table N checks (Table 1 arm N vs outcome-table N) are not proof-grade (analysis populations differ legitimately); only within-sentence randomisation arithmetic is proven.
 - Registry discordance needs network; Gate 1 covers it with fixtures.
 
