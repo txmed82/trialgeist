@@ -263,6 +263,22 @@ def extract_claims(path: str) -> list:
                                             granularity=g, scale_min=lo, scale_max=hi, provenance=prov))
     for cells in column_cells.values():
         claims.extend(_confirmed_cells(cells))
+    from .consort import allocation_claims, design_refused
+
+    if not design_refused("\n".join(pt.text for pt in pages)):  # screened once, not per page
+        seen = set()
+        for pt in pages:
+            for c in allocation_claims(pt.text, "pdf", pt.index):
+                seen.add((c.total, tuple(c.counts)))
+                claims.append(c)
+        # a randomisation sentence often runs from the foot of one page onto the next: read the
+        # seam (end of page i + start of page i+1) and keep only claims no single page produced
+        for a, b in zip(pages, pages[1:]):
+            for c in allocation_claims(a.text[-800:] + "\n" + b.text[:800], "pdf", a.index):
+                if (c.total, tuple(c.counts)) not in seen:
+                    seen.add((c.total, tuple(c.counts)))
+                    c.provenance[0].note = f"sentence continues on page {b.index + 1}"
+                    claims.append(c)
     return claims
 
 

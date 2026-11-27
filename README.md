@@ -54,6 +54,16 @@ geometry, or JATS markup), and every claim keeps page and bbox provenance.
 5. **Registry time machine** (`registry/diff.py`): ClinicalTrials.gov v2 plus the history API.
    It selects the versions active at the actual start and primary-completion dates and diffs
    primary outcomes, outcome swaps, time horizons and sample size against the paper.
+6. **Randomisation arithmetic** (`extract/consort.py`): a sentence that states how many people
+   were randomised and lists every arm, such as "530 patients were randomly assigned to
+   empagliflozin (n = 265) or placebo (n = 265)", "324 were randomized: 162 to dapagliflozin and
+   162 to placebo" or "511 were randomised (258 to placebo, 253 to nilvadipine)", must add up.
+   - It reads only closed lists (the last arm comes after "or"/"and") with people as the
+     subject, and sentences across page breaks are included.
+   - It skips anything qualified: "of whom", "respectively", subgroups, eyes, sites, or a list
+     that carries on with more counts after a semicolon.
+   - Cluster, factorial, crossover, stepped-wedge and re-randomised designs skip the whole
+     document.
 
 ## Soundness rules
 
