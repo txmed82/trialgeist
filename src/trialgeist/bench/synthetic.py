@@ -135,19 +135,22 @@ def render_table1(page, rows, arms, footnote):
     c.text(50, y + 10, footnote, 7)
 
 
-def render_km(page, arms_data, horizon=36, step=6):
-    """arms_data: list of (name, steps[[t, before, after]], risk[(tau, n)], censor_times)."""
+def render_km(page, arms_data, horizon=36, step=6, rising=False):
+    """arms_data: list of (name, steps[[t, before, after]], risk[(tau, n)], censor_times).
+
+    rising=True plots 1 - S(t) (cumulative mortality, as in many Lancet/NEJM figures)."""
     c = Canvas(page)
     L, R, T, B = 90.0, 500.0, 120.0, 380.0
     X = lambda t: L + (R - L) * float(t) / horizon
-    Y = lambda s: B - (B - T) * float(s)
-    c.text(50, 90, "Figure 2. Kaplan-Meier estimates of overall survival", 10)
+    Y = (lambda s: B - (B - T) * float(1 - s)) if rising else (lambda s: B - (B - T) * float(s))
+    c.text(50, 90, "Figure 2. Kaplan-Meier estimates of cumulative mortality" if rising else
+           "Figure 2. Kaplan-Meier estimates of overall survival", 10)
     c.line((L, B), (R, B))
     c.line((L, B), (L, T))
     for k in range(6):
         v = k / 5
         c.line((L - 4, Y(v)), (L, Y(v)))
-        c.text(L - 6, Y(v) + 2.8, f"{v:.1f}", align="right")
+        c.text(L - 6, Y(v) + 2.8, f"{(1 - v) * 100:.0f}" if rising else f"{v:.1f}", align="right")
     for t in range(0, horizon + 1, step):
         c.line((X(t), B), (X(t), B + 4))
         c.text(X(t), B + 14, str(t), align="center")
