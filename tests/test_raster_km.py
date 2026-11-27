@@ -202,3 +202,18 @@ def test_sloped_polyline_is_not_a_staircase():
     assert not _sloped(jitter, event_px=3.3)
     # when one event is below 3 px the test cannot tell and does not refuse
     assert not _sloped(slope, event_px=2.0)
+
+
+
+def test_tick_label_crop_stops_before_the_axis_title():
+    from trialgeist.extract.raster import _first_band
+
+    crop = np.full((60, 80, 3), 255, np.uint8)
+    crop[4:14, 30:50] = 0     # the tick label
+    crop[30:40, 5:75] = 0     # the axis title further down
+    assert _first_band(crop, 0).shape[0] <= 16
+    left = np.full((40, 120, 3), 255, np.uint8)
+    left[15:25, 5:15] = 0     # rotated y-axis title, far left
+    left[15:25, 90:110] = 0   # the tick label next to the axis
+    out = _first_band(left, 1)
+    assert out.shape[1] <= 26 and out[:, :, 0].min() == 0

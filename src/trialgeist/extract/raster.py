@@ -345,6 +345,32 @@ def _ocr_label(crop: np.ndarray, scale: int) -> tuple[str, float] | None:
     return toks[0]
 
 
+def _first_band(crop: np.ndarray, axis: int) -> np.ndarray:
+    """Keep only the label nearest the plot: the first band of inked rows below an x-axis
+    (axis 0), or the last band of inked columns left of a y-axis (axis 1). The axis title
+    beyond a blank gap would otherwise join the crop and make OCR refuse the label."""
+    if crop.size == 0:
+        return crop
+    ink = (crop.astype(np.int16).mean(axis=2) < 160).any(axis=1 - axis)
+    idx = np.flatnonzero(ink)
+    if not len(idx):
+        return crop
+    gap = 3
+    if axis == 0:
+        a = b = idx[0]
+        for i in idx[1:]:
+            if i - b > gap:
+                break
+            b = i
+        return crop[max(0, a - 2): b + 3]
+    a = b = idx[-1]
+    for i in idx[::-1][1:]:
+        if a - i > gap + 3:  # digits of one label are closer than this
+            break
+        a = i
+    return crop[:, max(0, a - 2): b + 3]
+
+
 def tick_axis(img: np.ndarray, p: Panel, ticks: list[float], axis: str) -> Axis | None:
     """Fallback calibration: OCR the label next to each detected tick mark on its own.
     Full-figure OCR drops isolated one-digit labels ("0", "6"); a crop centred on the tick
@@ -368,10 +394,10 @@ def tick_axis(img: np.ndarray, p: Panel, ticks: list[float], axis: str) -> Axis 
             continue  # two marks this close are not both ticks; read neither
         if axis == "x":
             y0 = p.y1 + p.lw + gap
-            crop = img[y0: int(min(h, y0 + max(18, 0.09 * height))), int(max(0, t - half)): int(min(w, t + half))]
+            crop = _first_band(img[y0: int(min(h, y0 + max(18, 0.09 * height))), int(max(0, t - half)): int(min(w, t + half))], 0)
         else:
             x1 = p.x0 - p.lw - gap
-            crop = img[int(max(0, t - half)): int(min(h, t + half)), int(max(0, x1 - 0.2 * width)): max(0, x1)]
+            crop = _first_band(img[int(max(0, t - half)): int(min(h, t + half)), int(max(0, x1 - 0.2 * width)): max(0, x1)], 1)
         got = _ocr_label(crop, scale)
         v = _val(got[0]) if got else None
         if v is not None:
