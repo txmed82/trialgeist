@@ -26,7 +26,7 @@ import re
 import shutil
 import subprocess
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import numpy as np
@@ -71,6 +71,8 @@ class Trace:
     lw: float
     label: str = ""
     row: int | None = None  # risk row paired through the legend
+    method: str = "plateau"  # "plateau" (line centre) or "edges" (thick stroke, double-entry edges)
+    gaps: list[float] | None = None  # per drop: px of occlusion before it was seen (None: gap_px for all)
 
 
 @dataclass
@@ -528,6 +530,7 @@ def trace(mask: np.ndarray, p: Panel, other_ink: np.ndarray, why: list | None = 
         return None
     level = min((a + b) / 2 for a, b in cols[x] if b - a + 1 <= tmax)
     x_start, steps, gap_max, last_seen, last_cover = x, [], 0.0, x, x
+    gaps: list[float] = []
     max_gap = max(12, int(0.12 * (x_hi - x_lo)))
     while x < x_hi:
         x += 1
@@ -558,6 +561,7 @@ def trace(mask: np.ndarray, p: Panel, other_ink: np.ndarray, why: list | None = 
                 if nxt is None:
                     continue  # censor tick or a riser without a plateau: keep the level
                 steps.append((float(x), level, nxt[1]))
+                gaps.append(0.0)
                 level, x, last_seen = nxt[1], nxt[0], nxt[0]
             else:
                 level = level if abs((r[0] + r[1]) / 2 - level) > 1.0 or r[1] - r[0] + 1 > tmax else (r[0] + r[1]) / 2
@@ -588,13 +592,14 @@ def trace(mask: np.ndarray, p: Panel, other_ink: np.ndarray, why: list | None = 
                       and continues(new))
             if hidden:
                 steps.append(((last_seen + x) / 2, level, new))
+                gaps.append((x - last_seen) / 2)
                 gap_max = max(gap_max, (x - last_seen) / 2)
                 level, last_seen = new, x
     if len(steps) < 3 or last_seen - x_start < 0.3 * (x_hi - x_lo):
         if why is not None:
             why.append(("short", x_start, last_seen, x, len(steps), level, lw))
         return None
-    return Trace((0, 0, 0), steps, float(x_start), float(last_seen), gap_max, lw)
+    return Trace((0, 0, 0), steps, float(x_start), float(last_seen), gap_max, lw, gaps=gaps)
 
 
 def trace_edges(mask: np.ndarray, p: Panel, other_ink: np.ndarray, why: list | None = None) -> Trace | None:
@@ -721,25 +726,36 @@ def trace_edges(mask: np.ndarray, p: Panel, other_ink: np.ndarray, why: list | N
             Tf[i] = Tf[i - 1]
     x_start = xs[i0]
     n = i1 + 1  # nothing after the last confirmed column is read
-    steps, gap_max, run_unknown = [], 0.0, 0
+    steps, gaps, gap_max, run_unknown = [], [], 0.0, 0
     i = i0 + 1
     while i < n:
-        run_unknown = run_unknown + 1 if np.isnan(T2[i]) else 0
-        gap_max = max(gap_max, float(run_unknown))
+        if np.isnan(T2[i]):
+            run_unknown += 1
+            i += 1
+            continue
         if Tf[i] > Tf[i - 1]:
+            # a drop first seen after r unknown columns happened somewhere in them: its time is
+            # uncertain by r columns (unknown stretches with no drop across them cost nothing)
+            gap_max = max(gap_max, float(run_unknown))
             j = i
             while j + 1 < n and Tf[j + 1] > Tf[j]:
                 j += 1  # one drop spread over adjacent columns by anti-aliasing
             if Tf[j] - Tf[i - 1] >= 1.0:
                 steps.append((float(xs[i]) - (t + 1) / 2, Tf[i - 1] + t / 2, Tf[j] + t / 2))
+                gaps.append(float(run_unknown) + (j - i))
             i = j + 1
+            run_unknown = 0
             continue
+        run_unknown = 0
         i += 1
     if len(steps) < 3:
         if why is not None:
             why.append(("edges: fewer than 3 drops", len(steps)))
         return None
-    return Trace((0, 0, 0), steps, float(x_start), float(xs[n - 1]), gap_max + (t + 1) / 2, t + 1)
+    # placement: the drop is the top-edge change moved back by half the stroke (+-1 px of AA),
+    # a constant part of every drop's time tolerance, added in raster_claims via lw
+    return Trace((0, 0, 0), steps, float(x_start), float(xs[n - 1]), max(gaps, default=0.0), t + 1,
+                 method="edges", gaps=gaps)
 
 
 # ------------------------------------------------------------------ figure -> claims
@@ -1033,7 +1049,7 @@ def _flip(p: Panel, h: int) -> Panel:
 
 
 def _unflip(t: Trace, h: int) -> Trace:
-    return Trace(t.color, [(x, h - 1 - b, h - 1 - a) for x, b, a in t.steps], t.x_start, t.x_end, t.gap_px, t.lw)
+    return replace(t, steps=[(x, h - 1 - b, h - 1 - a) for x, b, a in t.steps])
 
 
 def raster_claims(rk: RasterKM) -> list:
@@ -1047,19 +1063,24 @@ def raster_claims(rk: RasterKM) -> list:
     for i, tr in enumerate(rk.traces):
         eps_px = tr.lw / 2 + 2.0 + 3 * rk.yaxis.residual
         eps = abs(rk.yaxis.b) * rk.y_scale * eps_px
-        eps_t = abs(rk.xaxis.b) * (3.0 + tr.gap_px + 3 * rk.xaxis.residual)
+        # time tolerance: 3 px + axis residual (+ half the stroke for edge reading) for every drop,
+        # plus, per drop, the occlusion it was hidden behind (a drop seen late may lie anywhere in it)
+        base_px = 3.0 + 3 * rk.xaxis.residual + (tr.lw / 2 if tr.method == "edges" else 0.0)
+        eps_t = abs(rk.xaxis.b) * base_px
+        gaps = tr.gaps if tr.gaps is not None else [tr.gap_px] * len(tr.steps)
         steps = []
-        for x, b, a in tr.steps:
+        for (x, b, a), g in zip(tr.steps, gaps):
             vb, va = rk.yaxis.value(b) * rk.y_scale, rk.yaxis.value(a) * rk.y_scale
             if rk.rising:
                 vb, va = 1 - vb, 1 - va
-            steps.append(KMStepIn(t=f"{rk.xaxis.value(x):.6f}", before=f"{min(max(vb, 0), 1):.6f}", after=f"{min(max(va, 0), 1):.6f}"))
+            steps.append(KMStepIn(t=f"{rk.xaxis.value(x):.6f}", before=f"{min(max(vb, 0), 1):.6f}", after=f"{min(max(va, 0), 1):.6f}",
+                                  dt=f"{abs(rk.xaxis.b) * g:.6f}"))
         bbox = (fig.rect[0] + rk.panel.x0 * sx, fig.rect[1] + rk.panel.y0 * sy, fig.rect[0] + rk.panel.x1 * sx, fig.rect[1] + rk.panel.y1 * sy)
         prov = [Provenance(source="raster", page=fig.page, bbox=bbox,
                            text=f"raster KM curve {i + 1} (colour {tr.color}){' plotted as 1 - S(t)' if rk.rising else ''}",
                            note=(f"image xref {fig.xref} {fig.width}x{fig.height}px; " +
                                  ("numbers at risk read by OCR from the image; " if rk.ocr_numbers else "") +
-                                 "drops (px): " + ";".join(f"{x:.0f}:{b:.1f}->{a:.1f}" for x, b, a in tr.steps[:200]))),
+                                 f"read by {tr.method}; drops (px): " + ";".join(f"{x:.0f}:{b:.1f}->{a:.1f}" for x, b, a in tr.steps[:200]))),
                 # the studio draws these on the page so a reviewer sees exactly what was digitised
                 Provenance(source="raster", page=fig.page, text=f"digitised drops of curve {i + 1}",
                            note="vertices: " + ";".join(f"{fig.rect[0] + x * sx:.2f},{fig.rect[1] + y * sy:.2f}"

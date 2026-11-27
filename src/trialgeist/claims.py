@@ -82,6 +82,7 @@ class KMStepIn(BaseModel):
     t: str
     before: str
     after: str
+    dt: str = "0"  # extra time tolerance for this drop only
 
 
 class KMRiskRow(BaseModel):
@@ -201,7 +202,7 @@ def check_claim(c) -> list[Finding]:
         return [contingency_check(c.n1, c.n2, c.events1, c.events2, c.pct1, c.pct2, c.rr, c.odds_ratio, c.rd_percent,
                                   c.estimate_is_crude, c.p_value, tuple(c.tests) if c.tests else None, c.label, c.provenance)]
     if isinstance(c, KMArmClaim):
-        steps = [KMStep(Fraction(s.t), Fraction(s.before), Fraction(s.after)) for s in c.steps]
+        steps = [KMStep(Fraction(s.t), Fraction(s.before), Fraction(s.after), Fraction(s.dt)) for s in c.steps]
         rows = [(r.risk_times, r.at_risk) for r in c.alternatives] or [(c.risk_times, c.at_risk)]
         rows3 = [([Fraction(t) for t in ts], list(ns), c.total_events) for ts, ns in rows]
         f = km_check_any_row(c.label, steps, Fraction(c.eps), Fraction(c.eps_t), rows3, c.provenance)

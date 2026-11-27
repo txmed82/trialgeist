@@ -51,7 +51,7 @@ def figure(rnd: random.Random, tmp_path, idx: int, corrupt: bool):
                 risk[m + 1] = (t1, new)
                 for j in range(m + 2, len(risk)):
                     risk[j] = (risk[j][0], min(risk[j][1], new))
-                edited = True
+                edited = tuple(round(255 * v) for v in pal[ai])  # the edited arm's colour
                 break
     dpi, q, rising = rnd.choice([110, 150, 200, 300]), rnd.choice([60, 75, 85, 95]), rnd.random() < 0.3
     width = rnd.choice([0.6, 1.0, 1.4])
@@ -96,7 +96,7 @@ def test_gate_raster_clean_precision(tmp_path):
 
 def test_gate_raster_recall(tmp_path):
     rnd = random.Random(7)
-    caught = planted = 0
+    caught = planted = figs = figs_caught = 0
     for i in range(N):
         path, edited, cfg = figure(rnd, tmp_path, i, corrupt=True)
         if not edited:
@@ -104,7 +104,14 @@ def test_gate_raster_recall(tmp_path):
         fs, plots, _ = run(path)
         if not plots:
             continue
-        planted += 1
-        caught += any(f.tier is Tier.PROVEN_IMPOSSIBLE for f in fs)
-    print(f"raster recall: {caught}/{planted} edited at-risk tables caught (among digitised figures)")
+        hit = any(f.tier is Tier.PROVEN_IMPOSSIBLE for f in fs)
+        figs += 1
+        figs_caught += hit
+        # power is measured where the edited arm's own curve was digitised; a figure where only
+        # the other arms were read cannot convict (and must not), whatever the table says
+        if any(max(abs(a - b) for a, b in zip(t.color, edited)) <= 48 for p in plots for t in p.traces):
+            planted += 1
+            caught += hit
+    print(f"raster recall: {caught}/{planted} edited at-risk tables caught where the edited curve was digitised "
+          f"({figs_caught}/{figs} among all digitised figures)")
     assert planted >= 5 and caught >= 0.5 * planted

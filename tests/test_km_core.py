@@ -121,3 +121,20 @@ def test_km_detects_risk_table_edit():
 def test_km_increasing_risk_table_is_impossible():
     arm = KMArm("x", [0, 6, 12], [100, 80, 85], [KMStep(Fraction(2), Fraction(1), Fraction(99, 100))])
     assert km_check(arm).tier is Tier.PROVEN_IMPOSSIBLE
+
+
+
+def test_per_drop_time_tolerance_merges_the_checkpoint_it_straddles():
+    """A drop seen only after an occlusion may lie anywhere in it: when that window covers a
+    risk-table time, the two intervals must be merged, never assigned to one side."""
+    from fractions import Fraction as F
+
+    from trialgeist.engines.km_vector_sat import KMArm, KMStep, segments
+
+    steps = [KMStep(F(2), F(1), F(9, 10)), KMStep(F(5), F(9, 10), F(8, 10)), KMStep(F(7), F(8, 10), F(7, 10))]
+    tight = KMArm("a", [0, 6, 12], [10, 8, 5], steps, eps=F(1, 100), eps_t=F(1, 10))
+    assert len(segments(tight)) == 3
+    late = [steps[0], KMStep(F(5), F(9, 10), F(8, 10), dt=F(3, 2)), steps[2]]
+    wide = KMArm("a", [0, 6, 12], [10, 8, 5], late, eps=F(1, 100), eps_t=F(1, 10))
+    segs = segments(wide)
+    assert len(segs) == 2 and segs[0].t1 == 12  # the checkpoint at 6 is merged away

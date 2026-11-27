@@ -50,6 +50,7 @@ class KMStep:
     t: Fraction
     before: Fraction
     after: Fraction
+    dt: Fraction = Fraction(0)  # extra time tolerance for this drop alone (seen only after an occlusion)
 
 
 @dataclass
@@ -65,7 +66,7 @@ class KMArm:
 
     def __post_init__(self) -> None:
         self.risk_times = [F(t) for t in self.risk_times]
-        self.steps = [KMStep(F(s.t), F(s.before), F(s.after)) for s in self.steps]
+        self.steps = [KMStep(F(s.t), F(s.before), F(s.after), F(s.dt)) for s in self.steps]
         self.eps, self.eps_t = F(self.eps), F(self.eps_t)
         if len(self.risk_times) != len(self.at_risk):
             raise ValueError("risk table times/counts length mismatch")
@@ -96,7 +97,7 @@ def segments(arm: KMArm) -> list[Segment]:
     times, counts = arm.risk_times, arm.at_risk
     keep = [0]
     for m in range(1, len(times)):
-        if any(abs(s.t - times[m]) <= arm.eps_t for s in arm.steps):
+        if any(abs(s.t - times[m]) <= arm.eps_t + s.dt for s in arm.steps):
             continue  # drop at (or near) a checkpoint: at-risk convention ambiguous, merge
         keep.append(m)
     segs: list[Segment] = []
@@ -107,7 +108,7 @@ def segments(arm: KMArm) -> list[Segment]:
         n_end = counts[nxt] if nxt is not None else 0
         st = []
         for i, s in enumerate(arm.steps):
-            in_seg = s.t >= t0 - (arm.eps_t if j == 0 else 0) and (t1 is None or s.t < t1)
+            in_seg = s.t >= t0 - (arm.eps_t + s.dt if j == 0 else 0) and (t1 is None or s.t < t1)
             if j == 0 and s.t < t0:
                 in_seg = True
             if in_seg:
@@ -184,7 +185,7 @@ def _inputs(arm: KMArm) -> dict:
         "label": arm.label,
         "risk_times": [str(t) for t in arm.risk_times],
         "at_risk": list(arm.at_risk),
-        "steps": [[str(s.t), str(s.before), str(s.after)] for s in arm.steps],
+        "steps": [[str(s.t), str(s.before), str(s.after)] + ([str(s.dt)] if s.dt else []) for s in arm.steps],
         "eps": str(arm.eps),
         "eps_t": str(arm.eps_t),
         "total_events": arm.total_events,
@@ -199,6 +200,10 @@ def _assumptions(arm: KMArm) -> list[str]:
         "the curve is an unweighted, unadjusted Kaplan-Meier estimate",
         "each visible drop contains at least one event (drops <= 2*eps may be jitter)",
     ]
+    wide = [s for s in arm.steps if s.dt]
+    if wide:
+        a.append(f"{len(wide)} drop(s) seen only after an occlusion may lie up to a further "
+                 f"{float(max(s.dt for s in wide)):.4g} away (per drop, as listed in the inputs)")
     if arm.total_events is not None:
         a.append(f"the arm has at most {arm.total_events} events in total")
     return a
