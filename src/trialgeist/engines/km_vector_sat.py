@@ -275,6 +275,8 @@ for ai, alt in enumerate(ALTS):
         prev, t0, t1 = seg["n_start"], F(seg["t0"]), seg["t1"] and F(seg["t1"])
         for k, (t, dt, b, a_) in enumerate(seg["steps"]):
             tol = F(alt["eps_t"]) + F(dt)  # each drop's true time must lie inside its interval
+            # (interior checkpoints with a drop within tol were merged away when the intervals were
+            # built, so this holds for every drop the engine places; checked here, not assumed)
             assert (j == 0 and t0 == 0 or F(t) - tol >= t0) and (t1 is None or F(t) + tol < t1), "drop outside interval"
             b, a_ = F(b), F(a_)
             lo = floor(max(F(0), a_ - EPS) / (b + EPS) * Q)  # factor >= lo/Q, rounded outward

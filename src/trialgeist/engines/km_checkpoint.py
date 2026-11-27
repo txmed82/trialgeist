@@ -144,7 +144,9 @@ def km_checkpoint_check(label: str, readings: list, eps, eps_t, rows: list,
 def km_checkpoint_joint_check(labels: list[str], curves: list[tuple[list, Any, Any]], rows: list,
                               provenance: list[Provenance] | None = None) -> Finding:
     """PROVEN when no one-to-one assignment of the printed rows to the curves fits: under every
-    assignment some curve falls faster than its row allows."""
+    assignment some curve falls faster than its row allows.  Fewer curves than rows is allowed
+    (an arm the reader refused): each row belongs to one arm, so the read curves take distinct
+    rows, and every injective assignment is tried."""
     cs = [(sorted((F(t), F(v)) for t, v in rd), F(e), F(et)) for rd, e, et in curves]
     rws = [([F(t) for t in ts], [int(n) for n in ns]) for ts, ns in rows]
     label = " / ".join(labels)
@@ -155,14 +157,14 @@ def km_checkpoint_joint_check(labels: list[str], curves: list[tuple[list, Any, A
     assumptions = _assumptions(eps, eps_t, len(rws), True)
     common: dict[str, Any] = dict(engine=ENGINE, check="km_checkpoint_joint", inputs=inputs, assumptions=assumptions,
                                   provenance=provenance)
-    if len(cs) != len(rws) or not 2 <= len(cs) <= 4:
-        why = (f"{len(cs)} curves but {len(rws)} numbers-at-risk rows" if len(cs) != len(rws)
-               else f"{len(cs)} curves and rows; the joint check needs 2 to 4")
+    if not 2 <= len(cs) <= len(rws) <= 4:
+        why = (f"{len(cs)} curves but only {len(rws)} numbers-at-risk rows" if len(cs) > len(rws)
+               else f"{len(cs)} curves and {len(rws)} rows; the joint check needs 2 to 4 curves, at most as many as rows")
         return make_finding(**common, tier=Tier.INCONCLUSIVE, title=f"KM checkpoint assignment not checked ({label})",
                             detail=why)
     v = [[violation(rd, e, et, r) for r in rws] for rd, e, et in cs]
     witnesses = []
-    for perm in permutations(range(len(rws))):
+    for perm in permutations(range(len(rws)), len(cs)):
         hit = next(((c, perm[c]) for c in range(len(cs)) if v[c][perm[c]] is not None), None)
         if hit is None:
             return make_finding(**common, tier=Tier.CONSISTENT,
@@ -198,7 +200,7 @@ def checkpoint_certificate(cid, groups, eps, eps_t, rows, assumptions, claim, la
 from itertools import permutations
 ROWS = {row_data!r}
 PAIRS = {pairs!r}  # contradicted (curve, row) pairs: checkpoints, counts and the two plotted readings used
-JOINT = {curves_eps is not None!r}  # True: rows are assigned one-to-one to {n_curves} curves
+JOINT = {curves_eps is not None!r}  # True: each of the {n_curves} curves takes a distinct row (each row is one arm's)
 bad = set()
 for p in PAIRS:
     row, eps, et = ROWS[p["row"]], F(p["eps"]), F(p["eps_t"])
@@ -222,7 +224,7 @@ for p in PAIRS:
         bad.add((p["curve"], p["row"]))
 if JOINT:
     k = {n_curves}
-    ok = all(any((c, perm[c]) in bad for c in range(k)) for perm in permutations(range(len(ROWS))))
+    ok = all(any((c, perm[c]) in bad for c in range(k)) for perm in permutations(range(len(ROWS)), k))
 else:
     ok = all((0, r) in bad for r in range(len(ROWS)))
 if not ok:

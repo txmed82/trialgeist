@@ -126,3 +126,25 @@ def test_increasing_rows_and_empty_inputs_are_never_proofs():
     assert violation(rd, Fr(1, 100), Fr(0), (taus, [100, 120, 90])) is None  # malformed row
     assert km_checkpoint_check("x", [], "0.01", "0", [(taus, [100, 99, 98])]).tier is Tier.CONSISTENT
     assert km_checkpoint_joint_check(["a"], [(rd, "0.01", "0")], [(taus, [100, 99, 98]), (taus, [1, 1, 1])]).tier is Tier.INCONCLUSIVE
+    assert km_checkpoint_joint_check(["a", "b"], [(rd, "0.01", "0")] * 2, [(taus, [100, 99, 98])]).tier is Tier.INCONCLUSIVE
+
+
+def test_joint_check_with_an_unread_arm(tmp_path):
+    """Three printed rows, two curves read (the third arm refused): each read curve takes a
+    distinct row.  True data never proves; two curves that fit no distinct pair of rows do."""
+    rnd = random.Random(7)
+    arms = [km_data(rnd, 300, lam, 0.01) for lam in (0.01, 0.03, 0.08)]
+    taus = [Fr(t) for t in (0, 6, 12, 18, 24, 30, 36)]
+    rows = [(taus, risk(a, taus, False)) for a in arms]
+    eps, eps_t = Fr(1, 200), Fr(1, 10)
+    rd = [readings(rnd, a, eps, eps_t) for a in arms]
+    for pick in ((0, 1), (1, 2), (0, 2), (2, 0)):
+        f = km_checkpoint_joint_check([str(i) for i in pick], [(rd[i], eps, eps_t) for i in pick], rows)
+        assert f.tier is Tier.CONSISTENT, f.detail
+    # both read curves fall far faster than any printed row allows: only one could have the
+    # steepest row, so the other contradicts whatever it is given
+    steep = [(Fr(t), Fr(1, 1000) if t > 1 else Fr(1)) for t in range(0, 37)]
+    f = km_checkpoint_joint_check(["x", "y"], [(steep, eps, eps_t), (steep, eps, eps_t)], rows)
+    assert f.tier is Tier.PROVEN_IMPOSSIBLE, f.detail
+    ok, _, out = run_certificate(f.certificate, tmp_path, "unread")
+    assert ok, out

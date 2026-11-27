@@ -1108,6 +1108,8 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
                 notes.append(f"page {fig.page + 1}: raster curve drawn with sloping segments (not a KM staircase) refused")
                 continue
             kept.append(t)
+        # a refused (sloped) trace keeps its legend label and row on its own object; the
+        # remaining arms keep theirs, and the joint check accepts fewer curves than rows
         if not kept and not levels:
             continue
         out.append(RasterKM(fig, p, xaxis, yaxis, y_scale, rising, kept, rr, ocr, levels=levels))
@@ -1531,7 +1533,7 @@ def checkpoint_claims(rk: RasterKM) -> list:
             alts = [rows[arm.row]] if arm.row is not None else rows
             out.append(KMCheckpointClaim(label=name, readings=rd, eps=f"{eps:.6f}", eps_t=f"{eps_t:.6f}", alternatives=alts,
                                          provenance=prov, ocr_numbers=rk.ocr_numbers))
-    if 2 <= len(arms) == len(rows) <= 4 and all(c.readings for c in curves):
+    if 2 <= len(arms) <= len(rows) <= 4 and all(c.readings for c in curves):
         prov = [Provenance(source="raster", page=fig.page, bbox=bbox, text=f"raster KM panel with {len(arms)} arms",
                            note=f"image xref {fig.xref}; " + ("numbers at risk read by OCR from the image" if rk.ocr_numbers else "numbers at risk from PDF text"))]
         out.append(KMCheckpointJointClaim(label=f"page {fig.page + 1} raster panel", curves=curves, rows=rows,
