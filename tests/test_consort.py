@@ -40,7 +40,7 @@ def test_refusals():
     ]
     got = [one(t) for t in refuse]
     assert got[0] == [] and got[2] == [] and got[3] == [] and got[4] == [] and got[5] == [] and got[6] == []
-    assert got[1] == [(600, [300, 300])]  # the clause before ';' is a complete partition
+    assert got[1] == []  # more arm counts follow the ';': the list may be incomplete
     assert allocation_claims("200 patients were randomized to A (n = 100) or B (n = 90).",
                              doc_text="This 2x2 factorial trial ...") == []
     assert allocation_claims("200 patients were randomized to A (n = 100) or B (n = 90).",
@@ -90,3 +90,36 @@ def test_design_screen():
 
     assert design_refused("Methods. This was a cluster-randomised trial.")
     assert not design_refused("Methods. Patients were individually randomised.")
+
+
+def test_list_continued_after_semicolon_is_not_claimed():
+    # the partition goes on after ';': reading only the first clause would falsely convict
+    assert one("In total, 600 patients were randomized to drug (n = 200) or placebo (n = 200); "
+               "usual care (n = 200) was given open label.") == []
+    assert one("In total, 600 patients were randomized: 200 to drug and 200 to placebo; 200 to usual care were followed.") == []
+    # a semicolon followed by prose without counts still ends the clause
+    assert one("In total, 400 patients were randomized to drug (n = 200) or placebo (n = 200); "
+               "baseline characteristics were similar.") == [(400, [200, 200])]
+
+
+def test_two_word_cross_over_is_refused():
+    from trialgeist.extract.consort import design_refused
+
+    assert design_refused("This was a 2-period cross over design.")
+
+
+def test_sentence_across_a_page_break(tmp_path):
+    import pymupdf
+
+    from trialgeist.extract.pdf_text import extract_claims
+
+    doc = pymupdf.open()
+    p1 = doc.new_page()
+    p1.insert_text((72, 760), "Overall, 530 patients were randomly assigned to empagliflozin (n = 265) or")
+    p2 = doc.new_page()
+    p2.insert_text((72, 72), "placebo (n = 260). Baseline characteristics were similar.")
+    path = tmp_path / "seam.pdf"
+    doc.save(path)
+    claims = [c for c in extract_claims(str(path)) if type(c).__name__ == "CountSumClaim"]
+    assert [(c.total, c.counts) for c in claims] == [(530, [265, 260])]
+    assert check_claim(claims[0])[0].tier is Tier.PROVEN_IMPOSSIBLE

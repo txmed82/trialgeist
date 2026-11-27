@@ -70,8 +70,20 @@ REFUSE_TAIL_RE = re.compile(
     r"sites?\b|centres?\b|centers?\b|hospitals?|practices|wards?|schools?|villages?|households?|teams?",
     re.I,
 )
-REFUSE_DOC_RE = re.compile(r"cluster[\s-]+randomi|factorial|cross-?over|stepped[\s-]+wedge|re-?randomi", re.I)
+REFUSE_DOC_RE = re.compile(r"cluster[\s-]+randomi|factorial|cross\s*-?\s*over|stepped[\s-]+wedge|re-?randomi", re.I)
 SENT_END_RE = re.compile(r";|\.(?=\s+[A-Z(\[]|\s*$)")
+FULL_END_RE = re.compile(r"\.(?=\s+[A-Z(\[]|\s*$)")
+MORE_ARMS_RE = re.compile(r"\(\s*n\s*=|\b\d[\d,]*\s+(?:" + PEOPLE + r"\s+)?(?:(?:were|was)\s+)?"
+                          r"(?:to|into|in|received|assigned|allocated|randomi[sz]ed)\b", re.I)
+
+
+def _continues(flat: str, end) -> bool:
+    """The list was read up to a ';' but the sentence goes on with more arm counts
+    ("... A (n = 200) or B (n = 200); C (n = 200) ..."): the partition may be incomplete."""
+    if end is None or flat[end.start()] != ";":
+        return False
+    full = FULL_END_RE.search(flat, end.end())
+    return bool(MORE_ARMS_RE.search(flat[end.end(): full.start() if full else min(len(flat), end.end() + 400)]))
 
 
 def design_refused(doc_text: str) -> bool:
@@ -122,7 +134,7 @@ def allocation_claims(text: str, source: str = "pdf", page: int | None = None,
         if ARM_N_RE.search(tail[arms[-1].end():]) or re.search(r"\d", tail[arms[-1].end():]):
             continue  # more numbers after the list: not a clean enumeration
         total, counts = _int(m.group(1)), [_int(a.group(1)) for a in arms]
-        if total < 2 or any(c <= 0 for c in counts):
+        if total < 2 or any(c <= 0 for c in counts) or _continues(flat, end):
             continue
         out.append(_claim(flat, m, end, tail, total, counts, source, page))
     for m in TOTAL_B_RE.finditer(flat):
@@ -150,7 +162,7 @@ def allocation_claims(text: str, source: str = "pdf", page: int | None = None,
         if any(re.search(r"\b(?:or|and)\s*$", nm.rstrip(" ,")) for nm in names[:-2]):
             continue
         total, counts = _int(m.group(1)), [_int(a.group(1)) for a in arms]
-        if total < 2 or any(c <= 0 for c in counts):
+        if total < 2 or any(c <= 0 for c in counts) or _continues(flat, end):
             continue
         out.append(_claim(flat, m, end, tail, total, counts, source, page))
     for m in TOTAL_C_RE.finditer(flat):
@@ -173,6 +185,9 @@ def allocation_claims(text: str, source: str = "pdf", page: int | None = None,
             continue
         total = _int(m.group(1))
         end = SENT_END_RE.search(flat, m.end())
+        full = FULL_END_RE.search(flat, m.end())
+        if MORE_ARMS_RE.search(flat[m.end(): full.start() if full else min(len(flat), m.end() + 400)]):
+            continue  # more arm counts after the parenthesis: the list may be incomplete
         out.append(_claim(flat, m, end, "", total, counts, source, page))
     return out
 

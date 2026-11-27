@@ -169,7 +169,7 @@ def extract_claims_xml(path: str) -> list:
     from .consort import allocation_claims
 
     seen = set()
-    for c in allocation_claims(paper_text_xml(path), "xml"):
+    for c in allocation_claims(paper_text_xml(root), "xml"):
         if (c.total, tuple(c.counts)) not in seen:
             seen.add((c.total, tuple(c.counts)))
             claims.append(c)
@@ -240,6 +240,7 @@ def _partition_blocks(body: list[list[str]], col_n: dict[int, int], label: str, 
     return out
 
 
-def paper_text_xml(path: str) -> str:
-    root = ET.parse(path).getroot()
+def paper_text_xml(src) -> str:
+    """Abstract + body text of a JATS file (path) or an already-parsed root element."""
+    root = src if isinstance(src, ET.Element) else ET.parse(src).getroot()
     return " ".join(_text(x) for x in root.iter() if x.tag in ("abstract", "body"))
