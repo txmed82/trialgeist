@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 from pathlib import Path
 
@@ -35,3 +36,10 @@ def test_raster_corpus_no_false_proofs(entry):
     for f in report.findings:
         if f.title.startswith("Lead (OCR-read"):
             assert f.certificate is None
+    # coverage, reported (not asserted) in the CI job summary
+    raster = [f for f in report.findings if any(p.source == "raster" for p in f.provenance)]
+    if os.environ.get("GITHUB_STEP_SUMMARY"):
+        with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fh:
+            if entry is MANIFEST[0]:
+                fh.write("| paper | raster KM arms read | tiers |\n|---|---|---|\n")
+            fh.write(f"| {entry['pmcid']} | {len(raster)} | {', '.join(sorted({f.tier.name for f in raster})) or '-'} |\n")
