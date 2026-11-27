@@ -456,6 +456,9 @@ def _ocr_blob(crop: np.ndarray) -> str | None:
     return None
 
 
+BLOB_MISS_LIMIT = 6  # consecutive unreadable blobs before an axis band is abandoned
+
+
 def blob_axis(img: np.ndarray, p: Panel, axis: str) -> Axis | None:
     """Third calibration route, for axes without usable tick marks or with labels too small
     or grey for tesseract: find each label as a blob of ink in the band of labels nearest the
@@ -476,13 +479,17 @@ def blob_axis(img: np.ndarray, p: Panel, axis: str) -> Axis | None:
         gh = r1 - r0 + 1
         if gh < 5 or gh > 0.15 * height + 10:
             return None
+        misses = 0
         for c0, c1 in _bands(strip[r0: r1 + 1].any(axis=0), max(3, int(0.6 * gh))):
             if c1 - c0 + 1 > 6 * gh:
-                return None  # a run of text, not a tick label
+                continue  # a run of text or two merged labels: skip it, keep the rest
             crop = img[ya + max(0, r0 - 2): ya + r1 + 3, xa + max(0, c0 - 2): xa + c1 + 3]
             v = _val(t) if (t := _ocr_blob(crop)) else None
             if v is not None:
                 pairs.append((xa + (c0 + c1) / 2, v))
+                misses = 0
+            elif (misses := misses + 1) >= BLOB_MISS_LIMIT:
+                return None  # a band of unreadable blobs is not a label row; bound the OCR cost
         return _linear(pairs, want_negative=False) if len(pairs) >= 3 else None
     xb = p.x0 - p.lw - 2
     ya, xa = max(0, p.y0 - 15), max(0, xb - int(0.25 * width))
@@ -510,6 +517,7 @@ def blob_axis(img: np.ndarray, p: Panel, axis: str) -> Axis | None:
             break
         c0 = a
     band = strip[:, c0: c1 + 1]
+    misses = 0
     for r0, r1 in _bands(band.any(axis=1), 2):
         if not (0.6 * gh <= r1 - r0 + 1 <= 1.6 * gh):
             continue  # not one line of label text
@@ -517,6 +525,9 @@ def blob_axis(img: np.ndarray, p: Panel, axis: str) -> Axis | None:
         v = _val(t) if (t := _ocr_blob(crop)) else None
         if v is not None:
             pairs.append((ya + (r0 + r1) / 2, v))
+            misses = 0
+        elif (misses := misses + 1) >= BLOB_MISS_LIMIT:
+            return None
     return _linear(pairs, want_negative=True) if len(pairs) >= 3 else None
 
 

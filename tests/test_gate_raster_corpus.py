@@ -30,7 +30,7 @@ def test_raster_corpus_manifest_present():
 
 
 @pytest.mark.parametrize("entry", MANIFEST, ids=[m["pmcid"] for m in MANIFEST])
-def test_raster_corpus_no_false_proofs(entry):
+def test_raster_corpus_no_false_proofs(entry, capsys):
     pdf = CORPUS / entry["pmcid"] / "paper.pdf"
     if not pdf.exists():
         pytest.skip("PDF not downloaded: uv run python scripts/fetch_corpus.py")
@@ -43,8 +43,11 @@ def test_raster_corpus_no_false_proofs(entry):
             assert f.certificate is None
     # coverage, reported (not asserted) in the CI job summary
     raster = [f for f in report.findings if any(p.source == "raster" for p in f.provenance)]
+    row = f"| {entry['pmcid']} | {len(raster)} | {', '.join(sorted({f.tier.name for f in raster})) or '-'} |\n"
+    with capsys.disabled():  # also in the job log, which (unlike the summary) is readable via the API
+        print(f"\nraster coverage {row.strip()}")
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fh:
             if entry is MANIFEST[0]:
                 fh.write("| paper | raster KM arms read | tiers |\n|---|---|---|\n")
-            fh.write(f"| {entry['pmcid']} | {len(raster)} | {', '.join(sorted({f.tier.name for f in raster})) or '-'} |\n")
+            fh.write(row)
