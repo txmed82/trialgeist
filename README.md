@@ -54,7 +54,9 @@ geometry, or JATS markup), and every claim keeps page and bbox provenance.
    digitised: L-frame panel detection, tick labels OCR'd with tesseract and accepted only if
    they lie on an exact linear scale, curves separated by colour (halo and band tints
    removed), plateaus joined only through drawn risers, and curves paired to at-risk rows by
-   their legend swatches. When the numbers at risk come from PDF text, a raster finding can
+   their legend swatches. Thick lines whose drops are smaller than the line width are read
+   from both stroke edges, and a column counts only when the two edges agree. A drop first
+   seen after an occlusion gets its own wider time window. When the numbers at risk come from PDF text, a raster finding can
    be proven like a vector one. **When they were read by OCR, the finding is capped at
    `INCONCLUSIVE` and labelled a lead**: OCR digits are never evidence.
 5. **Cross-table consistency** (`engines/consistency.py`, `extract/crosstable.py`): baseline
@@ -92,7 +94,7 @@ geometry, or JATS markup), and every claim keeps page and bbox provenance.
 | G1 | `tests/test_gate1_synthetic.py` | 200 clean simulated RCTs rendered to real PDFs (instrument means, n (%), binary, vector KM plus risk table) and 100 registry cases give 0 false `PROVEN_IMPOSSIBLE` and 0 false registry flags; recall on injected corruptions >= 0.9 |
 | G2 | `tests/test_gate2_positive.py` | documented impossibilities in retracted trials are proven, and certificates exit 0 |
 | G3 | `tests/test_gate3_negative.py` | 30+ open-access RCTs (PDF and XML) give 0 `PROVEN_IMPOSSIBLE` (four genuine typos found in them are recorded in the manifest) |
-| R | `tests/test_raster_gate.py` | synthetic KM figures rasterised at 110-300 dpi, JPEG quality 60-95, falling and rising, give 0 false proofs; planted risk-table edits are caught |
+| R | `tests/test_raster_gate.py` | synthetic KM figures rasterised at 110-300 dpi, JPEG quality 60-95, falling and rising, 0.6-1.4 pt lines: >= 60% digitised with 0 false proofs; >= 50% of planted risk-table edits caught where the edited curve was read |
 | RC | `tests/test_gate_raster_corpus.py` | 25 retraction-checked OA RCTs with bitmap KM figures give 0 `PROVEN_IMPOSSIBLE` |
 
 Raster figures need `tesseract` on PATH (`brew install tesseract`, `apt install tesseract-ocr`);
