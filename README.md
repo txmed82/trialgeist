@@ -43,15 +43,28 @@ geometry, or JATS markup), and every claim keeps page and bbox provenance.
    Wald p-values with generous floating-point margins. Adjusted estimates are never used as
    evidence.
 3. **KM-SAT** (`km_vector_sat.py`, `extract/km_vector.py`): survival staircases are read from
-   PDF drawing operators (no rasterization), axes are calibrated from tick labels, and the
-   numbers-at-risk table is read. Each visible drop is modelled as a cluster of events with
-   arbitrary censoring inside it. CP-SAT then asks whether any integer events and censorings
-   reproduce every drop within the plotting tolerance and every printed risk count. If the
-   curve-to-row pairing is ambiguous, every row is tried.
-4. **Carlisle-Stouffer** (`carlisle.py`): rounding-aware two-arm mid-p values for continuous
+   PDF drawing operators, axes are calibrated from tick labels, and the numbers-at-risk
+   table is read. Each visible drop is modelled as a cluster of events with arbitrary
+   censoring inside it. CP-SAT then asks whether any integer events and censorings reproduce
+   every drop within the plotting tolerance and every printed risk count. If the
+   curve-to-row pairing is ambiguous, every row is tried. Rising 1 - S(t) curves are read
+   when the page says Kaplan-Meier and nothing suggests cumulative incidence; multi-panel
+   pages and broken y-axes are handled per panel.
+4. **Raster KM** (`extract/raster.py`): Kaplan-Meier figures embedded as bitmaps are
+   digitised: L-frame panel detection, tick labels OCR'd with tesseract and accepted only if
+   they lie on an exact linear scale, curves separated by colour (halo and band tints
+   removed), plateaus joined only through drawn risers, and curves paired to at-risk rows by
+   their legend swatches. When the numbers at risk come from PDF text, a raster finding can
+   be proven like a vector one. **When they were read by OCR, the finding is capped at
+   `INCONCLUSIVE` and labelled a lead**: OCR digits are never evidence.
+5. **Cross-table consistency** (`engines/consistency.py`, `extract/crosstable.py`): baseline
+   and outcome tables (JATS cells or PDF geometry grids) are checked for Total-column sums,
+   arm totals, pooled means lying inside the arm means, a shared denominator across the
+   categories of one variable, and medians inside their IQR or range.
+6. **Carlisle-Stouffer** (`carlisle.py`): rounding-aware two-arm mid-p values for continuous
    variables (so identical printed means do not fake under-dispersion), mid-p Fisher for
    binary rows, and stratification and cluster guardrails. It never proves anything.
-5. **Registry time machine** (`registry/diff.py`): ClinicalTrials.gov v2 plus the history API.
+7. **Registry time machine** (`registry/diff.py`): ClinicalTrials.gov v2 plus the history API.
    It selects the versions active at the actual start and primary-completion dates and diffs
    primary outcomes, outcome swaps, time horizons and sample size against the paper.
 
@@ -65,8 +78,11 @@ geometry, or JATS markup), and every claim keeps page and bbox provenance.
   it: at least 60% of its cells, and every neighbouring cell, must be exactly count/N. This
   keeps rows with another unit of analysis (vessels, events, safety population) from being
   read against the wrong N.
-* KM curves are refused when they rise (cumulative incidence), or when the page mentions
-  adjusted, weighted or competing-risk estimates.
+* KM curves are refused when the page mentions adjusted, weighted, competing-risk or
+  cumulative-incidence estimates; a rising curve is only read as 1 - KM under Kaplan-Meier
+  wording.
+* Raster axes need at least three OCR'd tick labels on an exact linear scale (one interior
+  misread may be dropped, never an end label, so an axis break is not bridged).
 
 ## Acceptance gates (`pytest`)
 
@@ -75,6 +91,11 @@ geometry, or JATS markup), and every claim keeps page and bbox provenance.
 | A0 | `tests/test_*_core.py` | brute-force cross-checks agree; zero false impossibles across rounding and SD conventions |
 | G1 | `tests/test_gate1_synthetic.py` | 200 clean simulated RCTs rendered to real PDFs (instrument means, n (%), binary, vector KM plus risk table) and 100 registry cases give 0 false `PROVEN_IMPOSSIBLE` and 0 false registry flags; recall on injected corruptions >= 0.9 |
 | G2 | `tests/test_gate2_positive.py` | documented impossibilities in retracted trials are proven, and certificates exit 0 |
-| G3 | `tests/test_gate3_negative.py` | 20+ open-access RCTs (PDF and XML) give 0 `PROVEN_IMPOSSIBLE` |
+| G3 | `tests/test_gate3_negative.py` | 30+ open-access RCTs (PDF and XML) give 0 `PROVEN_IMPOSSIBLE` (four genuine typos found in them are recorded in the manifest) |
+| R | `tests/test_raster_gate.py` | synthetic KM figures rasterised at 110-300 dpi, JPEG quality 60-95, falling and rising, give 0 false proofs; planted risk-table edits are caught |
+| RC | `tests/test_gate_raster_corpus.py` | 25 retraction-checked OA RCTs with bitmap KM figures give 0 `PROVEN_IMPOSSIBLE` |
+
+Raster figures need `tesseract` on PATH (`brew install tesseract`, `apt install tesseract-ocr`);
+without it they are inventoried and skipped with a note.
 
 Fetch the third-party corpora first with `uv run python scripts/fetch_corpus.py`, then run `uv run pytest -q` (set `TG_GATE1_CLEAN` / `TG_GATE1_CORRUPT` for a quick G1).
