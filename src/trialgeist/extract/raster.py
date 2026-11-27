@@ -342,6 +342,10 @@ def tick_axis(img: np.ndarray, p: Panel, ticks: list[float], axis: str) -> Axis 
     Full-figure OCR drops isolated one-digit labels ("0", "6"); a crop centred on the tick
     reads them, and the label position is the tick itself.  The same exact-linearity rule
     applies, so a misread or a spurious tick refuses the axis rather than bending it."""
+    # detached axes (Stata, base R): the other axis line overhangs the frame corner and
+    # looks like a tick right beside the real origin tick; it carries no label of its own
+    edge = p.x0 if axis == "x" else p.y1
+    ticks = [t for t in ticks if not (abs(t - edge) <= p.lw + 2 and any(0 < abs(u - t) < 20 for u in ticks))]
     if len(ticks) < 3:
         return None
     h, w = img.shape[:2]
