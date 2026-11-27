@@ -72,3 +72,41 @@ def test_rising_requires_kaplan_meier_wording(tmp_path):
         doc.save(tmp_path / "no_km_words.pdf")
     plots, _ = find_km_plots(str(tmp_path / "no_km_words.pdf"))
     assert not plots  # a rising curve might be cumulative incidence with competing risks
+
+
+def _retitle(tmp_path, path, title, name):
+    with pymupdf.open(path) as doc:
+        page = doc[0]
+        for inst in page.search_for("Kaplan-Meier estimates of cumulative mortality"):
+            page.add_redact_annot(inst)
+        page.apply_redactions()
+        page.insert_text((50, 90), title, fontsize=10)
+        doc.save(tmp_path / name)
+    return tmp_path / name
+
+
+def test_rising_refused_when_caption_may_be_cumulative_incidence(tmp_path):
+    path = make(tmp_path, rising=True)
+    for i, title in enumerate(["Kaplan-Meier estimates of the cumulative risk of recurrence, death as a competing event",
+                               "Kaplan-Meier cumulative probability of relapse"]):
+        plots, notes = find_km_plots(str(_retitle(tmp_path, path, title, f"t{i}.pdf")))
+        assert not plots and any("cumulative incidence" in n or "competing" in n or "adjusted" in n for n in notes), notes
+
+
+def test_same_style_arms_sharing_the_start_point_are_both_read_whole(tmp_path):
+    from trialgeist.bench.synthetic import render_km as rk
+
+    taus = list(range(0, 37, 6))
+    arms = [(nm, km_from_times(n, d), risk(n, d, taus), [36]) for nm, n, d in
+            [("Drug", 40, [2, 3, 5, 8, 8, 13, 17, 22, 29]), ("Placebo", 38, [1, 2, 4, 4, 7, 9, 11, 15, 20, 25, 31])]]
+    path = tmp_path / "same_style.pdf"
+    with pymupdf.open() as doc:
+        rk(doc.new_page(width=612, height=792), arms, colors=[(0, 0, 0), (0, 0, 0)])
+        doc.save(path)
+    plots, notes = find_km_plots(str(path))
+    assert plots, notes
+    curves = [c for p in plots for c in p.curves]
+    drops = sorted(sum(1 for a, b in zip(c.points, c.points[1:]) if b[1] - a[1] > 1e-3) for c in curves)
+    assert drops == [8, 10], drops  # distinct death times per arm: 8 and 10 drops
+    tiers = [f.tier for p in plots for c in plot_to_claims(p) for f in check_claim(c)]
+    assert tiers and all(t is Tier.CONSISTENT for t in tiers)

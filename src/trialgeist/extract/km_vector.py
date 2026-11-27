@@ -37,8 +37,12 @@ from .pdf_text import Row, rows_from_page
 
 SEG_TOL = 0.15  # pt, endpoint matching
 NUM_WORD = re.compile(r"^[\-\u2212]?\d+(?:[.\u00b7]\d+)?%?$")
-ADJUSTED_RE = re.compile(r"adjusted (survival|curves?)|weighted|IPTW|inverse.probability|cumulative incidence|competing.risk|"
-                         r"Aalen|Fine.(and.)?Gray|subdistribution", re.I)
+ADJUSTED_RE = re.compile(r"adjusted (survival|curves?)|weighted|IPTW|inverse.probability|cumulative incidence|"
+                         r"competing.(risks?|events?)|Aalen|Fine.(and.)?Gray|subdistribution", re.I)
+# A rising curve is read as 1 - KM only when nothing on the page suggests it might be a
+# cumulative incidence function instead; these captions are ambiguous, so refuse them.
+RISING_REFUSE_RE = re.compile(r"cumulative (risk|probability|proportion)|competing|cause.specific|subdistribution|"
+                              r"Aalen|Fine.(and.)?Gray|incidence function", re.I)
 KAPLAN_RE = re.compile(r"Kaplan[\s\-\u2010-\u2014]*Meier", re.I)
 RISK_LABEL_RE = re.compile(r"(no\.?|number|n)\s*(of patients\s*)?at\s*risk|at risk", re.I)
 
@@ -117,7 +121,10 @@ def _key(x: float, y: float) -> tuple[int, int]:
     return (round(x / SEG_TOL), round(y / SEG_TOL))
 
 
-def staircases(segs: list[Seg], min_steps: int = 3, rising: bool = False) -> list[Staircase]:
+MAX_STAIRCASES_PER_STYLE = 32
+
+
+def staircases(segs: list[Seg], min_steps: int = 3, rising: bool = False, notes: list[str] | None = None) -> list[Staircase]:
     by_style: dict[tuple, list[Seg]] = defaultdict(list)
     for s in segs:
         if s.horizontal or s.vertical:
@@ -140,34 +147,37 @@ def staircases(segs: list[Seg], min_steps: int = 3, rising: bool = False) -> lis
         # longest path in the DAG by x-extent then edge count; repeat on what is
         # left so several panels drawn in the same style each yield a curve
         order = sorted(coords, key=lambda k: (coords[k][0], -coords[k][1] if rising else coords[k][1]))
-        dead: set[tuple] = set()
-        for _ in range(12):
+        # Used EDGES are retired, not vertices: two arms drawn in one style share their
+        # (t=0, S=1) start point, and retiring it would truncate the second curve.
+        dead: set[tuple[tuple, tuple]] = set()
+        for it in range(MAX_STAIRCASES_PER_STYLE + 1):
+            if it == MAX_STAIRCASES_PER_STYLE:
+                if notes is not None:
+                    notes.append(f"more than {MAX_STAIRCASES_PER_STYLE} staircases in stroke style {color}/{width}; the rest were not read")
+                break
             best: dict[tuple, tuple[float, int, tuple | None]] = {}
             for k in reversed(order):
-                if k in dead:
-                    continue
                 cand = (0.0, 0, None)
                 for nk, _ in adj.get(k, []):
-                    if nk == k or nk in dead:
+                    if nk == k or (k, nk) in dead:
                         continue
                     ext = coords[nk][0] - coords[k][0] + best.get(nk, (0.0, 0, None))[0]
                     cnt = 1 + best.get(nk, (0.0, 0, None))[1]
                     if (ext, cnt) > cand[:2]:
                         cand = (ext, cnt, nk)
                 best[k] = cand
-            if not best:
-                break
-            start = max(best, key=lambda k: best[k][:2])
+            start = max(best, key=lambda k: best[k][:2], default=None)
+            if start is None or best[start][2] is None:
+                break  # no edges left
             path, keys, k = [coords[start]], [start], start
             while best[k][2] is not None:
                 k = best[k][2]
                 path.append(coords[k])
                 keys.append(k)
+            dead.update(zip(keys, keys[1:]))
             drops = sum(1 for p, q in zip(path, path[1:]) if (p[1] - q[1] if rising else q[1] - p[1]) > 1e-3)
-            if drops < min_steps:
-                break
-            out.append(Staircase(color, width, path, rising))
-            dead.update(keys)
+            if drops >= min_steps:  # short fragments are retired too, and the search goes on
+                out.append(Staircase(color, width, path, rising))
     return out
 
 
@@ -213,8 +223,10 @@ def plot_frame(sc: Staircase, segs: list[Seg]) -> tuple[float, float, float, flo
     return left, top, x1, bottom
 
 
-def calibrate(page: pymupdf.Page, sc: Staircase, segs: list[Seg]):
+def calibrate(page: pymupdf.Page, sc: Staircase, segs: list[Seg], group: list[Staircase] | None = None):
+    """Axes for ``sc``; the y-axis must also be valid for every curve in ``group``."""
     x0, y0, _, y1 = plot_frame(sc, segs)
+    curves_top = min(c.bbox[1] for c in (group or [sc]))
     words = [w for w in page.get_text("words") if NUM_WORD.match(w[4])]
     # y labels: right edge left of the plot, vertically within the plot band
     ycand = [w for w in words if w[2] <= x0 + 2 and w[2] >= x0 - 60 and y0 - 30 <= (w[1] + w[3]) / 2 <= y1 + 30]
@@ -237,7 +249,7 @@ def calibrate(page: pymupdf.Page, sc: Staircase, segs: list[Seg]):
             top = min(pairs)
             rest = [p for p in pairs if p is not top]
             ax = _fit(rest)
-            if ax and ax.b < 0 and ax.residual < 1.0 and sc.bbox[1] >= min(c for c, _ in rest) - 2:
+            if ax and ax.b < 0 and ax.residual < 1.0 and curves_top >= min(c for c, _ in rest) - 2:  # every curve below the break
                 yaxis = ax
                 break
     # x labels: a row below the plot with increasing values left to right
@@ -311,9 +323,13 @@ def _find_km_plots(doc) -> tuple[list[KMPlot], list[str]]:
     for pi, page in enumerate(doc):
         segs = _segments(page)
         text = page.get_text()
-        scs = staircases(segs)
+        scs = staircases(segs, notes=notes)
         if KAPLAN_RE.search(text):
-            scs += staircases(segs, rising=True)
+            if RISING_REFUSE_RE.search(text):
+                if staircases(segs, rising=True):
+                    notes.append(f"page {pi}: rising curves skipped (caption may describe cumulative incidence, not 1 - KM)")
+            else:
+                scs += staircases(segs, rising=True, notes=notes)
         if not scs:
             continue
         if ADJUSTED_RE.search(text):
@@ -330,7 +346,7 @@ def _find_km_plots(doc) -> tuple[list[KMPlot], list[str]]:
                 if scs[j].rising == sc.rising and abs(b1[0] - b2[0]) < 15 and not (b2[1] > b1[3] + 10 or b1[1] > b2[3] + 10):
                     group.append(scs[j])
                     used.add(j)
-            xaxis, yaxis = calibrate(page, sc, segs)
+            xaxis, yaxis = calibrate(page, sc, segs, group)
             if not xaxis or not yaxis:
                 notes.append(f"page {pi}: staircase found but axes could not be calibrated")
                 continue

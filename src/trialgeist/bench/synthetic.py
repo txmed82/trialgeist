@@ -135,7 +135,7 @@ def render_table1(page, rows, arms, footnote):
     c.text(50, y + 10, footnote, 7)
 
 
-def render_km(page, arms_data, horizon=36, step=6, rising=False):
+def render_km(page, arms_data, horizon=36, step=6, rising=False, colors=None, width=1.0):
     """arms_data: list of (name, steps[[t, before, after]], risk[(tau, n)], censor_times).
 
     rising=True plots 1 - S(t) (cumulative mortality, as in many Lancet/NEJM figures)."""
@@ -156,7 +156,7 @@ def render_km(page, arms_data, horizon=36, step=6, rising=False):
         c.text(X(t), B + 14, str(t), align="center")
     c.text((L + R) / 2, B + 28, "Months since randomization", align="center")
     for i, (name, steps, risk, cens) in enumerate(arms_data):
-        col = COLORS[i]
+        col = (colors or COLORS)[i]
         pts = [(X(0), Y(1))]
         for t, b, a in steps:
             pts.append((X(t), Y(b)))
@@ -164,7 +164,7 @@ def render_km(page, arms_data, horizon=36, step=6, rising=False):
         last_t = max([t for t, _, _ in steps] + [0])
         end_t = min(horizon, max(cens + [last_t]))
         pts.append((X(end_t), pts[-1][1]))
-        c.polyline(pts, col, 1.0)
+        c.polyline(pts, col, width)
         for ct in cens:
             lvl = Fraction(1)
             for t, b, a in steps:
