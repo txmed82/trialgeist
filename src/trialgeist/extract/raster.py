@@ -896,7 +896,11 @@ def raster_claims(rk: RasterKM) -> list:
                            text=f"raster KM curve {i + 1} (colour {tr.color}){' plotted as 1 - S(t)' if rk.rising else ''}",
                            note=(f"image xref {fig.xref} {fig.width}x{fig.height}px; " +
                                  ("numbers at risk read by OCR from the image; " if rk.ocr_numbers else "") +
-                                 "drops (px): " + ";".join(f"{x:.0f}:{b:.1f}->{a:.1f}" for x, b, a in tr.steps[:200])))]
+                                 "drops (px): " + ";".join(f"{x:.0f}:{b:.1f}->{a:.1f}" for x, b, a in tr.steps[:200]))),
+                # the studio draws these on the page so a reviewer sees exactly what was digitised
+                Provenance(source="raster", page=fig.page, text=f"digitised drops of curve {i + 1}",
+                           note="vertices: " + ";".join(f"{fig.rect[0] + x * sx:.2f},{fig.rect[1] + y * sy:.2f}"
+                                                        for x, bb, aa in tr.steps[:200] for y in (bb, aa)))]
         alts = [rows[tr.row]] if tr.row is not None else rows
         name = f"page {fig.page + 1} raster curve {i + 1}" + (f" ({tr.label}, paired by legend)" if tr.row is not None else "")
         out.append(KMArmClaim(label=name, alternatives=alts, steps=steps,
