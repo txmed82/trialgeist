@@ -21,6 +21,7 @@ Soundness rules (a false PROVEN_IMPOSSIBLE is the one unacceptable outcome):
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -32,7 +33,7 @@ import numpy as np
 import pymupdf
 
 from ..verdict import Provenance
-from .km_vector import ADJUSTED_RE, KAPLAN_RE, RISK_LABEL_RE, Axis, _fit, risk_rows
+from .km_vector import ADJUSTED_RE, KAPLAN_RE, RISING_REFUSE_RE, RISK_LABEL_RE, Axis, _fit, risk_rows
 
 KM_WORDS_RE = re.compile(r"kaplan|survival|at risk|time to (first )?event|event[- ]free|cumulative (mortality|probability)", re.I)
 NUM_TOKEN = re.compile(r"^[\-\u2212]?\d+(?:[.,\u00b7]\d+)?%?$")
@@ -596,6 +597,151 @@ def trace(mask: np.ndarray, p: Panel, other_ink: np.ndarray, why: list | None = 
     return Trace((0, 0, 0), steps, float(x_start), float(last_seen), gap_max, lw)
 
 
+def trace_edges(mask: np.ndarray, p: Panel, other_ink: np.ndarray, why: list | None = None) -> Trace | None:
+    """Edge reading of a thick stroked staircase whose drops are smaller than its line width.
+
+    A pen of width w draws a drop at x_r as a vertical stroke over [x_r - w/2, x_r + w/2], so the
+    stroke's TOP edge is the curve shifted right by w/2 (minus w/2) and its BOTTOM edge is the
+    curve shifted left by w/2 (plus w/2).  Both edges are read independently and must describe
+    the same staircase (bottom = top + thickness, k ~ w columns earlier) in at least 97% of the
+    columns and within 2.5 px everywhere; otherwise the curve is refused.  Drops are taken from
+    the top edge, placed back at the stroke centre, and given as line-centre levels."""
+    x_lo, x_hi = p.x0 + p.lw + 1, p.x1
+    y_lo, y_hi = p.y0, p.y1 - p.lw
+    width = x_hi - x_lo
+    runs = {x: _closed_runs(mask[y_lo:y_hi, x], 2, y_lo) for x in range(x_lo, x_hi + 1)}
+    cap = max(8, int(0.025 * (y_hi - y_lo)))
+    lens = np.bincount([b - a + 1 for x in runs for a, b in runs[x] if b - a + 1 <= cap], minlength=cap + 1)
+    if lens.sum() < 0.2 * width:
+        if why is not None:
+            why.append(("edges: too few thin runs", int(lens.sum())))
+        return None
+    lw = float(np.searchsorted(np.cumsum(lens), lens.sum() / 2))
+    tmax = lw * 1.25 + 2.5
+    x = next((xx for xx in range(x_lo, x_hi + 1) if any(b - a + 1 <= tmax for a, b in runs[xx])), None)
+    if x is None:
+        if why is not None:
+            why.append(("edges: no thin start",))
+        return None
+    a0, b0 = min((r for r in runs[x] if r[1] - r[0] + 1 <= tmax), key=lambda r: r[0])
+    xs, T, B, tprev, bprev = [x], [float(a0)], [float(b0)], a0, b0
+    last_known, x_start = x, x
+    max_gap = max(12, int(0.12 * width))
+    while x < x_hi:
+        x += 1
+        # continuity is overlap with the previous column's run; a censor mark poking above or
+        # below is part of the run here and is removed by the edge envelopes afterwards
+        cand = [r for r in runs[x] if r[0] <= bprev + 2 and r[1] >= tprev - 2]
+        col_other = other_ink[:, max(0, x - 1): x + 2].any(axis=1)
+        if not cand:
+            # hidden under another curve (also just below it: the drop happened underneath)
+            if col_other[max(0, tprev - 2): int(bprev + tmax + 4)].any() and x - last_known <= max_gap:
+                xs.append(x); T.append(np.nan); B.append(np.nan)
+                continue  # under another curve
+            if x - last_known <= 2:
+                xs.append(x); T.append(np.nan); B.append(np.nan)
+                continue  # JPEG hole
+            # reacquire after occlusion: the highest thin run at or below the old top edge
+            nxt = [r for r in runs[x] if r[0] >= tprev - 1 and r[1] - r[0] + 1 <= tmax]
+            if nxt and x - last_known <= max_gap and np.isnan(T[-1]):
+                cand = [min(nxt, key=lambda r: r[0])]
+            else:
+                break
+        a, b = min(r[0] for r in cand), max(r[1] for r in cand)
+        # an edge another curve touches is not this curve's edge
+        ta = np.nan if col_other[max(0, a - 2): a].any() else float(a)
+        tb = np.nan if col_other[b + 1: b + 3].any() else float(b)
+        xs.append(x); T.append(ta); B.append(tb)
+        tprev, bprev, last_known = a, b, x
+    n = len(xs)
+    T, B = np.array(T), np.array(B)
+    while n and np.isnan(T[n - 1]) and np.isnan(B[n - 1]):
+        n -= 1
+    T, B, xs = T[:n], B[:n], xs[:n]
+    if n < 0.3 * width:
+        if why is not None:
+            why.append(("edges: short", x_start, xs[-1] if xs else x_start))
+        return None
+
+    def envelope(v, top):
+        """Monotone non-decreasing envelope.  Censor marks (| or +) poke ABOVE the top edge and
+        BELOW the bottom edge, so the top edge takes the running max from the left and the bottom
+        edge the running min from the right; each filter only ever discards a mark, never a drop.
+        Anything else that bends one edge (a hole, a touching object) is caught by the double entry."""
+        v = v.copy()
+        idx = np.flatnonzero(~np.isnan(v))
+        vals = v[idx]
+        v[idx] = np.maximum.accumulate(vals) if top else np.minimum.accumulate(vals[::-1])[::-1]
+        return v
+
+    T2, B2 = envelope(T, True), envelope(B, False)
+    both = ~np.isnan(T2) & ~np.isnan(B2)
+    if both.sum() < 0.25 * width:
+        if why is not None:
+            why.append(("edges: too few readable columns", int(both.sum())))
+        return None
+    def agree(tc):
+        k = tc + 1
+        n_ok = 0
+        for i in np.flatnonzero(~np.isnan(T2)):
+            if any(0 <= i - kk < n and abs(B2[i - kk] - T2[i] - tc) <= 1.5 for kk in (k - 1, k, k + 1)):
+                n_ok += 1
+        return n_ok
+
+    # stroke thickness: the value under which the two edges agree best (the median thickness is
+    # wrong when drops are denser than the pen, because riser columns then outnumber plateaus)
+    t = float(max(range(0, int(tmax) + 1), key=agree))
+    k = int(round(t + 1))
+    # double entry: a top-edge column counts only if the bottom edge, k columns earlier,
+    # confirms it; unconfirmed columns become unknown (their width widens eps_t like an occlusion)
+    ok = bad = longest = cur = 0
+    for i in range(n):
+        if np.isnan(T2[i]):
+            continue
+        best = min((abs(B2[i - kk] - T2[i] - t) for kk in (k - 1, k, k + 1) if 0 <= i - kk < n and not np.isnan(B2[i - kk])),
+                   default=None)
+        if best is not None and best <= 1.5:
+            ok += 1
+            cur = 0
+        else:
+            T2[i] = np.nan
+            bad += best is not None
+            cur += 1
+            longest = max(longest, cur)
+    if ok < 0.25 * width or bad > 0.1 * (ok + bad) or longest > max_gap:
+        if why is not None:
+            why.append(("edges: top and bottom edges disagree", ok, bad, longest))
+        return None
+    # steps from the top edge, from the first confirmed column, forward-filled over unknown ones
+    known = np.flatnonzero(~np.isnan(T2))
+    i0, i1 = int(known[0]), int(known[-1])
+    Tf = T2.copy()
+    for i in range(i0 + 1, n):
+        if np.isnan(Tf[i]):
+            Tf[i] = Tf[i - 1]
+    x_start = xs[i0]
+    n = i1 + 1  # nothing after the last confirmed column is read
+    steps, gap_max, run_unknown = [], 0.0, 0
+    i = i0 + 1
+    while i < n:
+        run_unknown = run_unknown + 1 if np.isnan(T2[i]) else 0
+        gap_max = max(gap_max, float(run_unknown))
+        if Tf[i] > Tf[i - 1]:
+            j = i
+            while j + 1 < n and Tf[j + 1] > Tf[j]:
+                j += 1  # one drop spread over adjacent columns by anti-aliasing
+            if Tf[j] - Tf[i - 1] >= 1.0:
+                steps.append((float(xs[i]) - (t + 1) / 2, Tf[i - 1] + t / 2, Tf[j] + t / 2))
+            i = j + 1
+            continue
+        i += 1
+    if len(steps) < 3:
+        if why is not None:
+            why.append(("edges: fewer than 3 drops", len(steps)))
+        return None
+    return Trace((0, 0, 0), steps, float(x_start), float(xs[n - 1]), gap_max + (t + 1) / 2, t + 1)
+
+
 # ------------------------------------------------------------------ figure -> claims
 
 
@@ -683,12 +829,20 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
         if not masks:
             continue
         rising = False
-        traces = []
+        # a rising curve is read as 1 - KM only with Kaplan-Meier wording, and never when the
+        # page may describe a cumulative-incidence function (competing risks do not follow KM)
+        may_rise = bool(KAPLAN_RE.search(fig.page_text)) and not RISING_REFUSE_RE.search(fig.page_text)
+        if KAPLAN_RE.search(fig.page_text) and not may_rise:
+            notes.append(f"page {fig.page + 1}: rising raster curves refused (page may describe a cumulative-incidence function)")
+        traces, whys = [], []
         for ci, (c, m) in enumerate(zip(colors, masks)):
             other = np.logical_or.reduce([o for j, o in enumerate(masks) if j != ci]) if len(masks) > 1 else np.zeros_like(m)
-            t = trace(m, p, other)
-            if t is None and KAPLAN_RE.search(fig.page_text):
-                tf = trace(m[::-1].copy(), _flip(p, img.shape[0]), other[::-1].copy())
+            why: list = []
+            t = trace(m, p, other, why) or trace_edges(m, p, other, why)
+            whys.append((c, why[:3]))
+            if t is None and may_rise:
+                mf, pf, of = m[::-1].copy(), _flip(p, img.shape[0]), other[::-1].copy()
+                tf = trace(mf, pf, of) or trace_edges(mf, pf, of)
                 if tf is not None:
                     t, rising = _unflip(tf, img.shape[0]), True
             if t is not None:
@@ -697,6 +851,8 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
         traces = _drop_shadows(traces)
         if not traces:
             notes.append(f"page {fig.page + 1}: raster panel without a traceable staircase")
+            if os.environ.get("TRIALGEIST_RASTER_DEBUG"):
+                notes.append(f"debug: lw={p.lw} colours={colors} why={whys}")
             continue
         # numbers at risk: PDF text under the image first (proof grade), then OCR inside the image (leads)
         px_axis = _page_axis(xaxis, fig)
@@ -856,8 +1012,11 @@ def _drop_shadows(traces: list[Trace]) -> list[Trace]:
             shared = sum(1 for s in t.steps if any(same(s, v) for v in u.steps))
             if shared >= 0.5 * len(t.steps) and (len(u.steps), j) > (len(t.steps), i):
                 shadow = True
-            # a trace sharing drops with two different curves hops between them
-            others = [k for k, w in enumerate(traces) if k != i and any(same(s, v) for s in t.steps for v in w.steps)]
+            # a trace sharing many of its drops with two different curves hops between them
+            # (a single shared drop is coincidence on dense curves that start together)
+            need = max(2, 0.25 * len(t.steps))
+            others = [k for k, w in enumerate(traces)
+                      if k != i and sum(1 for s in t.steps if any(same(s, v) for v in w.steps)) >= need]
             if len(others) >= 2:
                 shadow = True
         if not shadow:

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import random
 import shutil
 
+import numpy as np
 import pymupdf
 import pytest
 
@@ -118,3 +120,68 @@ def test_confidence_band_edges_are_never_read_as_curves(tmp_path, dpi, quality):
     for p in plots:
         for t in p.traces:
             assert min(t.color) < 120, (t.color, notes)  # a line colour, never a pale tint
+
+
+# ---------------------------------------------------------------- edge reader (thick strokes)
+
+def _stroke(levels, xs_drop, w, H=600, W=700, ticks=()):
+    """A staircase stroked with a square pen of width w: plateau rows [y - w//2, y + w//2],
+    drops drawn as vertical strokes centred on the drop column."""
+    from trialgeist.extract.raster import Panel
+    m = np.zeros((H, W), bool)
+    edges = [40] + list(xs_drop) + [W - 40]
+    for (x0, x1), y in zip(zip(edges, edges[1:]), levels):
+        m[y - w // 2: y - w // 2 + w, x0: x1 + w // 2] = True
+    for x, (y0, y1) in zip(xs_drop, zip(levels, levels[1:])):
+        m[y0 - w // 2: y1 - w // 2 + w, x - w // 2: x - w // 2 + w] = True
+    for x, y in ticks:  # censor marks: | ticks 3w tall on a plateau
+        m[y - 2 * w: y + 2 * w, x - w // 2: x - w // 2 + w] = True
+    return m, Panel(x0=30, y1=H - 20, x1=W - 30, y0=20, lw=1)
+
+
+def _level_at(steps, x, start):
+    lvl = start
+    for sx, b, a in steps:
+        if sx <= x:
+            lvl = a
+    return lvl
+
+
+@pytest.mark.parametrize("w", [4, 6, 9])
+def test_edge_reader_resolves_drops_smaller_than_the_line(w):
+    from trialgeist.extract.raster import trace, trace_edges
+    rnd = random.Random(w)
+    xs, levels, x, y = [], [60], 60, 60
+    while x < 600:
+        x += rnd.randint(2, 14) + (w > 6) * 6  # a 9 px pen needs some plateaus longer than itself
+        y += rnd.randint(2, 4)  # drops of 2-4 px under a 4-9 px pen
+        xs.append(x); levels.append(y)
+    m, p = _stroke(levels, xs, w, ticks=[(xs[5] + 1, levels[6]), (xs[20] + 1, levels[21])])
+    other = np.zeros_like(m)
+    assert trace(m, p, other) is None  # the plateau reader cannot see them
+    t = trace_edges(m, p, other)
+    assert t is not None and len(t.steps) >= 0.5 * len(xs)
+    # every read level is within half a line width + 1 px of the true curve
+    for xx in range(int(t.x_start) + w, int(t.x_end) - w):
+        true = _level_at(list(zip(xs, levels, levels[1:])), xx, 60)
+        got = _level_at(t.steps, xx, 60)
+        assert abs(got - true) <= 1.5 or any(abs(xx - d) <= w for d in xs), (xx, true, got)
+
+
+def test_edge_reader_refuses_when_the_edges_disagree():
+    from trialgeist.extract.raster import trace_edges
+    rnd = random.Random(3)
+    xs, levels, x, y = [], [60], 60, 60
+    while x < 600:
+        x += rnd.randint(4, 14)
+        y += rnd.randint(2, 4)
+        xs.append(x); levels.append(y)
+    m, p = _stroke(levels, xs, 6)
+    # a same-colour band glued under the line from x = 200 on (a CI band edge, a second arm):
+    # the bottom edge no longer follows the top edge
+    for xx in range(200, 640):
+        y = _level_at(list(zip(xs, levels, levels[1:])), xx, 60)
+        m[y: y + 14 + (xx // 7) % 9, xx] = True
+    t = trace_edges(m, p, np.zeros_like(m))
+    if t is not None:  # if anything is read, it is only what both edges confirm
+        assert t.x_end < 260 or all(abs(a - b) < 40 for _, b, a in t.steps)
