@@ -166,6 +166,13 @@ def extract_claims_xml(path: str) -> list:
         if not pct_unsafe:
             claims.extend(_partition_blocks(body, col_n, label, caption))
         claims.extend(grid_claims(_grid(head_c, body_c, col_n, label, caption, complete, pct_unsafe)))
+    from .consort import allocation_claims
+
+    seen = set()
+    for c in allocation_claims(paper_text_xml(path), "xml"):
+        if (c.total, tuple(c.counts)) not in seen:
+            seen.add((c.total, tuple(c.counts)))
+            claims.append(c)
     return claims
 
 

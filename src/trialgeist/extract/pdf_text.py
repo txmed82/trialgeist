@@ -263,6 +263,11 @@ def extract_claims(path: str) -> list:
                                             granularity=g, scale_min=lo, scale_max=hi, provenance=prov))
     for cells in column_cells.values():
         claims.extend(_confirmed_cells(cells))
+    from .consort import allocation_claims
+
+    doc_text = "\n".join(pt.text for pt in pages)
+    for pt in pages:
+        claims.extend(allocation_claims(pt.text, "pdf", pt.index, doc_text))
     return claims
 
 
