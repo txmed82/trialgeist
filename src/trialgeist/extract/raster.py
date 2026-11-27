@@ -1068,7 +1068,7 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
         if rising and not may_rise:
             levels = []
         levels = [lv for lv in levels if (lv.rising_ok if rising else lv.falling_ok)]
-        if (traces or levels) and (y_scale := axis_scale(max(v for _, v in yaxis.labels), rising)) is None:
+        if (traces or levels) and (not yaxis.labels or (y_scale := axis_scale(max(v for _, v in yaxis.labels), rising)) is None):
             notes.append(f"page {fig.page + 1}: raster y axis could be probability or percent (rising curve, labels <= 1.5): refused")
             continue
         if not traces and not levels:

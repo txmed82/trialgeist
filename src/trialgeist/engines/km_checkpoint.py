@@ -78,7 +78,7 @@ def violation(readings: list[Reading], eps: Fraction, eps_t: Fraction, row: Row)
             if uj * ni < nj * li:
                 margin = nj * li - uj * ni
                 if best is None or margin * best["ni"] > best["margin"] * ni:
-                    best = {"i": i, "j": j, "tau_i": times[i], "tau_j": times[j], "ni": ni, "nj": nj,
+                    best = {"tau_i": times[i], "tau_j": times[j], "ni": ni, "nj": nj,
                             "read_i": ri, "read_j": rj, "L": li, "U": uj, "margin": margin}
     return best
 

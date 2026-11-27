@@ -124,8 +124,9 @@ ND = int(os.environ.get("TG_RASTER_DENSE_N", "20"))
 
 
 def dense_figure(rnd: random.Random, tmp_path, idx: int, inflate: bool):
-    narms = rnd.choice([2, 2, 3])
-    pal = rnd.choice([p for p in PALETTES + [[(0.97, 0.46, 0.43), (0.0, 0.75, 0.77)]] if len(p) >= narms])
+    pals = PALETTES + [[(0.97, 0.46, 0.43), (0.0, 0.75, 0.77)]]
+    narms = min(rnd.choice([2, 2, 3]), max(len(p) for p in pals))
+    pal = rnd.choice([p for p in pals if len(p) >= narms])
     arms, lam0 = [], rnd.uniform(0.01, 0.05)
     for ai in range(narms):
         obs = simulate_survival(rnd, rnd.randint(150, 900), lam0 * rnd.uniform(0.5, 1.6))
