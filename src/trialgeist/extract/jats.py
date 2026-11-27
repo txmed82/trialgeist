@@ -12,8 +12,9 @@ import xml.etree.ElementTree as ET
 
 from ..claims import MeanClaim, PercentClaim, PercentPartitionClaim
 from ..verdict import Provenance
+from .crosstable import Grid, GridRow, grid_claims
 from .pdf_text import (COMPLETE_RE, HEADER_N_RE, INSTRUMENTS, MEAN_CONTEXT_RE, MEANSD_RE, MEDIAN_CONTEXT_RE, NPCT_RE,
-                       OF_BEFORE_RE, PCTN_RE, RISK_CONTEXT_RE, PCT_CONTEXT_RE, UNIT_LABEL_RE, UNSAFE_PCT_RE, _confirmed_cells)
+                       OF_BEFORE_RE, PCTN_RE, npct_count, RISK_CONTEXT_RE, PCT_CONTEXT_RE, UNIT_LABEL_RE, UNSAFE_PCT_RE, _confirmed_cells)
 
 
 def _text(el) -> str:
@@ -22,6 +23,13 @@ def _text(el) -> str:
 
 def table_grid(tbl) -> tuple[list[list[str]], list[list[str]]]:
     """(header rows, body rows) with colspans expanded and rowspans filled down."""
+    head, body = table_cells(tbl)
+    return [[t for t, _ in r] for r in head], [[t for t, _ in r] for r in body]
+
+
+def table_cells(tbl) -> tuple[list[list[tuple[str, bool]]], list[list[tuple[str, bool]]]]:
+    """Like table_grid, but each slot is (text, own) where own is False for slots
+    filled by another cell's colspan/rowspan."""
 
     def rows_of(sec_tags):
         out = []
@@ -33,7 +41,7 @@ def table_grid(tbl) -> tuple[list[list[str]], list[list[str]]]:
             while ci < len(cells) or col in pending:
                 if col in pending:
                     txt, left = pending.pop(col)
-                    row.append(txt)
+                    row.append((txt, False))
                     if left > 1:
                         pending[col] = (txt, left - 1)
                     col += 1
@@ -43,7 +51,7 @@ def table_grid(tbl) -> tuple[list[list[str]], list[list[str]]]:
                 txt = _text(c)
                 cs, rs = int(c.get("colspan", "1") or 1), int(c.get("rowspan", "1") or 1)
                 for k in range(cs):
-                    row.append(txt)
+                    row.append((txt, k == 0 and cs == 1))
                     if rs > 1:
                         pending[col] = (txt, rs - 1)
                     col += 1
@@ -53,7 +61,7 @@ def table_grid(tbl) -> tuple[list[list[str]], list[list[str]]]:
     head = rows_of(["thead"])
     body = rows_of(["tbody"])
     if not head and not body:
-        body = [[_text(c) for c in tr] for tr in tbl.iter("tr")]
+        body = [[(_text(c), True) for c in tr] for tr in tbl.iter("tr")]
     return head, body
 
 
@@ -91,10 +99,12 @@ def extract_claims_xml(path: str) -> list:
         tbl = tw.find(".//table")
         if tbl is None:
             continue
-        head, body = table_grid(tbl)
-        if not head:  # header rows coded as <tbody> rows: leading rows carrying "n=" and no data cells
-            while body and any(HEADER_N_RE.search(x) for x in body[0][1:]) and not any(NPCT_RE.search(x) for x in body[0]):
-                head.append(body.pop(0))
+        head_c, body_c = table_cells(tbl)
+        if not head_c:  # header rows coded as <tbody> rows: leading rows carrying "n=" and no data cells
+            while body_c and any(HEADER_N_RE.search(x) for x, _ in body_c[0][1:]) and not any(NPCT_RE.search(x) for x, _ in body_c[0]):
+                head_c.append(body_c.pop(0))
+        head = [[t for t, _ in r] for r in head_c]
+        body = [[t for t, _ in r] for r in body_c]
         ncol = max((len(r) for r in head + body), default=0)
         col_n: dict[int, int] = {}
         for hr in head:
@@ -122,7 +132,7 @@ def extract_claims_xml(path: str) -> list:
                             continue
                         if not ((m.group(3) and kind in (None, "pct")) or kind == "pct"):
                             continue
-                        count, pct = int(m.group(1)), m.group(2)
+                        count, pct = npct_count(m), m.group(2)
                         if float(pct.replace("\u00b7", ".")) <= 100:  # >100 only counts once the column confirms N
                             claims.append(PercentClaim(label=rlab[:80], count=count, percent=pct, n=None, provenance=prov))
                         if c in col_n:
@@ -155,7 +165,33 @@ def extract_claims_xml(path: str) -> list:
             claims.extend(_confirmed_cells(cells))
         if not pct_unsafe:
             claims.extend(_partition_blocks(body, col_n, label, caption))
+        claims.extend(grid_claims(_grid(head_c, body_c, col_n, label, caption, complete, pct_unsafe)))
     return claims
+
+
+def _grid(head_c, body_c, col_n: dict[int, int], label: str, caption: str, complete: bool, pct_unsafe: bool) -> Grid:
+    col_head: dict[int, str] = {}
+    for hr in head_c:
+        for c, (txt, _) in enumerate(hr):
+            if c > 0 and txt and txt not in col_head.get(c, ""):
+                col_head[c] = (col_head.get(c, "") + " " + txt).strip()
+    rows: list[GridRow] = []
+    section, section_label = -1, ""
+    for r, row in enumerate(body_c):
+        texts = [t for t, _ in row]
+        if not texts:
+            continue
+        if _is_section(texts) or not any(t for t in texts[1:]):
+            section, section_label = r, texts[0]
+            continue
+        cells = {c: t for c, (t, own) in enumerate(row) if c > 0 and own and t}
+        if pct_unsafe:
+            cells = {c: t for c, t in cells.items() if not NPCT_RE.search(t)}
+        prov = {c: Provenance(source="xml", text=t, note=f"{label} row {r + 1} col {c + 1}: {texts[0][:80]} | {caption[:80]}")
+                for c, t in cells.items()}
+        ctx = texts[0] + (" | " + section_label if section >= 0 else "")
+        rows.append(GridRow(label=texts[0], context=ctx, section=section, cells=cells, prov=prov))
+    return Grid(label=label, caption=caption, col_n=dict(col_n), col_head=col_head, rows=rows, complete=complete)
 
 
 BARE_PCT_RE = re.compile(r"\d{1,3}(?:[.\u00b7]\d+)?")

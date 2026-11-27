@@ -28,8 +28,13 @@ from ..verdict import Provenance
 
 NUM = r"\d+(?:[.\u00b7]\d+)?"
 DEC = r"\d+[.\u00b7]\d+"
-NPCT_RE = re.compile(r"(?<![\d.\u00b7/\-\u2013])(\d{1,6})\s*\(\s*(" + NUM + r")\s*(%?)\s*\)")
-MEANSD_RE = re.compile(r"(?<![\d.\u00b7])([\-\u2212]?" + DEC + r")\s*(?:\(\s*(" + DEC + r")\s*\)|\u00b1\s*(" + DEC + r"))")
+NPCT_RE = re.compile(r"(?<![\d.,\u00b7/\-\u2013])(\d{1,3}(?:,\d{3})+|\d{1,6})\s*\(\s*(" + NUM + r")\s*(%?)\s*\)")
+MEANSD_RE = re.compile(r"(?<![\d.,\u00b7])([\-\u2212]?" + DEC + r")\s*(?:\(\s*(" + DEC + r")\s*\)|\u00b1\s*(" + DEC + r"))")
+def npct_count(m: re.Match) -> int:
+    """The count of an NPCT_RE match ("1,075 (51.1)" -> 1075)."""
+    return int(m.group(1).replace(",", ""))
+
+
 HEADER_N_RE = re.compile(r"\(?\s*[nN]\s*=\s*(\d[\d,]*)\s*\)?")
 PCT_CONTEXT_RE = re.compile(r"\b(no|n|number)\.?\s*\(\s*%\s*\)|\(\s*%\s*\)|\bnumbers?\s*\(\s*percent(age)?s?\s*\)", re.I)
 PCTN_RE = re.compile(r"(?<![\d.])(" + NUM + r")\s*%?\s*\(\s*n\s*=\s*(\d{1,6})\s*\)")  # "36.6 (n=11)": percent first
@@ -201,9 +206,15 @@ def _confirmed_cells(cells: list[tuple[int, object]]) -> list:
 
 
 def extract_claims(path: str) -> list:
+    from .crosstable import grid_claims, pdf_grids
+
     claims: list = []
     column_cells: dict[tuple[int, int], list] = {}
-    for pt in load_pages(path):
+    pages = load_pages(path)
+    for g in pdf_grids(pages):
+        if not UNSAFE_PCT_RE.search(g.caption):
+            claims.extend(grid_claims(g))
+    for pt in pages:
         pct_unsafe = bool(UNSAFE_PCT_RE.search(pt.text))
         complete = bool(COMPLETE_RE.search(pt.text))
         for i, row in enumerate(pt.rows):
@@ -218,7 +229,7 @@ def extract_claims(path: str) -> list:
                         continue
                     if UNIT_LABEL_RE.search(label_txt):
                         continue
-                    count, pct = int(m.group(1)), m.group(2)
+                    count, pct = npct_count(m), m.group(2)
                     if float(pct.replace("\u00b7", ".")) > 100:
                         continue
                     if OF_BEFORE_RE.search(text[: m.start()]):
@@ -301,7 +312,7 @@ def extract_baseline(path: str):
                 if kind not in ("pct", "mixed") and not nps[0].group(3):
                     continue
                 ns = [_header_n(pt, (bb[0] + bb[2]) / 2, row.y)[0] for bb in bbs]
-                ks = [int(m.group(1)) for m in nps]
+                ks = [npct_count(m) for m in nps]
                 if None in ns or any(k > n for k, n in zip(ks, ns)):  # type: ignore[operator]
                     continue
                 vars_.append(BaselineVar(name=row.label_before(bbs[0][0])[:60],

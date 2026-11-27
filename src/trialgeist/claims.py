@@ -120,6 +120,7 @@ class MeanPartitionClaim(_Claim):
     kind: Literal["mean_partition"] = "mean_partition"
     overall_mean: str
     parts: list[tuple[int, str]]  # (n, printed mean) of disjoint subgroups making up the whole
+    weights_exact: bool = True  # False: per-row missing data, pooled mean only within the subgroup means
 
 
 class MedianRangeClaim(_Claim):
@@ -128,11 +129,27 @@ class MedianRangeClaim(_Claim):
     min: str
     max: str
     granularity: str | None = None
+    bounds: Literal["range", "iqr"] = "range"
+
+
+class ArmTotalClaim(_Claim):
+    kind: Literal["arm_total"] = "arm_total"
+    total: int
+    counts: list[int]
+    total_n: int
+    arm_ns: list[int]
+
+
+class CommonDenominatorClaim(_Claim):
+    kind: Literal["common_denominator"] = "common_denominator"
+    counts: list[int]
+    percents: list[str]
+    d_max: int | None = None
 
 
 Claim = Annotated[
     Union[MeanClaim, PercentClaim, CountSumClaim, PercentPartitionClaim, TwoByTwoClaim, KMArmClaim, BaselineTableClaim,
-          MeanPartitionClaim, MedianRangeClaim],
+          MeanPartitionClaim, MedianRangeClaim, ArmTotalClaim, CommonDenominatorClaim],
     Field(discriminator="kind"),
 ]
 
@@ -190,11 +207,19 @@ def check_claim(c) -> list[Finding]:
     if isinstance(c, MeanPartitionClaim):
         from .engines.consistency import mean_partition_check
 
-        return [mean_partition_check(c.overall_mean, list(c.parts), c.label, c.provenance)]
+        return [mean_partition_check(c.overall_mean, list(c.parts), c.label, c.provenance, c.weights_exact)]
+    if isinstance(c, ArmTotalClaim):
+        from .engines.consistency import arm_total_check
+
+        return [arm_total_check(c.total, c.counts, c.total_n, c.arm_ns, c.label, c.provenance)]
+    if isinstance(c, CommonDenominatorClaim):
+        from .engines.consistency import common_denominator_check
+
+        return [common_denominator_check(c.counts, c.percents, c.d_max, c.label, c.provenance)]
     if isinstance(c, MedianRangeClaim):
         from .engines.consistency import median_range_check
 
-        return [median_range_check(c.median, c.min, c.max, c.label, c.granularity, c.provenance)]
+        return [median_range_check(c.median, c.min, c.max, c.label, c.granularity, c.provenance, c.bounds)]
     if isinstance(c, BaselineTableClaim):
         from .engines.carlisle import CategoricalVar, ContinuousVar, Design, carlisle_check
 

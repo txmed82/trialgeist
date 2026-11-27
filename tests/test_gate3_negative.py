@@ -47,5 +47,5 @@ def test_gate3_no_false_proofs(entry):
     # table (recorded with its justification in the manifest); everything else is a false alarm.
     known = [k["printed"] for k in entry.get("known_true_impossibilities", [])]
     bad = [(f.title, f.provenance[0].text if f.provenance else None) for f in findings if f.tier is Tier.PROVEN_IMPOSSIBLE
-           and not any(f.provenance and k in (f.provenance[0].text or "") for k in known)]
+           and not any(k in (p.text or "") for k in known for p in f.provenance)]
     assert not bad, bad
