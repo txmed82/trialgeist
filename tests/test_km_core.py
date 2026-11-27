@@ -138,3 +138,18 @@ def test_per_drop_time_tolerance_merges_the_checkpoint_it_straddles():
     wide = KMArm("a", [0, 6, 12], [10, 8, 5], late, eps=F(1, 100), eps_t=F(1, 10))
     segs = segments(wide)
     assert len(segs) == 2 and segs[0].t1 == 12  # the checkpoint at 6 is merged away
+
+
+def test_drops_before_a_late_first_checkpoint_are_not_held_to_its_count():
+    """A numbers-at-risk row that starts after time 0 (a table from month 3, or a row whose first
+    column was lost): drops before its first time had more patients at risk than that count."""
+    from trialgeist.engines.km_vector_sat import KMStep, km_check_any_row
+
+    # 24 patients: deaths at 1, 2, 3, 4 (1/24, 1/23, 1/22, 1/21), then 5 at risk at 50, 1 at 100
+    s, steps, n = Fraction(1), [], 24
+    for t in (1, 2, 3, 4):
+        a = s * (n - 1) / n
+        steps.append(KMStep(Fraction(t), s, a))
+        s, n = a, n - 1
+    f = km_check_any_row("late row", steps, Fraction(1, 500), Fraction(1, 2), [([50, 100], [5, 1], None)])
+    assert f.tier is not Tier.PROVEN_IMPOSSIBLE, f.detail

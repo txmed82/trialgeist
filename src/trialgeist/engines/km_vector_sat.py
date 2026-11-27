@@ -108,9 +108,14 @@ def segments(arm: KMArm) -> list[Segment]:
         n_end = counts[nxt] if nxt is not None else 0
         st = []
         for i, s in enumerate(arm.steps):
-            in_seg = s.t >= t0 - (arm.eps_t + s.dt if j == 0 else 0) and (t1 is None or s.t < t1)
-            if j == 0 and s.t < t0:
-                in_seg = True
+            if j == 0 and t0 > 0:
+                # a table that starts after time 0: drops before (or possibly before) its first
+                # checkpoint had more patients at risk than n(t0); leaving them out only relaxes
+                in_seg = s.t - (arm.eps_t + s.dt) >= t0 and (t1 is None or s.t < t1)
+            elif j == 0:
+                in_seg = t1 is None or s.t < t1  # nothing precedes time 0: early readings are slack
+            else:
+                in_seg = s.t >= t0 and (t1 is None or s.t < t1)
             if in_seg:
                 lo, hi, opt = ratio_bounds(s.before, s.after, arm.eps)
                 st.append((i, lo, hi, opt))
@@ -254,20 +259,25 @@ def km_check_any_row(label: str, steps: list[KMStep], eps, eps_t, rows: list[tup
 def km_certificate(cid: str, alts, assumptions, claim, label) -> str:
     data = []
     for arm, segs, total in alts:
-        data.append({"eps": str(arm.eps), "total": total, "segs": [
-            {"n_start": s.n_start, "n_end": s.n_end,
-             "steps": [[str(arm.steps[i].before), str(arm.steps[i].after)] for i, _, _, _ in s.steps]} for s in segs]})
+        data.append({"eps": str(arm.eps), "eps_t": str(arm.eps_t), "total": total, "segs": [
+            {"t0": str(s.t0), "t1": None if s.t1 is None else str(s.t1), "n_start": s.n_start, "n_end": s.n_end,
+             "steps": [[str(arm.steps[i].t), str(arm.steps[i].dt), str(arm.steps[i].before), str(arm.steps[i].after)]
+                       for i, _, _, _ in s.steps]} for s in segs]})
     small_inputs = {"label": label, "alternatives": len(data)}
     body = f'''from fractions import Fraction as F
 from math import ceil, floor
 from z3 import Int, Solver, And, Or, Sum, unsat  # pip install z3-solver
 Q = {QUANT}
-ALTS = {data!r}  # per candidate risk row: tolerance, event cap, intervals (at risk start/end, drops)
+ALTS = {data!r}  # per candidate risk row: tolerances, event cap, intervals [t0, t1) (at risk start/end, drops)
 for ai, alt in enumerate(ALTS):
     EPS, sv, allD = F(alt["eps"]), Solver(), []
     for j, seg in enumerate(alt["segs"]):
-        prev = seg["n_start"]
-        for k, (b, a_) in enumerate(seg["steps"]):
+        prev, t0, t1 = seg["n_start"], F(seg["t0"]), seg["t1"] and F(seg["t1"])
+        for k, (t, dt, b, a_) in enumerate(seg["steps"]):
+            tol = F(alt["eps_t"]) + F(dt)  # each drop's true time must lie inside its interval
+            # (interior checkpoints with a drop within tol were merged away when the intervals were
+            # built, so this holds for every drop the engine places; checked here, not assumed)
+            assert (j == 0 and t0 == 0 or F(t) - tol >= t0) and (t1 is None or F(t) + tol < t1), "drop outside interval"
             b, a_ = F(b), F(a_)
             lo = floor(max(F(0), a_ - EPS) / (b + EPS) * Q)  # factor >= lo/Q, rounded outward
             hi = Q if b - EPS <= 0 else min(Q, ceil((a_ + EPS) / (b - EPS) * Q))

@@ -230,6 +230,8 @@ def test_axis_scale_refuses_ambiguous_rising_axes():
     assert axis_scale(100, rising=False) == 0.01
     assert axis_scale(40, rising=True) == 0.01
     assert axis_scale(0.5, rising=True) is None   # 0-0.5 probability or 0-0.5 %: cannot tell
+    assert axis_scale(1000, rising=True) is None  # events per 1,000 persons: not a survival scale
+    assert axis_scale(250, rising=False) is None
     assert axis_scale(1.25, rising=False) is None  # neither a probability nor a percent top
 
 
@@ -258,6 +260,40 @@ def test_ocr_risk_rows_stay_with_their_own_panel():
     # a two-checkpoint table is still a table
     words3 = [w(60, 330, "risk"), w(100, 330, "50"), w(200, 330, "40")]
     assert [[n for _, n in r] for _, r in ocr_risk_rows(words3, p, ax)] == [[50, 40]]
+
+
+def test_level_shadows_are_dropped():
+    """A colour exported twice (or an anti-aliased edge) yields a second level curve on top of
+    a real arm; it must not count as an arm of its own."""
+    from trialgeist.extract.raster import LevelCurve, Trace, _drop_level_shadows
+
+    a = LevelCurve((200, 0, 0), [(float(x), 100 + x / 10) for x in range(0, 400, 4)], 2.0, True, False)
+    b = LevelCurve((0, 0, 200), [(float(x), 150 + x / 8) for x in range(0, 400, 4)], 2.0, True, False)
+    halo = LevelCurve((230, 120, 120), [(float(x), 101 + x / 10) for x in range(0, 400, 8)], 2.0, True, False)
+    assert _drop_level_shadows([a, halo, b], []) == [a, b]
+    t = Trace.__new__(Trace)
+    t.steps = [(float(x), 150 + (x - 4) / 8, 150 + x / 8) for x in range(4, 400, 4)]
+    assert _drop_level_shadows([a, b], [t]) == [a]
+
+
+def test_ocr_risk_rows_inside_the_frame():
+    """Some exports print the table inside the plot frame under the curves: read it only with
+    "at risk" on one line in the bottom third, and never below the frame."""
+    from trialgeist.extract.km_vector import Axis
+    from trialgeist.extract.raster import Panel, ocr_risk_rows
+
+    p = Panel(x0=100, y1=300, x1=500, y0=100, lw=2)
+    ax = Axis(a=0.0, b=0.1, residual=0.0, labels=[(100, 0.0), (200, 10.0), (300, 20.0), (400, 30.0)])
+    w = lambda x, y, t: (x - 8, y, x + 8, y + 12, t, 90)  # noqa: E731
+    table = [w(110, 250, "No."), w(130, 250, "at"), w(150, 250, "risk"),
+             w(100, 265, "50"), w(200, 265, "40"), w(300, 265, "30"),
+             w(100, 280, "45"), w(200, 280, "41"), w(300, 280, "22")]
+    rows = ocr_risk_rows(table + [w(100, 330, "9"), w(200, 330, "8"), w(300, 330, "7")], p, ax)
+    assert [[n for _, n in r] for _, r in rows] == [[50, 40, 30], [45, 41, 22]]
+    # "risk" alone (a curve label such as "high risk") is not a table
+    assert ocr_risk_rows([v for v in table if v[4] != "at"], p, ax) == []
+    # a label high in the panel (a legend) is not a table either
+    assert ocr_risk_rows([(x0, y - 120, x1, y1 - 120, t, c) for x0, y, x1, y1, t, c in table], p, ax) == []
 
 
 
@@ -307,3 +343,51 @@ def test_blob_axis_refuses_labels_that_are_not_on_one_linear_scale():
     # control: the same layout with linear values is read, so the refusal above is the rule
     img, p, _ = _render_axes(["0", "4", "8", "12", "16", "20"], ["6", "4", "2", "0"], title=False)
     assert blob_axis(img, p, "x") is not None
+
+
+def _level_mask(levels, h=300, w=600, lw=3, ticks=(), band=None):
+    """A falling staircase drawn in a boolean mask: plateaus at ``levels`` (px rows), risers between."""
+    m = np.zeros((h, w), dtype=bool)
+    xs = np.linspace(40, w - 10, len(levels) + 1).astype(int)
+    for k, y in enumerate(levels):
+        m[y - lw // 2: y - lw // 2 + lw, xs[k]: xs[k + 1] + 1] = True
+        if k:
+            m[levels[k - 1]: y + 1, xs[k] - lw // 2: xs[k] - lw // 2 + lw] = True
+    for x in ticks:
+        y = next(levels[k] for k in range(len(levels)) if xs[k] <= x <= xs[k + 1])
+        m[y - 6: y + 7, x: x + 1] = True
+    if band is not None:  # a continuous second stroke ``band`` px above (a band edge, or another arm)
+        m |= np.roll(m, -band, axis=0)
+    return m
+
+
+def test_level_curve_reads_levels_through_censor_marks():
+    from trialgeist.extract.raster import Panel, level_curve
+
+    levels = list(range(30, 260, 3))  # 77 tiny drops: far too dense for the staircase reader
+    m = _level_mask(levels, ticks=range(60, 580, 7))
+    p = Panel(x0=20, y1=290, x1=595, y0=10, lw=1)
+    lv = level_curve(m, p)
+    assert lv is not None and lv.falling_ok and not lv.rising_ok
+    xs = np.linspace(40, 590, len(levels) + 1).astype(int)
+    for x, y in lv.points:  # every reading is on the curve (within half a stroke) at its column
+        k = int(np.searchsorted(xs, x, side="right")) - 1
+        near = [levels[j] for j in (k - 1, k) if 0 <= j < len(levels)]
+        assert min(abs(y - v) for v in near) <= 2, (x, y, near)
+
+
+def test_level_curve_refuses_a_second_stroke_in_the_same_colour():
+    from trialgeist.extract.raster import Panel, level_curve
+
+    m = _level_mask(list(range(60, 200, 10)), band=25)  # a band edge (or a second arm) in the same colour
+    why: list = []
+    assert level_curve(m, Panel(x0=20, y1=290, x1=595, y0=10, lw=1), why=why) is None
+    assert any("several strokes" in str(w) for w in why)
+
+
+def test_level_curve_refuses_non_monotone_ink():
+    from trialgeist.extract.raster import Panel, level_curve
+
+    m = _level_mask([200, 150, 220, 100, 240])  # up and down: not a survival curve in either orientation
+    why: list = []
+    assert level_curve(m, Panel(x0=20, y1=290, x1=595, y0=10, lw=1), why=why) is None

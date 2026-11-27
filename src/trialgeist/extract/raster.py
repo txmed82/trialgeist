@@ -89,7 +89,12 @@ class RasterKM:
     risk: list[tuple[str, list[tuple[float, int]]]]
     ocr_numbers: bool
     notes: list[str] = field(default_factory=list)
+    levels: list = field(default_factory=list)  # LevelCurve: curves read by level only
 
+
+# tesseract spawns one OpenMP thread per core per call; scans run many calls (and often several
+# scans at once), where that oversubscription makes each call orders of magnitude slower
+_TESS_ENV = {**os.environ, "OMP_THREAD_LIMIT": "1"}
 
 # ------------------------------------------------------------------ images
 
@@ -162,7 +167,7 @@ def ocr_words(img: np.ndarray, scale: float | None = None) -> list[tuple[float, 
             fh.write(np.ascontiguousarray(big, dtype=np.uint8).tobytes())
         del big
         try:
-            r = subprocess.run([exe, str(p), "-", "--psm", "11", "tsv"], capture_output=True, text=True, timeout=60)
+            r = subprocess.run([exe, str(p), "-", "--psm", "11", "tsv"], capture_output=True, text=True, timeout=60, env=_TESS_ENV)
         except (OSError, subprocess.TimeoutExpired):
             return []
     out = []
@@ -334,7 +339,7 @@ def _ocr_label(crop: np.ndarray, scale: int, min_conf: float = 60) -> tuple[str,
             fh.write(np.ascontiguousarray(c, dtype=np.uint8).tobytes())
         try:
             r = subprocess.run([exe, str(f), "-", "--psm", "7", "-c", "tessedit_char_whitelist=0123456789.-%",
-                                "tsv"], capture_output=True, text=True, timeout=30)
+                                "tsv"], capture_output=True, text=True, timeout=30, env=_TESS_ENV)
         except (OSError, subprocess.TimeoutExpired):
             return None
     toks = []
@@ -931,7 +936,14 @@ def ocr_risk_rows(words, p: Panel, xaxis: Axis, bottom: float | None = None) -> 
     lab = [w for w in words if (RISK_LABEL_RE.search(w[4]) or w[4].lower() in ("risk", "at"))
            and w[1] >= p.y1 - 4 and (bottom is None or w[1] < bottom)]
     if not lab:
-        return []
+        # some exports draw the table inside the frame, under the curves: a "... at risk"
+        # label in the bottom third of the panel, with "at" and "risk" on one line
+        low = [w for w in words if p.y1 - 0.35 * (p.y1 - p.y0) <= w[1] < p.y1 and p.x0 - 200 <= w[0] <= p.x1]
+        risk = [w for w in low if w[4].lower().strip(":") == "risk"]
+        lab = [w for w in risk if any(v[4].lower() == "at" and abs(v[1] - w[1]) < 0.6 * (w[3] - w[1]) and v[0] < w[0] for v in low)]
+        if not lab:
+            return []
+        bottom = p.y1 - p.lw if bottom is None else min(bottom, p.y1 - p.lw)
     top = min(w[1] for w in lab) - 4
     ints = [w for w in words if re.fullmatch(r"\d[\d,]*", w[4]) and w[1] >= top and w[5] >= 60
             and (bottom is None or w[3] <= bottom) and p.x0 - 15 <= (w[0] + w[2]) / 2 <= p.x1 + 15]
@@ -1020,7 +1032,7 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
         if not may_rise:
             notes.append(f"page {fig.page + 1}: rising raster curves not read (no Kaplan-Meier wording, or a "
                          "cumulative-incidence note on the page)")
-        traces, whys = [], []
+        traces, whys, levels = [], [], []
         for ci, (c, m) in enumerate(zip(colors, masks)):
             other = np.logical_or.reduce([o for j, o in enumerate(masks) if j != ci]) if len(masks) > 1 else np.zeros_like(m)
             why: list = []
@@ -1039,17 +1051,27 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
             if t is not None:
                 t.color = c
                 traces.append(t)
+            elif (lv := level_curve(m, p, c, why)) is not None:
+                levels.append(lv)  # too dense to rebuild drop by drop: read its level only
         traces = _drop_shadows(traces)
-        if len({t.rising for t in traces}) > 1:
-            # one panel is falling or rising; arms read in both orientations mean one of the
-            # readings is wrong, and 1 - v applied to the wrong arms would invent contradictions
+        levels = _drop_level_shadows(levels, traces)
+        # one panel is falling or rising; arms read in both orientations mean one of the
+        # readings is wrong, and 1 - v applied to the wrong arms would invent contradictions
+        sure = {t.rising for t in traces} | {lv.rising_ok for lv in levels if lv.rising_ok != lv.falling_ok}
+        if len(sure) > 1:
             notes.append(f"page {fig.page + 1}: raster panel with arms read in opposite orientations refused")
             continue
-        rising = bool(traces) and traces[0].rising
-        if traces and (y_scale := axis_scale(max(v for _, v in yaxis.labels), rising)) is None:
+        if levels and not sure:
+            notes.append(f"page {fig.page + 1}: raster panel with only flat level curves (orientation unknown) refused")
+            continue
+        rising = bool(sure) and sure.pop()
+        if rising and not may_rise:
+            levels = []
+        levels = [lv for lv in levels if (lv.rising_ok if rising else lv.falling_ok)]
+        if (traces or levels) and (not yaxis.labels or (y_scale := axis_scale(max(v for _, v in yaxis.labels), rising)) is None):
             notes.append(f"page {fig.page + 1}: raster y axis could be probability or percent (rising curve, labels <= 1.5): refused")
             continue
-        if not traces:
+        if not traces and not levels:
             notes.append(f"page {fig.page + 1}: raster panel without a traceable staircase")
             if os.environ.get("TRIALGEIST_RASTER_DEBUG"):
                 notes.append(f"debug: lw={p.lw} colours={colors} why={whys}")
@@ -1062,14 +1084,19 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
                        fig.rect[0] + p.x0 * sx, fig.rect[0] + p.x1 * sx)
         ocr = False
         if not rr:
-            below = [q.y0 for q in panels if q.y0 > p.y1 and q.x0 < p.x1 and p.x0 < q.x1]
-            rr, ocr = ocr_risk_rows(words, p, xaxis, min(below, default=None)), True
+            below = sorted((q for q in panels if q.y0 > p.y1 and q.x0 < p.x1 and p.x0 < q.x1), key=lambda q: q.y0)
+            rr, ocr = ocr_risk_rows(words, p, xaxis, below[0].y0 if below else None), True
+            if not rr and below and below[0].y1 - below[0].y0 < 0.6 * (p.y1 - p.y0):
+                # a numbers-at-risk table drawn in its own box under the plot (ggsurvplot
+                # risk.table): read inside it, never past the next panel
+                rr = ocr_risk_rows(words, p, xaxis, below[1].y0 if len(below) > 1 else None)
         if not rr:
             notes.append(f"page {fig.page + 1}: raster KM panel without numbers at risk")
             continue
-        labels = legend_labels(img, words, [t.color for t in traces])
+        arms = traces + levels
+        labels = legend_labels(img, words, [t.color for t in arms])
         for ci, ri in pair_rows(labels, rr).items():
-            traces[ci].label, traces[ci].row = labels[ci], ri
+            arms[ci].label, arms[ci].row = labels[ci], ri
         # one event moves the curve by at least 1/N0 of the y-range (largest N0 among the rows the
         # curve may belong to): px of the smallest possible single-event drop
         px_per_unit = 1.0 / max(abs(yaxis.b) * y_scale, 1e-12)
@@ -1081,10 +1108,88 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
                 notes.append(f"page {fig.page + 1}: raster curve drawn with sloping segments (not a KM staircase) refused")
                 continue
             kept.append(t)
-        if not kept:
+        # a refused (sloped) trace keeps its legend label and row on its own object; the
+        # remaining arms keep theirs, and the joint check accepts fewer curves than rows
+        if not kept and not levels:
             continue
-        out.append(RasterKM(fig, p, xaxis, yaxis, y_scale, rising, kept, rr, ocr))
+        out.append(RasterKM(fig, p, xaxis, yaxis, y_scale, rising, kept, rr, ocr, levels=levels))
     return out, notes
+
+
+@dataclass
+class LevelCurve:
+    """A curve read only by its level, column by column (no drop list): (x px, y px) of the
+    columns where the curve is a single clean stroke, first and last column of each flat run."""
+
+    color: tuple[int, int, int]
+    points: list[tuple[float, float]]
+    lw: float
+    falling_ok: bool  # image y never decreases left to right (a falling survival curve)
+    rising_ok: bool   # image y never increases (a rising 1 - S(t) curve)
+    label: str = ""
+    row: int | None = None
+
+
+def level_curve(mask: np.ndarray, p: Panel, color=(0, 0, 0), why: list | None = None) -> LevelCurve | None:
+    """Read a curve's level where it is unambiguous, for curves too dense to rebuild drop by drop.
+
+    Only ink in connected pieces spanning >= 12% of the panel width counts (text, legend
+    swatches and marks are smaller).  A column is read only if it holds exactly one stroke no
+    thicker than the curve's own line (+2 px): risers, censor marks, crossings and occlusions
+    are skipped, never guessed.  The colour is refused when many columns hold several strokes
+    (two curves, a band in the same colour, circles) or when the readings are not monotone,
+    which also rejects stray same-coloured marks read as the curve."""
+    from scipy import ndimage
+
+    oy, ox = p.y0, p.x0 + p.lw + 1
+    sub = mask[p.y0: p.y1 - p.lw, ox: p.x1 + 1]
+    if sub.size == 0 or not sub.any():
+        return None
+    W = sub.shape[1]
+    lab, n = ndimage.label(sub, structure=np.ones((3, 3), dtype=bool))
+    if not n:
+        return None
+    objs = ndimage.find_objects(lab)
+    keep = [k + 1 for k, sl in enumerate(objs) if sl is not None and sl[1].stop - sl[1].start >= max(0.12 * W, 25)]
+    if not keep:
+        if why is not None:
+            why.append("levels: no long stroke")
+        return None
+    big = np.isin(lab, keep)
+    runs = [_runs(big[:, x]) for x in range(W)]
+    inked = sum(1 for r in runs if r)
+    multi = sum(1 for r in runs if len(r) >= 2)
+    singles = [b - a + 1 for r in runs if len(r) == 1 for a, b in r]
+    if multi > 0.2 * inked:
+        if why is not None:
+            why.append(("levels: several strokes in one colour", multi, inked))
+        return None
+    if inked < 30 or len(singles) < 20:
+        if why is not None:
+            why.append(("levels: too little stroke", inked, len(singles)))
+        return None
+    lw = float(np.median(singles))
+    pts = [(x + ox, oy + (r[0][0] + r[0][1]) / 2) for x, r in enumerate(runs) if len(r) == 1 and r[0][1] - r[0][0] + 1 <= lw + 2]
+    if len(pts) < 20:
+        if why is not None:
+            why.append(("levels: too few clean single-stroke columns", len(pts), lw))
+        return None
+    tol = max(lw / 2 + 1.5, 2.0)
+    ys = np.array([y for _, y in pts])
+    falling_ok = bool(np.all(ys >= np.maximum.accumulate(ys) - tol))
+    rising_ok = bool(np.all(ys <= np.minimum.accumulate(ys) + tol))
+    if not (falling_ok or rising_ok):
+        if why is not None:
+            why.append("levels: not monotone")
+        return None
+    out = [pts[0]]
+    for i in range(1, len(pts)):  # first and last column of each flat run of adjacent columns
+        x, y = pts[i]
+        px, py = pts[i - 1]
+        if x - px == 1 and abs(y - py) <= 0.5 and i + 1 < len(pts) and pts[i + 1][0] - x == 1 and abs(pts[i + 1][1] - y) <= 0.5:
+            continue
+        out.append((x, y))
+    return LevelCurve(tuple(color), out, lw, falling_ok, rising_ok)
 
 
 def _sloped(t: Trace, event_px: float) -> bool:
@@ -1253,6 +1358,46 @@ def _drop_shadows(traces: list[Trace]) -> list[Trace]:
     return keep
 
 
+def _trace_y(t: Trace, x: float) -> float:
+    """Pixel row of a staircase at column x (the plateau in force there)."""
+    y = t.steps[0][1]
+    for sx, _, a in t.steps:
+        if sx > x:
+            break
+        y = a
+    return y
+
+
+def _drop_level_shadows(levels: list[LevelCurve], traces: list[Trace]) -> list[LevelCurve]:
+    """A level curve lying on another arm (a colour exported twice, anti-aliased edge pixels)
+    is a shadow: it would take a legend label and a risk row from a real arm and change the
+    arm count of the joint check.  Mostly coinciding with a staircase, or with a level curve
+    that has more points, drops it."""
+    def near(lv, ys_at):
+        tol = max(lv.lw, 3.0)
+        return sum(1 for x, y in lv.points if (z := ys_at(x)) is not None and abs(z - y) <= tol)
+
+    def level_at(other):
+        xs = np.array([x for x, _ in other.points])
+        ys = np.array([y for _, y in other.points])
+
+        def f(x):
+            i = int(np.searchsorted(xs, x))
+            cand = [j for j in (i - 1, i) if 0 <= j < len(xs) and abs(xs[j] - x) <= 3]
+            return float(ys[cand[0]]) if cand else None
+        return f
+
+    keep = []
+    for i, lv in enumerate(levels):
+        n = len(lv.points)
+        shadow = any(t.steps and near(lv, lambda x, t=t: _trace_y(t, x)) >= 0.6 * n for t in traces)
+        shadow = shadow or any(j != i and (len(o.points), -j) > (n, -i) and near(lv, level_at(o)) >= 0.6 * n
+                               for j, o in enumerate(levels))
+        if not shadow:
+            keep.append(lv)
+    return keep
+
+
 def _bars_on_curve(t: Trace, mask: np.ndarray, p: Panel) -> int:
     """Places where the curve's own ink runs far above its plateau, away from any drop: error bars
     or a band in the curve's own colour (KM steps only fall; a censor tick is a short mark).
@@ -1332,6 +1477,67 @@ def raster_claims(rk: RasterKM) -> list:
         name = f"page {fig.page + 1} raster curve {i + 1}" + (f" ({tr.label}, paired by legend)" if tr.row is not None else "")
         out.append(KMArmClaim(label=name, alternatives=alts, steps=steps,
                               eps=f"{eps:.6f}", eps_t=f"{eps_t:.6f}", provenance=prov, ocr_numbers=rk.ocr_numbers))
+    return out + checkpoint_claims(rk)
+
+
+def _level(rk: RasterKM, y: float) -> float:
+    v = rk.yaxis.value(y) * rk.y_scale
+    return min(max(1 - v if rk.rising else v, 0.0), 1.0)
+
+
+def level_readings(rk: RasterKM, arm) -> tuple[list[tuple[str, str]], float, float]:
+    """(time, survival) readings with their level and time tolerances, for a level curve or,
+    for a fully rebuilt staircase, the midpoints of its plateaus that are clear of both drops."""
+    base_px = 3.0 + 3 * rk.xaxis.residual + arm.lw / 2  # axis fit + the stroke's horizontal half-width
+    eps = abs(rk.yaxis.b) * rk.y_scale * (arm.lw / 2 + 2.0 + 3 * rk.yaxis.residual)
+    if isinstance(arm, LevelCurve):
+        pts = arm.points
+    else:
+        gaps = arm.gaps if arm.gaps is not None else [arm.gap_px] * len(arm.steps)
+        edges = [(arm.x_start, arm.steps[0][1] if arm.steps else None, 0.0)]
+        edges += [(x, a, g) for (x, _, a), g in zip(arm.steps, gaps)]
+        ends = [(x, g) for (x, _, _), g in zip(arm.steps, gaps)] + [(arm.x_end, 0.0)]
+        pts = []
+        for (x0, lev, g0), (x1, g1) in zip(edges, ends):
+            if lev is not None and (x1 - x0) / 2 > base_px + max(g0, g1) + 1:
+                pts.append(((x0 + x1) / 2, lev))
+    rd = [(f"{rk.xaxis.value(x):.6f}", f"{_level(rk, y):.6f}") for x, y in pts]
+    return rd, eps, abs(rk.xaxis.b) * base_px
+
+
+def checkpoint_claims(rk: RasterKM) -> list:
+    """Level-only checks: each level curve against its row(s); and, when the panel has as many
+    arms as numbers-at-risk rows, all arms jointly (every row must belong to one arm)."""
+    from ..claims import KMCheckpointClaim, KMCheckpointCurve, KMCheckpointJointClaim, KMRiskRow
+
+    fig = rk.figure
+    sx = (fig.rect[2] - fig.rect[0]) / fig.width
+    sy = (fig.rect[3] - fig.rect[1]) / fig.height
+    bbox = (fig.rect[0] + rk.panel.x0 * sx, fig.rect[1] + rk.panel.y0 * sy, fig.rect[0] + rk.panel.x1 * sx, fig.rect[1] + rk.panel.y1 * sy)
+    rows = [KMRiskRow(label=lab, risk_times=[f"{t:.6f}" for t, _ in row], at_risk=[n for _, n in row]) for lab, row in rk.risk]
+    arms = list(rk.traces) + list(rk.levels)
+    out, curves = [], []
+    for i, arm in enumerate(arms):
+        rd, eps, eps_t = level_readings(rk, arm)
+        kind = "level curve" if isinstance(arm, LevelCurve) else "staircase"
+        name = f"page {fig.page + 1} raster {kind} {i + 1}" + (f" ({arm.label}, paired by legend)" if arm.row is not None else "")
+        curves.append(KMCheckpointCurve(label=name, readings=rd, eps=f"{eps:.6f}", eps_t=f"{eps_t:.6f}"))
+        if isinstance(arm, LevelCurve) and rd:
+            prov = [Provenance(source="raster", page=fig.page, bbox=bbox,
+                               text=f"raster KM {kind} {i + 1} (colour {arm.color}){' plotted as 1 - S(t)' if rk.rising else ''}",
+                               note=(f"image xref {fig.xref} {fig.width}x{fig.height}px; " +
+                                     ("numbers at risk read by OCR from the image; " if rk.ocr_numbers else "") +
+                                     f"read by level at {len(rd)} columns (single clean stroke only)")),
+                    Provenance(source="raster", page=fig.page, text=f"level readings of curve {i + 1}",
+                               note="vertices: " + ";".join(f"{fig.rect[0] + x * sx:.2f},{fig.rect[1] + y * sy:.2f}" for x, y in arm.points[:400]))]
+            alts = [rows[arm.row]] if arm.row is not None else rows
+            out.append(KMCheckpointClaim(label=name, readings=rd, eps=f"{eps:.6f}", eps_t=f"{eps_t:.6f}", alternatives=alts,
+                                         provenance=prov, ocr_numbers=rk.ocr_numbers))
+    if 2 <= len(arms) <= len(rows) <= 4 and all(c.readings for c in curves):
+        prov = [Provenance(source="raster", page=fig.page, bbox=bbox, text=f"raster KM panel with {len(arms)} arms",
+                           note=f"image xref {fig.xref}; " + ("numbers at risk read by OCR from the image" if rk.ocr_numbers else "numbers at risk from PDF text"))]
+        out.append(KMCheckpointJointClaim(label=f"page {fig.page + 1} raster panel", curves=curves, rows=rows,
+                                          provenance=prov, ocr_numbers=rk.ocr_numbers))
     return out
 
 

@@ -103,6 +103,33 @@ class KMArmClaim(_Claim):
     ocr_numbers: bool = False  # numbers at risk read by OCR from an image: never more than a lead
 
 
+class KMCheckpointClaim(_Claim):
+    """Survival levels read off a curve (not its individual drops) against numbers at risk."""
+
+    kind: Literal["km_checkpoint"] = "km_checkpoint"
+    readings: list[tuple[str, str]]  # (time, plotted survival)
+    eps: str
+    eps_t: str
+    alternatives: list[KMRiskRow]
+    ocr_numbers: bool = False
+
+
+class KMCheckpointCurve(BaseModel):
+    label: str
+    readings: list[tuple[str, str]]
+    eps: str
+    eps_t: str
+
+
+class KMCheckpointJointClaim(_Claim):
+    """Curves of one panel against its rows, each row belonging to exactly one curve."""
+
+    kind: Literal["km_checkpoint_joint"] = "km_checkpoint_joint"
+    curves: list[KMCheckpointCurve]
+    rows: list[KMRiskRow]
+    ocr_numbers: bool = False
+
+
 class BaselineVar(BaseModel):
     name: str
     means: list[str] | None = None
@@ -151,7 +178,8 @@ class CommonDenominatorClaim(_Claim):
 
 Claim = Annotated[
     Union[MeanClaim, PercentClaim, CountSumClaim, PercentPartitionClaim, TwoByTwoClaim, KMArmClaim, BaselineTableClaim,
-          MeanPartitionClaim, MedianRangeClaim, ArmTotalClaim, CommonDenominatorClaim],
+          MeanPartitionClaim, MedianRangeClaim, ArmTotalClaim, CommonDenominatorClaim, KMCheckpointClaim,
+          KMCheckpointJointClaim],
     Field(discriminator="kind"),
 ]
 
@@ -168,6 +196,17 @@ def _with_missing(c: MeanClaim) -> list[Finding]:
     if c.sd is not None and c.scale_min is not None and c.scale_max is not None:
         out.append(bhatia_davis_check(lo, c.mean, c.sd, c.scale_min, c.scale_max, label=c.label, provenance=c.provenance))
     return out
+
+
+def _ocr_lead(f: Finding) -> Finding:
+    """Proven arithmetic on OCR-read numbers at risk is a lead: OCR may have misread a digit."""
+    if f.tier is Tier.PROVEN_IMPOSSIBLE:
+        f.tier, f.certificate = Tier.INCONCLUSIVE, None
+        f.title = "Lead (OCR-read numbers at risk): " + f.title
+        f.detail = ("The curve and the numbers at risk as read by OCR contradict each other; check every "
+                    "at-risk number against the figure before relying on this. " + f.detail)
+        f.assumptions.append("numbers at risk were read by OCR from a raster image and are not verified")
+    return f
 
 
 def check_claim(c) -> list[Finding]:
@@ -206,14 +245,17 @@ def check_claim(c) -> list[Finding]:
         rows = [(r.risk_times, r.at_risk) for r in c.alternatives] or [(c.risk_times, c.at_risk)]
         rows3 = [([Fraction(t) for t in ts], list(ns), c.total_events) for ts, ns in rows]
         f = km_check_any_row(c.label, steps, Fraction(c.eps), Fraction(c.eps_t), rows3, c.provenance)
-        if c.ocr_numbers and f.tier is Tier.PROVEN_IMPOSSIBLE:
-            # the arithmetic is proven, but OCR may have misread a digit of the at-risk table
-            f.tier, f.certificate = Tier.INCONCLUSIVE, None
-            f.title = "Lead (OCR-read numbers at risk): " + f.title
-            f.detail = ("The curve and the numbers at risk as read by OCR contradict each other; check every "
-                        "at-risk number against the figure before relying on this. " + f.detail)
-            f.assumptions.append("numbers at risk were read by OCR from a raster image and are not verified")
-        return [f]
+        return [_ocr_lead(f) if c.ocr_numbers else f]
+    if isinstance(c, (KMCheckpointClaim, KMCheckpointJointClaim)):
+        from .engines.km_checkpoint import km_checkpoint_check, km_checkpoint_joint_check
+
+        if isinstance(c, KMCheckpointClaim):
+            f = km_checkpoint_check(c.label, c.readings, c.eps, c.eps_t,
+                                    [(r.risk_times, r.at_risk) for r in c.alternatives], c.provenance)
+        else:
+            f = km_checkpoint_joint_check([k.label for k in c.curves], [(k.readings, k.eps, k.eps_t) for k in c.curves],
+                                          [(r.risk_times, r.at_risk) for r in c.rows], c.provenance)
+        return [_ocr_lead(f) if c.ocr_numbers else f]
     if isinstance(c, MeanPartitionClaim):
         from .engines.consistency import mean_partition_check
 
