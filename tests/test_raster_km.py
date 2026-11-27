@@ -185,3 +185,20 @@ def test_edge_reader_refuses_when_the_edges_disagree():
     t = trace_edges(m, p, np.zeros_like(m))
     if t is not None:  # if anything is read, it is only what both edges confirm
         assert t.x_end < 260 or all(abs(a - b) < 40 for _, b, a in t.steps)
+
+
+
+def test_sloped_polyline_is_not_a_staircase():
+    """Points joined by sloping lines read as runs of sub-event drops; one event of a 25-patient
+    arm is 4% of the axis, so 1 px 'drops' every 3 px are a slope and the curve is refused."""
+    from trialgeist.extract.raster import Trace, _sloped
+
+    slope = Trace((0, 0, 0), [(100 + 3 * k, 50 + k, 51 + k) for k in range(12)], 90, 200, 0.0, 2)
+    assert _sloped(slope, event_px=13.0)
+    stairs = Trace((0, 0, 0), [(100 + 40 * k, 50 + 13 * k, 63 + 13 * k) for k in range(6)], 90, 400, 0.0, 2)
+    assert not _sloped(stairs, event_px=13.0)
+    # lone 1 px jitter on long plateaus is not a slope
+    jitter = Trace((0, 0, 0), [(100 + 90 * k, 50 + k, 51 + k) for k in range(5)], 90, 600, 0.0, 2)
+    assert not _sloped(jitter, event_px=3.3)
+    # when one event is below 3 px the test cannot tell and does not refuse
+    assert not _sloped(slope, event_px=2.0)

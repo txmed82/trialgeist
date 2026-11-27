@@ -866,6 +866,10 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
                 tf = trace(mf, pf, of) or trace_edges(mf, pf, of)
                 if tf is not None:
                     t, rising = _unflip(tf, img.shape[0]), True
+            if t is not None and _bars_on_curve(t, m, p) >= 2:
+                why.append("own-colour ink far above the plateaus (error bars or a band)")
+                notes.append(f"page {fig.page + 1}: raster curve with error bars or a band in its own colour refused")
+                t = None
             if t is not None:
                 t.color = c
                 traces.append(t)
@@ -889,8 +893,43 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
         labels = legend_labels(img, words, [t.color for t in traces])
         for ci, ri in pair_rows(labels, rr).items():
             traces[ci].label, traces[ci].row = labels[ci], ri
-        out.append(RasterKM(fig, p, xaxis, yaxis, y_scale, rising, traces, rr, ocr))
+        # one event moves the curve by at least 1/N0 of the y-range (largest N0 among the rows the
+        # curve may belong to): px of the smallest possible single-event drop
+        px_per_unit = 1.0 / max(abs(yaxis.b) * y_scale, 1e-12)
+        kept = []
+        for t in traces:
+            cand = [rr[t.row]] if t.row is not None else rr
+            n0 = max((max((n for _, n in row), default=0) for _, row in cand), default=0)
+            if n0 > 0 and _sloped(t, px_per_unit / n0):
+                notes.append(f"page {fig.page + 1}: raster curve drawn with sloping segments (not a KM staircase) refused")
+                continue
+            kept.append(t)
+        if not kept:
+            continue
+        out.append(RasterKM(fig, p, xaxis, yaxis, y_scale, rising, kept, rr, ocr))
     return out, notes
+
+
+def _sloped(t: Trace, event_px: float) -> bool:
+    """A curve drawn as points joined by sloping lines (not a staircase) is read as runs of drops
+    far smaller than one event, and its decreases are smeared across time. Every KM drop is at
+    least S(t)/n(t) >= 1/N0 of the y-range, so when one event is clearly visible (event_px >= 3),
+    a run of three or more sub-event drops adding up to most of an event is a slope, not steps."""
+    if event_px < 3:
+        return False
+    small, near = 0.4 * event_px, max(3 * t.lw, 12)
+    run_n, run_sum, last_x = 0, 0.0, None
+    for x, b, a in t.steps:
+        d = abs(a - b)
+        if d < small:
+            if last_x is not None and x - last_x > near:  # a slope is continuous; lone 1 px jitter is not
+                run_n, run_sum = 0, 0.0
+            run_n, run_sum, last_x = run_n + 1, run_sum + d, x
+            if run_n >= 3 and run_sum >= max(0.6 * event_px, 3.0):
+                return True
+        else:
+            run_n, run_sum, last_x = 0, 0.0, None
+    return False
 
 
 def _dilate(m: np.ndarray, r: int) -> np.ndarray:
@@ -1043,6 +1082,36 @@ def _drop_shadows(traces: list[Trace]) -> list[Trace]:
         if not shadow:
             keep.append(t)
     return keep
+
+
+def _bars_on_curve(t: Trace, mask: np.ndarray, p: Panel) -> int:
+    """Places where the curve's own ink runs far above its plateau, away from any drop: error bars
+    or a band in the curve's own colour (KM steps only fall; a censor tick is a short mark).
+    A reader could take such ink for risers or plateaus, so a curve that has them is refused."""
+    if not t.steps:
+        return 0
+    lim = max(5 * p.lw, 0.035 * (p.y1 - p.y0), 8)
+    near = max(p.lw + 3, 4)
+    gaps = t.gaps if t.gaps is not None else [t.gap_px] * len(t.steps)
+    hits, last = 0, -10 ** 9
+    for x in range(int(t.x_start) + near, int(t.x_end) - near):
+        if any(abs(x - sx) <= near + g for (sx, _, _), g in zip(t.steps, gaps)):
+            continue
+        k = sum(1 for sx, _, _ in t.steps if sx <= x)
+        level = t.steps[k - 1][2] if k else t.steps[0][1]
+        y = int(round(min(level, t.steps[k - 1][1] if k else level) - p.lw / 2 - 1))
+        run, miss = 0, 0
+        while y - run - miss > p.y0 and miss <= 1:
+            if mask[y - run - miss, x]:
+                run += 1 + miss
+                miss = 0
+            else:
+                miss += 1
+        if run > lim:
+            if x - last > near:
+                hits += 1
+            last = x
+    return hits
 
 
 def _flip(p: Panel, h: int) -> Panel:
