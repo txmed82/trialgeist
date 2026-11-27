@@ -24,6 +24,11 @@ MANIFEST = json.loads((CORPUS / "manifest.json").read_text()) if (CORPUS / "mani
 pytestmark = pytest.mark.skipif(not shutil.which("tesseract"), reason="raster digitiser needs tesseract")
 
 
+def test_raster_corpus_manifest_present():
+    if not MANIFEST:
+        pytest.skip("no raster manifest: uv run python scripts/build_raster_corpus.py")
+
+
 @pytest.mark.parametrize("entry", MANIFEST, ids=[m["pmcid"] for m in MANIFEST])
 def test_raster_corpus_no_false_proofs(entry):
     pdf = CORPUS / entry["pmcid"] / "paper.pdf"

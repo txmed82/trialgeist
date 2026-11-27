@@ -350,8 +350,10 @@ def _find_km_plots(doc) -> tuple[list[KMPlot], list[str]]:
             if not xaxis or not yaxis:
                 notes.append(f"page {pi}: staircase found but axes could not be calibrated")
                 continue
-            vmax = max(v for _, v in yaxis.labels)
-            y_scale = 0.01 if vmax > 1.5 else 1.0
+            y_scale = axis_scale(max(v for _, v in yaxis.labels), sc.rising)
+            if y_scale is None:
+                notes.append(f"page {pi}: y axis could be probability or percent (rising curve, labels <= 1.5): refused")
+                continue
             below = plot_frame(sc, segs)[3]
             rr = risk_rows(page, xaxis, below, min(c.bbox[0] for c in group), max(c.bbox[2] for c in group))
             if not rr:
@@ -359,6 +361,18 @@ def _find_km_plots(doc) -> tuple[list[KMPlot], list[str]]:
                 continue
             plots.append(KMPlot(pi, group, xaxis, yaxis, y_scale, rr))
     return plots, notes
+
+
+def axis_scale(vmax: float, rising: bool) -> float | None:
+    """Probability (1) or percent (0.01) y-axis from its largest label, or None if ambiguous.
+    A falling KM curve starts at S = 1, so its axis tops out near 1 or near 100. A rising
+    1 - S(t) axis may be zoomed: labels up to 1 can be probabilities or percentages
+    (0-1%), and reading a percent axis as probabilities would invent huge drops."""
+    if vmax > 1.5:
+        return 0.01
+    if vmax <= 1.05 and not rising:
+        return 1.0
+    return None
 
 
 def plot_to_claims(plot: KMPlot, eps_pt: float = 1.0):

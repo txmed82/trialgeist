@@ -88,13 +88,13 @@ def raster_km_figures(pdf: Path) -> list[dict]:
 
 
 def retraction_check(rec: dict) -> dict:
-    types = rec.get("pubTypeList", {}).get("pubType", [])
+    types = (rec.get("pubTypeList") or {}).get("pubType") or []
     doi = rec.get("doi")
     updates = []
     if doi:
         js = json.loads(get("https://api.crossref.org/works/" + urllib.parse.quote(doi)) or "{}")
         msg = js.get("message", {})
-        updates = [u.get("type", "") for u in msg.get("updated-by", []) + msg.get("update-to", [])]
+        updates = [u.get("type", "") for u in (msg.get("updated-by") or []) + (msg.get("update-to") or [])]
         time.sleep(0.3)
     return {"europepmc_pubtypes": types, "crossref_updates": updates, "checked": dt.date.today().isoformat()}
 

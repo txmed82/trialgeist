@@ -49,7 +49,7 @@ def main() -> int:
             fetch(m["pdf_url"], d / "paper.pdf")
             fetch(m["xml_url"], d / "paper.nxml")
             pdf = d / "paper.pdf"
-            if pdf.exists() and hashlib.sha256(pdf.read_bytes()).hexdigest() != m["pdf_sha256"]:
+            if m.get("pdf_sha256") and pdf.exists() and hashlib.sha256(pdf.read_bytes()).hexdigest() != m["pdf_sha256"]:
                 print(f"  {pid}: sha256 mismatch (PMC may have re-issued the PDF)")
                 bad += 1
     pos = ROOT / "tests" / "corpus" / "positive"

@@ -182,9 +182,12 @@ def test_edge_reader_refuses_when_the_edges_disagree():
     for xx in range(200, 640):
         y = _level_at(list(zip(xs, levels, levels[1:])), xx, 60)
         m[y: y + 14 + (xx // 7) % 9, xx] = True
-    t = trace_edges(m, p, np.zeros_like(m))
-    if t is not None:  # if anything is read, it is only what both edges confirm
-        assert t.x_end < 260 or all(abs(a - b) < 40 for _, b, a in t.steps)
+    why: list = []
+    t = trace_edges(m, p, np.zeros_like(m), why)
+    # the glued band breaks double entry over most of the curve: the reader must refuse, and
+    # say why (a reading that silently stopped at the band would be a different, weaker check)
+    assert t is None, (t.x_end, len(t.steps))
+    assert any("disagree" in str(w) for w in why), why
 
 
 
@@ -217,3 +220,41 @@ def test_tick_label_crop_stops_before_the_axis_title():
     left[15:25, 90:110] = 0   # the tick label next to the axis
     out = _first_band(left, 1)
     assert out.shape[1] <= 26 and out[:, :, 0].min() == 0
+
+
+
+def test_axis_scale_refuses_ambiguous_rising_axes():
+    from trialgeist.extract.km_vector import axis_scale
+
+    assert axis_scale(1.0, rising=False) == 1.0
+    assert axis_scale(100, rising=False) == 0.01
+    assert axis_scale(40, rising=True) == 0.01
+    assert axis_scale(0.5, rising=True) is None   # 0-0.5 probability or 0-0.5 %: cannot tell
+    assert axis_scale(1.25, rising=False) is None  # neither a probability nor a percent top
+
+
+def test_linear_drops_one_interior_misread_among_four_labels():
+    from trialgeist.extract.raster import _linear
+
+    ax = _linear([(100, 0), (200, 12), (300, 25), (400, 36)], want_negative=False)  # "24" read as "25"
+    assert ax is not None and abs(ax.value(300) - 24) < 1e-6
+
+
+def test_ocr_risk_rows_stay_with_their_own_panel():
+    from trialgeist.extract.km_vector import Axis
+    from trialgeist.extract.raster import Panel, ocr_risk_rows
+
+    p = Panel(x0=100, y1=300, x1=500, y0=100, lw=2)
+    ax = Axis(a=0.0, b=0.1, residual=0.0, labels=[(100, 0.0), (200, 10.0), (300, 20.0), (400, 30.0)])
+    w = lambda x, y, t: (x - 8, y, x + 8, y + 12, t, 90)  # noqa: E731
+    words = [w(60, 330, "risk"), w(100, 330, "50"), w(200, 330, "40"), w(300, 330, "30"),
+             # the next panel down (starting at y = 400) has its own table
+             w(60, 730, "risk"), w(100, 730, "60"), w(200, 730, "55"), w(300, 730, "50")]
+    rows = ocr_risk_rows(words, p, ax, bottom=400)
+    assert [[n for _, n in r] for _, r in rows] == [[50, 40, 30]]
+    # rows read from the glyph height, not a 6 px grid: one row whose words jitter by 5 px
+    words2 = [w(60, 330, "risk"), w(100, 330, "50"), w(200, 335, "40"), w(300, 331, "30")]
+    assert [[n for _, n in r] for _, r in ocr_risk_rows(words2, p, ax)] == [[50, 40, 30]]
+    # a two-checkpoint table is still a table
+    words3 = [w(60, 330, "risk"), w(100, 330, "50"), w(200, 330, "40")]
+    assert [[n for _, n in r] for _, r in ocr_risk_rows(words3, p, ax)] == [[50, 40]]

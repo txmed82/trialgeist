@@ -21,6 +21,7 @@ Soundness rules (a false PROVEN_IMPOSSIBLE is the one unacceptable outcome):
 
 from __future__ import annotations
 
+import colorsys
 import os
 import re
 import shutil
@@ -33,7 +34,7 @@ import numpy as np
 import pymupdf
 
 from ..verdict import Provenance
-from .km_vector import ADJUSTED_RE, KAPLAN_RE, RISING_REFUSE_RE, RISK_LABEL_RE, Axis, _fit, risk_rows
+from .km_vector import ADJUSTED_RE, axis_scale, KAPLAN_RE, RISING_REFUSE_RE, RISK_LABEL_RE, Axis, _fit, risk_rows
 
 KM_WORDS_RE = re.compile(r"kaplan|survival|at risk|time to (first )?event|event[- ]free|cumulative (mortality|probability)", re.I)
 NUM_TOKEN = re.compile(r"^[\-\u2212]?\d+(?:[.,\u00b7]\d+)?%?$")
@@ -72,6 +73,7 @@ class Trace:
     label: str = ""
     row: int | None = None  # risk row paired through the legend
     method: str = "plateau"  # "plateau" (line centre) or "edges" (thick stroke, double-entry edges)
+    rising: bool = False  # read in the flipped orientation (plotted as 1 - S(t))
     gaps: list[float] | None = None  # per drop: px of occlusion before it was seen (None: gap_px for all)
 
 
@@ -226,7 +228,7 @@ def find_panels(img: np.ndarray) -> list[Panel]:
         for xa, xb, ta, tb in vl:
             # the x-axis starts at (or overhangs left of) the y-axis by at most a tick, and the
             # y-axis ends at (or overhangs below) the x-axis by at most a tick
-            if a - 3 <= xa <= a + tick and ya - 3 <= tb <= yb + tick and ta < ya - 40 and b > xb + 60:
+            if a - 3 <= xa <= a + tick and ya - 3 <= tb <= yb + tick and ta < ya - min(40, 0.15 * h) and b > xb + min(60, 0.15 * w):
                 p = Panel(x0=xb, y1=ya, x1=b, y0=ta, lw=max(1, min(yb - ya + 1, xb - xa + 1)))
                 if not any(abs(q.x0 - p.x0) <= 8 and abs(q.y1 - p.y1) <= 8 for q in panels):
                     panels.append(p)
@@ -283,7 +285,7 @@ def _linear(pairs: list[tuple[float, float]], want_negative: bool) -> Axis | Non
     ax = _fit(pairs)
     if ok(ax):
         return ax
-    if len(pairs) >= 5:
+    if len(pairs) >= 4:
         fits = [_fit(pairs[:i] + pairs[i + 1:]) for i in range(1, len(pairs) - 1)]
         good = [f for f in fits if ok(f)]
         if len(good) == 1:  # exactly one interior label is the odd one out
@@ -379,7 +381,7 @@ def tick_axis(img: np.ndarray, p: Panel, ticks: list[float], axis: str) -> Axis 
     # detached axes (Stata, base R): the other axis line overhangs the frame corner and
     # looks like a tick right beside the real origin tick; it carries no label of its own
     edge = p.x0 if axis == "x" else p.y1
-    ticks = [t for t in ticks if not (abs(t - edge) <= p.lw + 2 and any(0 < abs(u - t) < 20 for u in ticks))]
+    ticks = [t for t in ticks if not (abs(t - edge) <= p.lw + 2 and any(0 < abs(u - t) < max(20, 2 * p.lw) for u in ticks))]
     if len(ticks) < 3:
         return None
     h, w = img.shape[:2]
@@ -396,7 +398,7 @@ def tick_axis(img: np.ndarray, p: Panel, ticks: list[float], axis: str) -> Axis 
             y0 = p.y1 + p.lw + gap
             crop = _first_band(img[y0: int(min(h, y0 + max(18, 0.09 * height))), int(max(0, t - half)): int(min(w, t + half))], 0)
         else:
-            x1 = p.x0 - p.lw - gap
+            x1 = max(1, p.x0 - p.lw - gap)
             crop = _first_band(img[int(max(0, t - half)): int(min(h, t + half)), int(max(0, x1 - 0.2 * width)): max(0, x1)], 1)
         got = _ocr_label(crop, scale)
         v = _val(got[0]) if got else None
@@ -472,8 +474,6 @@ def curve_colors(img: np.ndarray, p: Panel, text_mask: np.ndarray) -> list[tuple
 
 
 def _hsv(c: tuple[int, int, int]) -> tuple[float, float, float]:
-    import colorsys
-
     return colorsys.rgb_to_hsv(*(v / 255 for v in c))
 
 
@@ -639,8 +639,11 @@ def trace_edges(mask: np.ndarray, p: Panel, other_ink: np.ndarray, why: list | N
     A pen of width w draws a drop at x_r as a vertical stroke over [x_r - w/2, x_r + w/2], so the
     stroke's TOP edge is the curve shifted right by w/2 (minus w/2) and its BOTTOM edge is the
     curve shifted left by w/2 (plus w/2).  Both edges are read independently and must describe
-    the same staircase (bottom = top + thickness, k ~ w columns earlier) in at least 97% of the
-    columns and within 2.5 px everywhere; otherwise the curve is refused.  Drops are taken from
+    the same staircase (bottom = top + thickness, k ~ w columns earlier): a column counts only
+    if the edges agree within 1.5 px. At least 25% of the width must be confirmed, at most 10% of
+    the columns with a candidate may disagree, and no unconfirmed run may exceed the occlusion
+    limit; otherwise the curve is refused. Unconfirmed columns are unknown, and a drop seen after
+    them gets their width as extra time tolerance.  Drops are taken from
     the top edge, placed back at the stroke centre, and given as line-centre levels."""
     x_lo, x_hi = p.x0 + p.lw + 1, p.x1
     y_lo, y_hi = p.y0, p.y1 - p.lw
@@ -741,7 +744,7 @@ def trace_edges(mask: np.ndarray, p: Panel, other_ink: np.ndarray, why: list | N
             cur = 0
         else:
             T2[i] = np.nan
-            bad += best is not None
+            bad += 1  # no bottom-edge candidate at all is unconfirmed too
             cur += 1
             longest = max(longest, cur)
     if ok < 0.25 * width or bad > 0.1 * (ok + bad) or longest > max_gap:
@@ -800,24 +803,36 @@ def _page_axis(ax: Axis, fig: FigureImage) -> Axis:
     return Axis(a, b, ax.residual * sx, [(fig.rect[0] + c * sx, v) for c, v in ax.labels])
 
 
-def ocr_risk_rows(words, p: Panel, xaxis: Axis) -> list[tuple[str, list[tuple[float, int]]]]:
-    """Integer rows under the panel aligned to the time grid (OCR: leads only)."""
-    lab = [w for w in words if RISK_LABEL_RE.search(w[4]) or w[4].lower() in ("risk", "at")]
+def ocr_risk_rows(words, p: Panel, xaxis: Axis, bottom: float | None = None) -> list[tuple[str, list[tuple[float, int]]]]:
+    """Integer rows under the panel aligned to the time grid (OCR: leads only).  ``bottom`` is
+    the top of the next panel below, so stacked panels never share candidate rows."""
+    lab = [w for w in words if (RISK_LABEL_RE.search(w[4]) or w[4].lower() in ("risk", "at"))
+           and w[1] >= p.y1 - 4 and (bottom is None or w[1] < bottom)]
     if not lab:
         return []
     top = min(w[1] for w in lab) - 4
     ints = [w for w in words if re.fullmatch(r"\d[\d,]*", w[4]) and w[1] >= top and w[5] >= 60
-            and p.x0 - 15 <= (w[0] + w[2]) / 2 <= p.x1 + 15]
-    rows: dict[int, list] = {}
-    for w in ints:
-        rows.setdefault(round((w[1] + w[3]) / 2 / 6), []).append(w)
+            and (bottom is None or w[3] <= bottom) and p.x0 - 15 <= (w[0] + w[2]) / 2 <= p.x1 + 15]
+    if not ints:
+        return []
+    # rows: cluster word centres with a tolerance from the glyph height (resolution independent)
+    gh = float(np.median([w[3] - w[1] for w in ints]))
+    rows: list[list] = []
+    for w in sorted(ints, key=lambda w: (w[1] + w[3]) / 2):
+        yc = (w[1] + w[3]) / 2
+        if rows and yc - np.mean([(v[1] + v[3]) / 2 for v in rows[-1]]) <= 0.5 * gh:
+            rows[-1].append(w)
+        else:
+            rows.append([w])
     ticks = sorted(v for _, v in xaxis.labels)
     step = min((b - a for a, b in zip(ticks, ticks[1:]) if b > a), default=None)
     out = []
-    for k in sorted(rows):
-        r = sorted(rows[k], key=lambda w: w[0])
-        if len(r) < 3 or not step:
+    for row in rows:
+        r = sorted(row, key=lambda w: w[0])
+        if len(r) < 2 or not step:
             continue
+        if any(len(w[4]) > 1 and w[4][0] == "0" for w in r) or any(w[4].endswith(",") for w in r):
+            continue  # "024" / "1,": a thousands number split by OCR; the row cannot be trusted
         ts = [xaxis.value((w[0] + w[2]) / 2) for w in r]
         snapped = [round(t / step) * step for t in ts]
         if any(abs(t - s) > 0.25 * step for t, s in zip(ts, snapped)) or len(set(snapped)) != len(snapped):
@@ -825,7 +840,7 @@ def ocr_risk_rows(words, p: Panel, xaxis: Axis) -> list[tuple[str, list[tuple[fl
         vals = [int(w[4].replace(",", "")) for w in r]
         if any(b > a for a, b in zip(vals, vals[1:])):
             continue  # an increasing count is a misread far more often than a typo
-        out.append(("ocr row", list(zip(snapped, vals))))
+        out.append((f"ocr row {len(out) + 1}", list(zip(snapped, vals))))
     return out
 
 
@@ -864,8 +879,6 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
         if not xaxis or not yaxis:
             notes += [f"page {fig.page + 1}: raster panel: {m}" for m in n]
             continue
-        vmax = max(v for _, v in yaxis.labels)
-        y_scale = 0.01 if vmax > 1.5 else 1.0
         colors = curve_colors(img, p, text_mask)
         hs = _hue_sat(img)
         masks = [ink_mask(img, c, hs) & ~text_mask for c in colors]
@@ -875,12 +888,12 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
         masks = _exclusive(img, colors, masks)
         if not masks:
             continue
-        rising = False
         # a rising curve is read as 1 - KM only with Kaplan-Meier wording, and never when the
         # page may describe a cumulative-incidence function (competing risks do not follow KM)
         may_rise = bool(KAPLAN_RE.search(fig.page_text)) and not RISING_REFUSE_RE.search(fig.page_text)
-        if KAPLAN_RE.search(fig.page_text) and not may_rise:
-            notes.append(f"page {fig.page + 1}: rising raster curves refused (page may describe a cumulative-incidence function)")
+        if not may_rise:
+            notes.append(f"page {fig.page + 1}: rising raster curves not read (no Kaplan-Meier wording, or a "
+                         "cumulative-incidence note on the page)")
         traces, whys = [], []
         for ci, (c, m) in enumerate(zip(colors, masks)):
             other = np.logical_or.reduce([o for j, o in enumerate(masks) if j != ci]) if len(masks) > 1 else np.zeros_like(m)
@@ -891,7 +904,8 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
                 mf, pf, of = m[::-1].copy(), _flip(p, img.shape[0]), other[::-1].copy()
                 tf = trace(mf, pf, of) or trace_edges(mf, pf, of)
                 if tf is not None:
-                    t, rising = _unflip(tf, img.shape[0]), True
+                    t = _unflip(tf, img.shape[0])
+                    t.rising = True
             if t is not None and _bars_on_curve(t, m, p) >= 2:
                 why.append("own-colour ink far above the plateaus (error bars or a band)")
                 notes.append(f"page {fig.page + 1}: raster curve with error bars or a band in its own colour refused")
@@ -900,6 +914,15 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
                 t.color = c
                 traces.append(t)
         traces = _drop_shadows(traces)
+        if len({t.rising for t in traces}) > 1:
+            # one panel is falling or rising; arms read in both orientations mean one of the
+            # readings is wrong, and 1 - v applied to the wrong arms would invent contradictions
+            notes.append(f"page {fig.page + 1}: raster panel with arms read in opposite orientations refused")
+            continue
+        rising = bool(traces) and traces[0].rising
+        if traces and (y_scale := axis_scale(max(v for _, v in yaxis.labels), rising)) is None:
+            notes.append(f"page {fig.page + 1}: raster y axis could be probability or percent (rising curve, labels <= 1.5): refused")
+            continue
         if not traces:
             notes.append(f"page {fig.page + 1}: raster panel without a traceable staircase")
             if os.environ.get("TRIALGEIST_RASTER_DEBUG"):
@@ -908,11 +931,13 @@ def digitize(doc, fig: FigureImage) -> tuple[list[RasterKM], list[str]]:
         # numbers at risk: PDF text under the image first (proof grade), then OCR inside the image (leads)
         px_axis = _page_axis(xaxis, fig)
         sx = (fig.rect[2] - fig.rect[0]) / fig.width
-        rr = risk_rows(page, px_axis, fig.rect[3] - 2 if p.y1 > 0.75 * fig.height else fig.rect[1] + p.y1 * sx,
+        sy = (fig.rect[3] - fig.rect[1]) / fig.height
+        rr = risk_rows(page, px_axis, fig.rect[3] - 2 if p.y1 > 0.75 * fig.height else fig.rect[1] + p.y1 * sy,
                        fig.rect[0] + p.x0 * sx, fig.rect[0] + p.x1 * sx)
         ocr = False
         if not rr:
-            rr, ocr = ocr_risk_rows(words, p, xaxis), True
+            below = [q.y0 for q in panels if q.y0 > p.y1 and q.x0 < p.x1 and p.x0 < q.x1]
+            rr, ocr = ocr_risk_rows(words, p, xaxis, min(below, default=None)), True
         if not rr:
             notes.append(f"page {fig.page + 1}: raster KM panel without numbers at risk")
             continue
@@ -1064,9 +1089,8 @@ def legend_labels(img: np.ndarray, words, colors) -> dict[int, str]:
             found.setdefault(ci, set()).add(" ".join(label))
     out = {ci: next(iter(ls)) for ci, ls in found.items() if len(ls) == 1}
     norms = [_norm(v) for v in out.values()]
-    if len(set(norms)) != len(norms):
-        return {}
-    return out
+    dup = {n for n in norms if norms.count(n) > 1}
+    return {ci: v for ci, v in out.items() if _norm(v) not in dup}  # ambiguous labels only
 
 
 def pair_rows(labels: dict[int, str], risk) -> dict[int, int]:
@@ -1091,20 +1115,13 @@ def _drop_shadows(traces: list[Trace]) -> list[Trace]:
 
     keep = []
     for i, t in enumerate(traces):
-        shadow = False
-        for j, u in enumerate(traces):
-            if i == j:
-                continue
-            shared = sum(1 for s in t.steps if any(same(s, v) for v in u.steps))
-            if shared >= 0.5 * len(t.steps) and (len(u.steps), j) > (len(t.steps), i):
-                shadow = True
-            # a trace sharing many of its drops with two different curves hops between them
-            # (a single shared drop is coincidence on dense curves that start together)
-            need = max(2, 0.25 * len(t.steps))
-            others = [k for k, w in enumerate(traces)
-                      if k != i and sum(1 for s in t.steps if any(same(s, v) for v in w.steps)) >= need]
-            if len(others) >= 2:
-                shadow = True
+        shared = {j: sum(1 for s in t.steps if any(same(s, v) for v in u.steps)) for j, u in enumerate(traces) if j != i}
+        # the trace is mostly another, longer curve's drops
+        shadow = any(n >= 0.5 * len(t.steps) and (len(traces[j].steps), j) > (len(t.steps), i) for j, n in shared.items())
+        # a trace sharing many of its drops with two different curves hops between them
+        # (a single shared drop is coincidence on dense curves that start together)
+        if sum(1 for n in shared.values() if n >= max(2, 0.25 * len(t.steps))) >= 2:
+            shadow = True
         if not shadow:
             keep.append(t)
     return keep
@@ -1180,7 +1197,7 @@ def raster_claims(rk: RasterKM) -> list:
                            text=f"raster KM curve {i + 1} (colour {tr.color}){' plotted as 1 - S(t)' if rk.rising else ''}",
                            note=(f"image xref {fig.xref} {fig.width}x{fig.height}px; " +
                                  ("numbers at risk read by OCR from the image; " if rk.ocr_numbers else "") +
-                                 f"read by {tr.method}; drops (px): " + ";".join(f"{x:.0f}:{b:.1f}->{a:.1f}" for x, b, a in tr.steps[:200]))),
+                                 f"read by {tr.method}; {len(tr.steps)} drops" + (" (first 200 listed)" if len(tr.steps) > 200 else "") + "; drops (px): " + ";".join(f"{x:.0f}:{b:.1f}->{a:.1f}" for x, b, a in tr.steps[:200]))),
                 # the studio draws these on the page so a reviewer sees exactly what was digitised
                 Provenance(source="raster", page=fig.page, text=f"digitised drops of curve {i + 1}",
                            note="vertices: " + ";".join(f"{fig.rect[0] + x * sx:.2f},{fig.rect[1] + y * sy:.2f}"
