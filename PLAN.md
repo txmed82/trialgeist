@@ -13,7 +13,8 @@ re-derives the contradiction from the printed digits.
 | G2 | Real retracted positive controls (`tests/test_gate2_positive.py`) | each documented impossibility rediscovered from printed numbers, certificate runs and exits 0 |
 | G3 | Clean OA negative controls (`tests/test_gate3_negative.py`) | 31 PMC OA RCT PDFs + XML end to end -> 0 `PROVEN_IMPOSSIBLE` beyond the four verified typos recorded in the manifest |
 | R | Rasterised synthetic KM (`tests/test_raster_gate.py`) | figures rendered as JPEG at 110-300 dpi, quality 60-95, falling and rising -> 0 false proofs; planted risk-table edits caught |
-| RC | Real raster KM corpus (`tests/test_gate_raster_corpus.py`) | 25 retraction-checked OA RCTs with bitmap KM figures -> 0 `PROVEN_IMPOSSIBLE` |
+| RC | Real raster KM corpus (`tests/test_gate_raster_corpus.py`) | 25 retraction-checked OA RCTs with bitmap KM figures -> 0 `PROVEN_IMPOSSIBLE`; per-paper raster coverage printed in the CI job summary |
+| C | Randomisation arithmetic (`tests/test_consort.py`) | prose allocation sentences: total vs enumerated arms, N-1/N convention pairs, two-word crossover spellings, page-break sentences read across the seam |
 
 ## Phases
 
@@ -33,10 +34,20 @@ re-derives the contradiction from the printed digits.
 - [x] P13 vector KM: rising 1 - S(t) curves, multi-panel pages, broken y-axes, same-style arms
 - [x] P14 raster KM digitiser (OCR-calibrated axes, colour separation, riser-joined staircases, legend pairing); OCR-read numbers at risk are leads only; studio draws digitised drops
 - [x] P15 randomisation arithmetic in prose (total vs enumerated arm allocation)
+- [x] P16 raster hardening: per-drop time tolerance after occlusions, double-entry edge reader with explicit acceptance ratios, grey/nested-frame detection, per-trace rising orientation, glyph-height OCR rows bounded per panel
 
 ## Open items
 
-- Raster KM coverage on real figures is low (3 of ~70 candidate panels digitised in the RC corpus). Refusals, in order: no traceable staircase (thick lines with steps smaller than the line width, dense censor marks), x/y tick labels not on an exact linear scale, no L-frame (boxed or axis-less plots). Every refusal is sound; widening is the work.
+- Raster KM coverage on real figures is partial: in the latest full rescan of the 25 RC papers, panels with a digitised staircase and a text numbers-at-risk table sit in 4 papers (9 panels; earlier runs reached 15 before the stricter axis/orientation rules). Remaining refusals, most common first:
+  - x/y tick labels not read on an exact linear scale (small or rotated labels, ggplot spacing)
+  - no L-frame (boxed or axis-less plots)
+  - numbers at risk only inside the image (OCR leads)
+  - polyline or error-bar curves (refused by design)
+  - ambiguous y scale on a rising curve (labels <= 1.5 cannot be told from a zoomed percent axis)
+
+  Every refusal is sound; widening coverage is the remaining work. Gate R (synthetic, known truth) is the
+  binding quality metric: 37/40 figures digitised, 0 false proofs, 9/14 planted edits caught where the
+  edited curve was digitised.
 - Inter-table N checks (Table 1 arm N vs outcome-table N) are not proof-grade (analysis populations differ legitimately); only within-sentence randomisation arithmetic is proven.
 - Registry discordance needs network; Gate 1 covers it with fixtures.
 
@@ -69,11 +80,16 @@ re-derives the contradiction from the printed digits.
    real typo recorded in the manifest (`known_true_impossibilities`), e.g.
    BMJ 2021;372:n84 Table 1 "5 (5)" of n=65.
 
-8. Raster figures: OCR is used to calibrate axes only when the labels lie on an
+9. Raster figures: OCR is used to calibrate axes only when the labels lie on an
    exact linear scale (one interior misread may be dropped, never an end
    label). Numbers at risk read by OCR never convict: the finding is capped at
    INCONCLUSIVE and titled as a lead. Pale same-hue tints (CI bands) are never
-   read as curves.
-9. Randomisation arithmetic is read only from one sentence that states the total
+   read as curves. A curve is read only if it is a staircase. Thick strokes count
+   only when both stroke edges agree column by column. Curves carrying error bars
+   or a band in their own colour are refused. Curves drawn as sloping polylines are
+   refused too, detected as runs of drops smaller than one event (each event moves
+   the curve by at least 1/N0). A drop seen only after an occlusion gets a time
+   window as wide as that occlusion.
+10. Randomisation arithmetic is read only from one sentence that states the total
    and enumerates every arm, with people as the subject; cluster, factorial,
    crossover and re-randomised designs are skipped for the whole document.
