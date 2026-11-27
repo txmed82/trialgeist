@@ -215,10 +215,11 @@ def _lines(dark: np.ndarray, min_len: int) -> list[tuple[int, int, int, int]]:
 
 def find_panels(img: np.ndarray) -> list[Panel]:
     """Plot frames: a long horizontal dark line whose left end meets a long vertical one."""
-    dark = img.astype(np.int16).mean(axis=2) < 110
+    # grey axes (ggplot/survminer exports, downsampled lines) are mid-grey, not black
+    dark = img.astype(np.int16).mean(axis=2) < 160
     h, w = dark.shape
     hl = _lines(dark, max(60, int(0.15 * w)))  # (y0, y1, x0, x1)
-    vl = _lines(dark.T, max(50, int(0.15 * h)))  # (x0, x1, y0, y1)
+    vl = _lines(dark.T, max(50, int(0.08 * h)))  # (x0, x1, y0, y1); 4-row grids have short y-axes
     panels: list[Panel] = []
     tick = max(25, int(0.015 * max(h, w)))  # tick length scales with the export resolution
     for ya, yb, a, b in hl:
@@ -229,7 +230,11 @@ def find_panels(img: np.ndarray) -> list[Panel]:
                 p = Panel(x0=xb, y1=ya, x1=b, y0=ta, lw=max(1, min(yb - ya + 1, xb - xa + 1)))
                 if not any(abs(q.x0 - p.x0) <= 8 and abs(q.y1 - p.y1) <= 8 for q in panels):
                     panels.append(p)
-    return panels
+    # a large KM riser meeting the start of the next plateau is also an "L": such a frame lies
+    # inside a real panel (grid panels sit side by side, never one inside another)
+    def inside(p: Panel, q: Panel) -> bool:
+        return q is not p and q.x0 + 4 < p.x0 < q.x1 and q.y0 - 6 <= p.y0 and p.y1 < q.y1 - 4
+    return [p for p in panels if not any(inside(p, q) for q in panels)]
 
 
 def clean_for_ocr(img: np.ndarray, panels: list[Panel]) -> np.ndarray:
