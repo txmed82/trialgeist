@@ -14,9 +14,13 @@ Pipeline per page:
 5. emit :class:`KMArmClaim` objects (one per curve) with all candidate risk
    rows, plus bbox provenance for every vertex.
 
-Refusals (no claim emitted): raster figures, rising curves (cumulative
-incidence; Aalen-Johansen is not 1-KM), pages mentioning adjusted / weighted
-curves, poor calibration, no risk table.
+Rising curves (cumulative mortality / events plotted as 1 - S(t)) are read
+too, but only when the page calls them Kaplan-Meier; cumulative incidence
+with competing risks (Aalen-Johansen, Fine-Gray) is not 1 - KM and is refused.
+
+Refusals (no claim emitted): raster figures, rising curves without Kaplan-Meier
+wording, pages mentioning adjusted / weighted / competing-risk curves, poor
+calibration, no risk table.
 """
 
 from __future__ import annotations
@@ -33,7 +37,13 @@ from .pdf_text import Row, rows_from_page
 
 SEG_TOL = 0.15  # pt, endpoint matching
 NUM_WORD = re.compile(r"^[\-\u2212]?\d+(?:[.\u00b7]\d+)?%?$")
-ADJUSTED_RE = re.compile(r"adjusted (survival|curves?)|weighted|IPTW|inverse.probability|cumulative incidence|competing risk", re.I)
+ADJUSTED_RE = re.compile(r"adjusted (survival|curves?)|weighted|IPTW|inverse.probability|cumulative incidence|"
+                         r"competing.(risks?|events?)|Aalen|Fine.(and.)?Gray|subdistribution", re.I)
+# A rising curve is read as 1 - KM only when nothing on the page suggests it might be a
+# cumulative incidence function instead; these captions are ambiguous, so refuse them.
+RISING_REFUSE_RE = re.compile(r"cumulative (risk|probability|proportion)|competing|cause.specific|subdistribution|"
+                              r"Aalen|Fine.(and.)?Gray|incidence function", re.I)
+KAPLAN_RE = re.compile(r"Kaplan[\s\-\u2010-\u2014]*Meier", re.I)
 RISK_LABEL_RE = re.compile(r"(no\.?|number|n)\s*(of patients\s*)?at\s*risk|at risk", re.I)
 
 
@@ -60,6 +70,7 @@ class Staircase:
     color: tuple
     width: float
     points: list[tuple[float, float]]  # PDF coords along the path
+    rising: bool = False  # True: the plotted value goes up (1 - S), PDF y decreases
 
     @property
     def bbox(self):
@@ -110,7 +121,10 @@ def _key(x: float, y: float) -> tuple[int, int]:
     return (round(x / SEG_TOL), round(y / SEG_TOL))
 
 
-def staircases(segs: list[Seg], min_steps: int = 3) -> list[Staircase]:
+MAX_STAIRCASES_PER_STYLE = 32
+
+
+def staircases(segs: list[Seg], min_steps: int = 3, rising: bool = False, notes: list[str] | None = None) -> list[Staircase]:
     by_style: dict[tuple, list[Seg]] = defaultdict(list)
     for s in segs:
         if s.horizontal or s.vertical:
@@ -123,35 +137,47 @@ def staircases(segs: list[Seg], min_steps: int = 3) -> list[Staircase]:
         for s in ss:
             if s.horizontal:
                 a, b = (s.x0, s.y0), (s.x1, s.y1)
-            else:
-                a, b = ((s.x0, s.y0), (s.x1, s.y1)) if s.y0 <= s.y1 else ((s.x1, s.y1), (s.x0, s.y0))
+            else:  # falling: PDF y increases along the path; rising: it decreases
+                down = ((s.x0, s.y0), (s.x1, s.y1)) if s.y0 <= s.y1 else ((s.x1, s.y1), (s.x0, s.y0))
+                a, b = (down[1], down[0]) if rising else down
             ka, kb = _key(*a), _key(*b)
             coords.setdefault(ka, a)
             coords.setdefault(kb, b)
             adj[ka].append((kb, b))
-        # longest path in DAG by x-extent then edge count (memoised DFS)
-        order = sorted(coords, key=lambda k: (coords[k][0], coords[k][1]))
-        best: dict[tuple, tuple[float, int, tuple | None]] = {}
-        for k in reversed(order):
-            cand = (0.0, 0, None)
-            for nk, _ in adj.get(k, []):
-                if nk == k:
-                    continue
-                ext = coords[nk][0] - coords[k][0] + best.get(nk, (0.0, 0, None))[0]
-                cnt = 1 + best.get(nk, (0.0, 0, None))[1]
-                if (ext, cnt) > cand[:2]:
-                    cand = (ext, cnt, nk)
-            best[k] = cand
-        if not best:
-            continue
-        start = max(order, key=lambda k: best[k][:2])
-        path, k = [coords[start]], start
-        while best[k][2] is not None:
-            k = best[k][2]
-            path.append(coords[k])
-        drops = sum(1 for p, q in zip(path, path[1:]) if q[1] - p[1] > 1e-3)
-        if drops >= min_steps:
-            out.append(Staircase(color, width, path))
+        # longest path in the DAG by x-extent then edge count; repeat on what is
+        # left so several panels drawn in the same style each yield a curve
+        order = sorted(coords, key=lambda k: (coords[k][0], -coords[k][1] if rising else coords[k][1]))
+        # Used EDGES are retired, not vertices: two arms drawn in one style share their
+        # (t=0, S=1) start point, and retiring it would truncate the second curve.
+        dead: set[tuple[tuple, tuple]] = set()
+        for it in range(MAX_STAIRCASES_PER_STYLE + 1):
+            if it == MAX_STAIRCASES_PER_STYLE:
+                if notes is not None:
+                    notes.append(f"more than {MAX_STAIRCASES_PER_STYLE} staircases in stroke style {color}/{width}; the rest were not read")
+                break
+            best: dict[tuple, tuple[float, int, tuple | None]] = {}
+            for k in reversed(order):
+                cand = (0.0, 0, None)
+                for nk, _ in adj.get(k, []):
+                    if nk == k or (k, nk) in dead:
+                        continue
+                    ext = coords[nk][0] - coords[k][0] + best.get(nk, (0.0, 0, None))[0]
+                    cnt = 1 + best.get(nk, (0.0, 0, None))[1]
+                    if (ext, cnt) > cand[:2]:
+                        cand = (ext, cnt, nk)
+                best[k] = cand
+            start = max(best, key=lambda k: best[k][:2], default=None)
+            if start is None or best[start][2] is None:
+                break  # no edges left
+            path, keys, k = [coords[start]], [start], start
+            while best[k][2] is not None:
+                k = best[k][2]
+                path.append(coords[k])
+                keys.append(k)
+            dead.update(zip(keys, keys[1:]))
+            drops = sum(1 for p, q in zip(path, path[1:]) if (p[1] - q[1] if rising else q[1] - p[1]) > 1e-3)
+            if drops >= min_steps:  # short fragments are retired too, and the search goes on
+                out.append(Staircase(color, width, path, rising))
     return out
 
 
@@ -188,15 +214,19 @@ def plot_frame(sc: Staircase, segs: list[Seg]) -> tuple[float, float, float, flo
     x0, y0, x1, y1 = sc.bbox
     w = max(x1 - x0, 1.0)
     hs = [s for s in segs if s.horizontal and s.y0 >= y1 - 1 and s.x1 - s.x0 >= 0.6 * w and s.x0 <= x0 + 5 and s.y0 - y1 < 400]
-    vs = [s for s in segs if s.vertical and s.x0 <= x0 + 1 and x0 - s.x0 < 60 and s.y1 - s.y0 >= 0.3 * max(y1 - y0, 1.0)]
+    # the y-axis line must span this curve (stacked panels share x, not y)
+    vs = [s for s in segs if s.vertical and s.x0 <= x0 + 1 and x0 - s.x0 < 60 and s.y1 - s.y0 >= 0.3 * max(y1 - y0, 1.0)
+          and s.y0 <= y0 + 1 and s.y1 >= y1 - 1]
     bottom = min((s.y0 for s in hs), default=y1)
     left = max((s.x0 for s in vs), default=x0)
-    top = min((s.y0 for s in vs if s.x0 == left), default=y0)
+    top = max((s.y0 for s in vs if s.x0 == left), default=y0)  # innermost spanning line
     return left, top, x1, bottom
 
 
-def calibrate(page: pymupdf.Page, sc: Staircase, segs: list[Seg]):
+def calibrate(page: pymupdf.Page, sc: Staircase, segs: list[Seg], group: list[Staircase] | None = None):
+    """Axes for ``sc``; the y-axis must also be valid for every curve in ``group``."""
     x0, y0, _, y1 = plot_frame(sc, segs)
+    curves_top = min(c.bbox[1] for c in (group or [sc]))
     words = [w for w in page.get_text("words") if NUM_WORD.match(w[4])]
     # y labels: right edge left of the plot, vertically within the plot band
     ycand = [w for w in words if w[2] <= x0 + 2 and w[2] >= x0 - 60 and y0 - 30 <= (w[1] + w[3]) / 2 <= y1 + 30]
@@ -212,6 +242,16 @@ def calibrate(page: pymupdf.Page, sc: Staircase, segs: list[Seg]):
         if ax and ax.b < 0 and ax.residual < 1.0:
             yaxis = ax
             break
+        # broken axis ("//"): the label above the break is off the line.  Drop the
+        # topmost label only, and only if the curve stays below the remaining ones,
+        # so values are never read across the break.
+        if len(pairs) >= 4:
+            top = min(pairs)
+            rest = [p for p in pairs if p is not top]
+            ax = _fit(rest)
+            if ax and ax.b < 0 and ax.residual < 1.0 and curves_top >= min(c for c, _ in rest) - 2:  # every curve below the break
+                yaxis = ax
+                break
     # x labels: a row below the plot with increasing values left to right
     x_right = sc.bbox[2]
     xcand = [w for w in words if y1 < (w[1] + w[3]) / 2 < y1 + 40 and x0 - 20 <= (w[0] + w[2]) / 2 <= x_right + 40]
@@ -282,10 +322,16 @@ def _find_km_plots(doc) -> tuple[list[KMPlot], list[str]]:
     plots, notes = [], []
     for pi, page in enumerate(doc):
         segs = _segments(page)
-        scs = staircases(segs)
+        text = page.get_text()
+        scs = staircases(segs, notes=notes)
+        if KAPLAN_RE.search(text):
+            if RISING_REFUSE_RE.search(text):
+                if staircases(segs, rising=True):
+                    notes.append(f"page {pi}: rising curves skipped (caption may describe cumulative incidence, not 1 - KM)")
+            else:
+                scs += staircases(segs, rising=True, notes=notes)
         if not scs:
             continue
-        text = page.get_text()
         if ADJUSTED_RE.search(text):
             notes.append(f"page {pi}: staircases skipped (adjusted/weighted/cumulative-incidence wording)")
             continue
@@ -297,10 +343,10 @@ def _find_km_plots(doc) -> tuple[list[KMPlot], list[str]]:
             group = [sc]
             for j in range(i + 1, len(scs)):
                 b1, b2 = sc.bbox, scs[j].bbox
-                if abs(b1[0] - b2[0]) < 15 and not (b2[1] > b1[3] + 10 or b1[1] > b2[3] + 10):
+                if scs[j].rising == sc.rising and abs(b1[0] - b2[0]) < 15 and not (b2[1] > b1[3] + 10 or b1[1] > b2[3] + 10):
                     group.append(scs[j])
                     used.add(j)
-            xaxis, yaxis = calibrate(page, sc, segs)
+            xaxis, yaxis = calibrate(page, sc, segs, group)
             if not xaxis or not yaxis:
                 notes.append(f"page {pi}: staircase found but axes could not be calibrated")
                 continue
@@ -328,11 +374,13 @@ def plot_to_claims(plot: KMPlot, eps_pt: float = 1.0):
     for ci, sc in enumerate(plot.curves):
         steps = []
         for p, q in zip(sc.points, sc.points[1:]):
-            if q[1] - p[1] > 1e-3 and abs(q[0] - p[0]) < 1e-3:
+            if (p[1] - q[1] if sc.rising else q[1] - p[1]) > 1e-3 and abs(q[0] - p[0]) < 1e-3:
                 t = plot.xaxis.value(p[0])
                 b, a = plot.yaxis.value(p[1]) * ys, plot.yaxis.value(q[1]) * ys
+                if sc.rising:  # plotted 1 - S(t)
+                    b, a = 1 - b, 1 - a
                 steps.append(KMStepIn(t=f"{t:.6f}", before=f"{min(max(b, 0), 1):.6f}", after=f"{min(max(a, 0), 1):.6f}"))
-        prov = [Provenance(source="pdf", page=plot.page, bbox=sc.bbox, text=f"KM curve {ci} (stroke {sc.color})",
+        prov = [Provenance(source="pdf", page=plot.page, bbox=sc.bbox, text=f"KM curve {ci} (stroke {sc.color}){' plotted as 1 - S(t)' if sc.rising else ''}",
                            note="vertices: " + ";".join(f"{x:.2f},{y:.2f}" for x, y in sc.points[:400]))]
         out.append(KMArmClaim(label=f"page {plot.page + 1} curve {ci + 1}", alternatives=rows, steps=steps,
                               eps=f"{eps:.6f}", eps_t=f"{eps_t:.6f}", provenance=prov))
