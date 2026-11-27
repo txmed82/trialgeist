@@ -1035,7 +1035,16 @@
    "crossref_updates": [],
    "checked": "2026-11-26"
   },
-  "visually_confirmed_km": null
+  "visually_confirmed_km": null,
+  "verified_errors": [
+   {
+    "page": 7,
+    "check": "km_sat",
+    "figure": "Figure 4D (overall survival, non-PCI group)",
+    "summary": "Toripalimab arm: the curve drops 70% -> 60% (one death among 7 at risk) at about month 25.5, but the printed numbers at risk are 7 at month 24 and still 7 at month 30; at most 6 can remain. The six censor marks after month 30 and the later counts (5, 3, 1) fit 6, not 7.",
+    "verified_by": "figure inspected at 400 dpi against the PDF-text risk table (Hermes, 2026-11-27); certificate exits 0"
+   }
+  ]
  },
  {
   "pmcid": "PMC13599497",

@@ -307,3 +307,51 @@ def test_blob_axis_refuses_labels_that_are_not_on_one_linear_scale():
     # control: the same layout with linear values is read, so the refusal above is the rule
     img, p, _ = _render_axes(["0", "4", "8", "12", "16", "20"], ["6", "4", "2", "0"], title=False)
     assert blob_axis(img, p, "x") is not None
+
+
+def _level_mask(levels, h=300, w=600, lw=3, ticks=(), band=None):
+    """A falling staircase drawn in a boolean mask: plateaus at ``levels`` (px rows), risers between."""
+    m = np.zeros((h, w), dtype=bool)
+    xs = np.linspace(40, w - 10, len(levels) + 1).astype(int)
+    for k, y in enumerate(levels):
+        m[y - lw // 2: y - lw // 2 + lw, xs[k]: xs[k + 1] + 1] = True
+        if k:
+            m[levels[k - 1]: y + 1, xs[k] - lw // 2: xs[k] - lw // 2 + lw] = True
+    for x in ticks:
+        y = next(levels[k] for k in range(len(levels)) if xs[k] <= x <= xs[k + 1])
+        m[y - 6: y + 7, x: x + 1] = True
+    if band is not None:  # a continuous second stroke ``band`` px above (a band edge, or another arm)
+        m |= np.roll(m, -band, axis=0)
+    return m
+
+
+def test_level_curve_reads_levels_through_censor_marks():
+    from trialgeist.extract.raster import Panel, level_curve
+
+    levels = list(range(30, 260, 3))  # 77 tiny drops: far too dense for the staircase reader
+    m = _level_mask(levels, ticks=range(60, 580, 7))
+    p = Panel(x0=20, y1=290, x1=595, y0=10, lw=1)
+    lv = level_curve(m, p)
+    assert lv is not None and lv.falling_ok and not lv.rising_ok
+    xs = np.linspace(40, 590, len(levels) + 1).astype(int)
+    for x, y in lv.points:  # every reading is on the curve (within half a stroke) at its column
+        k = int(np.searchsorted(xs, x, side="right")) - 1
+        near = [levels[j] for j in (k - 1, k) if 0 <= j < len(levels)]
+        assert min(abs(y - v) for v in near) <= 2, (x, y, near)
+
+
+def test_level_curve_refuses_a_second_stroke_in_the_same_colour():
+    from trialgeist.extract.raster import Panel, level_curve
+
+    m = _level_mask(list(range(60, 200, 10)), band=25)  # a band edge (or a second arm) in the same colour
+    why: list = []
+    assert level_curve(m, Panel(x0=20, y1=290, x1=595, y0=10, lw=1), why=why) is None
+    assert any("several strokes" in str(w) for w in why)
+
+
+def test_level_curve_refuses_non_monotone_ink():
+    from trialgeist.extract.raster import Panel, level_curve
+
+    m = _level_mask([200, 150, 220, 100, 240])  # up and down: not a survival curve in either orientation
+    why: list = []
+    assert level_curve(m, Panel(x0=20, y1=290, x1=595, y0=10, lw=1), why=why) is None

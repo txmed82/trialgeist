@@ -59,17 +59,30 @@ geometry, or JATS markup), and every claim keeps page and bbox provenance.
    seen after an occlusion gets its own wider time window. When the numbers at risk come from PDF text, a raster finding can
    be proven like a vector one. **When they were read by OCR, the finding is capped at
    `INCONCLUSIVE` and labelled a lead**: OCR digits are never evidence.
-5. **Cross-table consistency** (`engines/consistency.py`, `extract/crosstable.py`): baseline
+   Numbers-at-risk rows are read with or without a "No. at risk" label (unlabelled rows must
+   sit directly under the plot, on the time grid, never increase, and the page must speak of
+   numbers at risk).
+5. **KM checkpoint bound** (`engines/km_checkpoint.py`): most modern trial figures (hundreds
+   of patients per arm, every censoring marked, shaded bands) are too dense to rebuild drop by
+   drop. Their *level* can still be read wherever the curve is one clean stroke. Between two
+   numbers-at-risk times a Kaplan-Meier curve cannot fall by a larger fraction than the share
+   of patients who left the risk set: S(t2-)/S(t1) >= n(t2)/n(t1), under either at-risk
+   convention. Levels are read only in columns holding a single stroke no thicker than the
+   line (censor marks, crossings and bands are skipped, never guessed); a colour with a second
+   stroke or non-monotone ink is refused. With as many arms as rows, every one-to-one
+   assignment of rows to curves is tried, so a row that fits no curve is proven without
+   knowing the pairing. Certificates use `Fraction` only.
+6. **Cross-table consistency** (`engines/consistency.py`, `extract/crosstable.py`): baseline
    and outcome tables (JATS cells or PDF geometry grids) are checked for Total-column sums,
    arm totals, pooled means lying inside the arm means, a shared denominator across the
    categories of one variable, and medians inside their IQR or range.
-6. **Carlisle-Stouffer** (`carlisle.py`): rounding-aware two-arm mid-p values for continuous
+7. **Carlisle-Stouffer** (`carlisle.py`): rounding-aware two-arm mid-p values for continuous
    variables (so identical printed means do not fake under-dispersion), mid-p Fisher for
    binary rows, and stratification and cluster guardrails. It never proves anything.
-7. **Registry time machine** (`registry/diff.py`): ClinicalTrials.gov v2 plus the history API.
+8. **Registry time machine** (`registry/diff.py`): ClinicalTrials.gov v2 plus the history API.
    It selects the versions active at the actual start and primary-completion dates and diffs
    primary outcomes, outcome swaps, time horizons and sample size against the paper.
-6. **Randomisation arithmetic** (`extract/consort.py`): a sentence that states how many people
+9. **Randomisation arithmetic** (`extract/consort.py`): a sentence that states how many people
    were randomised and lists every arm, such as "530 patients were randomly assigned to
    empagliflozin (n = 265) or placebo (n = 265)", "324 were randomized: 162 to dapagliflozin and
    162 to placebo" or "511 were randomised (258 to placebo, 253 to nilvadipine)", must add up.
@@ -105,7 +118,8 @@ geometry, or JATS markup), and every claim keeps page and bbox provenance.
 | G2 | `tests/test_gate2_positive.py` | documented impossibilities in retracted trials are proven, and certificates exit 0 |
 | G3 | `tests/test_gate3_negative.py` | 30+ open-access RCTs (PDF and XML) give 0 `PROVEN_IMPOSSIBLE` (four genuine typos found in them are recorded in the manifest) |
 | R | `tests/test_raster_gate.py` | synthetic KM figures rasterised at 110-300 dpi, JPEG quality 60-95, falling and rising, 0.6-1.4 pt lines: >= 60% digitised with 0 false proofs; >= 50% of planted risk-table edits caught where the edited curve was read |
-| RC | `tests/test_gate_raster_corpus.py` | 25 retraction-checked OA RCTs with bitmap KM figures give 0 `PROVEN_IMPOSSIBLE` |
+| RD | `tests/test_raster_gate.py` (dense) | modern dense figures (150-900 per arm, every censoring marked, shaded bands, overlapping arms) at 110-300 dpi: 0 false proofs; inflated numbers-at-risk rows caught by the checkpoint bound |
+| RC | `tests/test_gate_raster_corpus.py` | 25 retraction-checked OA RCTs with bitmap KM figures give 0 unexpected `PROVEN_IMPOSSIBLE`; the one genuine error found in them (PMC13629860 Fig 4D) is recorded in the manifest, must still be found, and its certificate must verify |
 | C | `tests/test_consort.py` | prose allocation sentences: total vs enumerated arms, N-1/N convention pairs, two-word crossover spellings, page-break sentences read across the seam |
 
 Raster figures need `tesseract` on PATH (`brew install tesseract`, `apt install tesseract-ocr`);

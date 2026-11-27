@@ -13,7 +13,8 @@ re-derives the contradiction from the printed digits.
 | G2 | Real retracted positive controls (`tests/test_gate2_positive.py`) | each documented impossibility rediscovered from printed numbers, certificate runs and exits 0 |
 | G3 | Clean OA negative controls (`tests/test_gate3_negative.py`) | 31 PMC OA RCT PDFs + XML end to end -> 0 `PROVEN_IMPOSSIBLE` beyond the four verified typos recorded in the manifest |
 | R | Rasterised synthetic KM (`tests/test_raster_gate.py`) | figures rendered as JPEG at 110-300 dpi, quality 60-95, falling and rising -> 0 false proofs; planted risk-table edits caught |
-| RC | Real raster KM corpus (`tests/test_gate_raster_corpus.py`) | 25 retraction-checked OA RCTs with bitmap KM figures -> 0 `PROVEN_IMPOSSIBLE`; per-paper raster coverage printed in the CI job summary |
+| RD | Dense raster KM (`tests/test_raster_gate.py`, dense) | 150-900 per arm, every censoring marked, shaded bands -> 0 false proofs; inflated risk rows caught by the checkpoint bound |
+| RC | Real raster KM corpus (`tests/test_gate_raster_corpus.py`) | 25 retraction-checked OA RCTs with bitmap KM figures -> 0 unexpected `PROVEN_IMPOSSIBLE` (verified errors are listed in the manifest and must still be found); per-paper coverage printed in the job log and summary |
 | C | Randomisation arithmetic (`tests/test_consort.py`) | prose allocation sentences: total vs enumerated arms, N-1/N convention pairs, two-word crossover spellings, page-break sentences read across the seam |
 
 ## Phases
@@ -35,20 +36,24 @@ re-derives the contradiction from the printed digits.
 - [x] P14 raster KM digitiser (OCR-calibrated axes, colour separation, riser-joined staircases, legend pairing); OCR-read numbers at risk are leads only; studio draws digitised drops
 - [x] P15 randomisation arithmetic in prose (total vs enumerated arm allocation)
 - [x] P16 raster hardening: per-drop time tolerance after occlusions, double-entry edge reader with explicit acceptance ratios, grey/nested-frame detection, per-trace rising orientation, glyph-height OCR rows bounded per panel
+- [x] P17 small grey tick labels read from ink blobs (survminer/ggplot exports)
+- [x] P18 KM checkpoint bound for dense figures (levels only, S(t2-)/S(t1) >= n(t2)/n(t1)), joint row-to-curve assignment, unlabelled risk rows; first genuine raster error found in a real paper (PMC13629860 Fig 4D: 7 at risk at month 30 after a death among 7 at month 25.5)
 
 ## Open items
 
-- Raster KM coverage on real figures is partial: in the latest full rescan of the 25 RC papers, panels with a digitised staircase and a text numbers-at-risk table sit in 4 papers (9 panels; earlier runs reached 15 before the stricter axis/orientation rules). Remaining refusals, most common first:
-  - x/y tick labels not read on an exact linear scale (small or rotated labels, ggplot spacing)
+- Raster KM coverage on real figures is partial: in the latest full rescan of the 25 RC papers, 6 papers have read panels (30 panels, 25 rebuilt staircases + 25 level-only curves; was 4 papers / 9 panels before P17/P18). Remaining refusals, most common first:
+  - x/y tick labels not read on an exact linear scale (rotated labels, labels off the tick grid)
   - no L-frame (boxed or axis-less plots)
-  - numbers at risk only inside the image (OCR leads)
+  - no numbers-at-risk table at all, or only inside the image (OCR leads)
+  - adjusted / competing-risk figures (skipped by design)
   - polyline or error-bar curves (refused by design)
   - ambiguous y scale on a rising curve (labels <= 1.5 cannot be told from a zoomed percent axis)
 
   Every refusal is sound; widening coverage is the remaining work. Gate R (synthetic, known truth) is the
   binding quality metric: 37/40 figures digitised, 0 false proofs, 9/14 planted edits caught where the
-  edited curve was digitised. (Figures as of CI run 45961402012 on abec255; the live numbers are printed
-  by `tests/test_raster_gate.py` and the RC job summary, which win when they disagree.)
+  edited curve was digitised; Gate RD (dense) 27/30 read, 0 false proofs, 23/30 inflated rows caught
+  (local run, N=30). (Live numbers are printed by `tests/test_raster_gate.py` and the RC job log,
+  which win when they disagree.)
 - Inter-table N checks (Table 1 arm N vs outcome-table N) are not proof-grade (analysis populations differ legitimately); only within-sentence randomisation arithmetic is proven.
 - Registry discordance needs network; Gate 1 covers it with fixtures.
 
@@ -94,3 +99,12 @@ re-derives the contradiction from the printed digits.
 10. Randomisation arithmetic is read only from one sentence that states the total
    and enumerates every arm, with people as the subject; cluster, factorial,
    crossover and re-randomised designs are skipped for the whole document.
+11. KM checkpoint bound: only the level of a curve is used, read in columns holding one
+   stroke no thicker than the line; upper readings are widened by one event (1/n) so curves
+   drawn by joining event points stay sound. Joint row assignment is proven only if every
+   one-to-one assignment fails. A property test checks real KM data under both at-risk
+   conventions, ties and adversarial reading noise never yields a proof.
+12. KM-SAT segments: drops before a numbers-at-risk table's first time (when it is not 0) are
+   left out, never held to that first count (they had more patients at risk). Certificates
+   carry each drop's time and check it lies inside its interval. (Found because a false OCR
+   lead appeared on PMC13706688 p14.)

@@ -115,3 +115,68 @@ def test_gate_raster_recall(tmp_path):
     print(f"raster recall: {caught}/{planted} edited at-risk tables caught where the edited curve was digitised "
           f"({figs_caught}/{figs} among all digitised figures)")
     assert planted >= 5 and caught >= 0.5 * planted
+
+
+# ------------------------------------------------------------- Gate RD (dense figures)
+# Modern trial figures: hundreds of patients per arm, every censoring marked, shaded bands.
+# Drops are too small and too many to rebuild one by one; the checkpoint bound reads levels.
+ND = int(os.environ.get("TG_RASTER_DENSE_N", "20"))
+
+
+def dense_figure(rnd: random.Random, tmp_path, idx: int, inflate: bool):
+    narms = rnd.choice([2, 2, 3])
+    pal = rnd.choice([p for p in PALETTES + [[(0.97, 0.46, 0.43), (0.0, 0.75, 0.77)]] if len(p) >= narms])
+    arms, lam0 = [], rnd.uniform(0.01, 0.05)
+    for ai in range(narms):
+        obs = simulate_survival(rnd, rnd.randint(150, 900), lam0 * rnd.uniform(0.5, 1.6))
+        risk = [(tau, sum(1 for u, _ in obs if u >= tau)) for tau in range(0, 37, 6)]
+        arms.append([f"Arm {ai + 1}", km(obs), risk, sorted({t for t, e in obs if not e and t < 36})])
+    if inflate:  # one arm's row barely falls (e.g. the enrolled number carried across): the curve outruns it
+        ai = rnd.randrange(narms)
+        n0 = arms[ai][2][0][1]
+        arms[ai][2] = [(tau, n0 - round(k * 0.02 * n0)) for k, (tau, _) in enumerate(arms[ai][2])]
+    dpi, q, rising = rnd.choice([110, 150, 200, 300]), rnd.choice([60, 75, 85, 95]), rnd.random() < 0.25
+    width, bands = rnd.choice([0.6, 1.0, 1.4]), rnd.choice([0, 0, 0.18, 0.3])
+    with pymupdf.open() as src:
+        render_km(src.new_page(width=612, height=792), arms, rising=rising, colors=pal, width=width, bands=bands)
+        clip = pymupdf.Rect(40, 105, 520, 410)
+        jpg = src[0].get_pixmap(dpi=dpi, clip=clip).tobytes("jpeg", jpg_quality=q)
+        with pymupdf.open() as out:
+            page = out.new_page(width=612, height=792)
+            page.insert_text((50, 90), "Figure 2. Kaplan-Meier estimates" + (" of cumulative mortality" if rising else ""), fontsize=10)
+            page.insert_image(clip, stream=jpg)
+            for x0, y0, x1, y1, w, *_ in src[0].get_text("words"):
+                if y0 > clip.y1:
+                    page.insert_text((x0, y1 - 2), w, fontsize=9)
+            path = tmp_path / f"d{idx}.pdf"
+            out.save(path)
+    pymupdf.TOOLS.store_shrink(100)
+    return path, (dpi, q, rising, width, bands, narms)
+
+
+def test_gate_raster_dense_clean_precision(tmp_path):
+    rnd = random.Random(4242)
+    read = levels = 0
+    bad = []
+    for i in range(ND):
+        path, cfg = dense_figure(rnd, tmp_path, i, inflate=False)
+        fs, plots, _ = run(path)
+        read += bool(plots)
+        levels += sum(len(p.levels) for p in plots)
+        bad += [(cfg, f.detail[:300]) for f in fs if f.tier is Tier.PROVEN_IMPOSSIBLE]
+    print(f"raster dense clean: {read}/{ND} figures read ({levels} curves by level only)")
+    assert not bad, bad
+    assert read >= 0.7 * ND
+
+
+def test_gate_raster_dense_recall(tmp_path):
+    rnd = random.Random(99)
+    caught = read = 0
+    for i in range(ND):
+        path, _ = dense_figure(rnd, tmp_path, i, inflate=True)
+        fs, plots, _ = run(path)
+        if plots:
+            read += 1
+            caught += any(f.tier is Tier.PROVEN_IMPOSSIBLE for f in fs)
+    print(f"raster dense recall: {caught}/{read} inflated numbers-at-risk rows caught among read figures")
+    assert read >= 0.7 * ND and caught >= 0.25 * read

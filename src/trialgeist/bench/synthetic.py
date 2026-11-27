@@ -135,10 +135,11 @@ def render_table1(page, rows, arms, footnote):
     c.text(50, y + 10, footnote, 7)
 
 
-def render_km(page, arms_data, horizon=36, step=6, rising=False, colors=None, width=1.0):
+def render_km(page, arms_data, horizon=36, step=6, rising=False, colors=None, width=1.0, bands=0.0, censor_h=2.5):
     """arms_data: list of (name, steps[[t, before, after]], risk[(tau, n)], censor_times).
 
-    rising=True plots 1 - S(t) (cumulative mortality, as in many Lancet/NEJM figures)."""
+    rising=True plots 1 - S(t) (cumulative mortality, as in many Lancet/NEJM figures).
+    bands > 0 shades an approximate 95% band (fill opacity ``bands``) in each arm's colour."""
     c = Canvas(page)
     L, R, T, B = 90.0, 500.0, 120.0, 380.0
     X = lambda t: L + (R - L) * float(t) / horizon
@@ -157,6 +158,17 @@ def render_km(page, arms_data, horizon=36, step=6, rising=False, colors=None, wi
     c.text((L + R) / 2, B + 28, "Months since randomization", align="center")
     for i, (name, steps, risk, cens) in enumerate(arms_data):
         col = (colors or COLORS)[i]
+        if bands and steps:
+            n0 = max(n for _, n in risk)
+            hw = lambda s: 1.96 * math.sqrt(max(float(s) * (1 - float(s)), 0) / max(n0 * float(s), 1))  # noqa: E731
+            lv = [(Fraction(0), Fraction(1))] + [(t, a) for t, _, a in steps]
+            lv.append((Fraction(horizon), lv[-1][1]))
+            up = [(X(t), Y(min(1, float(s) + hw(s)))) for (t, s), (t2, _) in zip(lv, lv[1:]) for t in (t, t2)]
+            lo = [(X(t), Y(max(0, float(s) - hw(s)))) for (t, s), (t2, _) in zip(lv, lv[1:]) for t in (t, t2)]
+            sh = c.page.new_shape()
+            sh.draw_polyline(up + lo[::-1])
+            sh.finish(color=None, fill=col, fill_opacity=bands, closePath=True)
+            sh.commit()
         pts = [(X(0), Y(1))]
         for t, b, a in steps:
             pts.append((X(t), Y(b)))
@@ -170,7 +182,7 @@ def render_km(page, arms_data, horizon=36, step=6, rising=False, colors=None, wi
             for t, b, a in steps:
                 if t <= ct:
                     lvl = a
-            c.line((X(ct), Y(lvl) - 2.5), (X(ct), Y(lvl) + 2.5), col, 0.6)
+            c.line((X(ct), Y(lvl) - censor_h), (X(ct), Y(lvl) + censor_h), col, 0.6)
         c.line((R - 120, T + 15 + 12 * i), (R - 100, T + 15 + 12 * i), col, 1.0)
         c.text(R - 95, T + 18 + 12 * i, name)
     c.text(20, B + 50, "No. at risk")

@@ -279,9 +279,20 @@ def risk_rows(page: pymupdf.Page, xaxis: Axis, below_y: float, x_lo: float, x_hi
     """
     rows = rows_from_page(page)
     label_rows = [r for r in rows if r.y > below_y and r.y < below_y + 80 and RISK_LABEL_RE.search(r.text)]
-    if not label_rows:
-        return []
-    start_y = label_rows[0].y
+    unlabelled = not label_rows
+    if unlabelled:
+        # Many journals label the rows only with the arm names and put "number at risk" in the
+        # caption or legend.  Then only rows starting right under the plot are read, only if the
+        # page speaks of numbers at risk, and each must be non-increasing (counts at risk).
+        if not RISK_LABEL_RE.search(page.get_text()):
+            return []
+        first = next((r for r in rows if below_y - 3 < r.y < below_y + 25 and
+                      sum(1 for w in r.words if re.fullmatch(r"\d[\d,]*", w.text) and x_lo - 15 <= (w.x0 + w.x1) / 2 <= x_hi + 15) >= 3), None)
+        if first is None:
+            return []
+        start_y = first.y
+    else:
+        start_y = label_rows[0].y
     tick_vals = sorted(v for _, v in xaxis.labels)
     tick_step = min((b - a for a, b in zip(tick_vals, tick_vals[1:]) if b > a), default=None)
     out = []
@@ -307,6 +318,8 @@ def risk_rows(page: pymupdf.Page, xaxis: Axis, below_y: float, x_lo: float, x_hi
                 break
             aligned.append((snapped, int(w.text.replace(",", ""))))
         times = [t for t, _ in aligned]
+        if unlabelled and any(b > a for (_, a), (_, b) in zip(aligned, aligned[1:])):
+            continue
         if len(aligned) >= 3 and len(set(times)) == len(times) and times == sorted(times):
             label = " ".join(w.text for w in r.words if not re.fullmatch(r"[\d,()]+", w.text) and (w.x1 < x_lo + 5))
             out.append((label.strip(), aligned))

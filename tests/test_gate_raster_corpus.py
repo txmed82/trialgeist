@@ -2,7 +2,9 @@
 
 Every paper in tests/corpus/raster/manifest.json (built by scripts/build_raster_corpus.py,
 retraction-checked) is scanned with the raster digitiser.  No PROVEN_IMPOSSIBLE is
-allowed, and a raster finding built on OCR-read numbers at risk must never carry a
+allowed except the reporting errors a person has checked against the figure and recorded
+in the manifest (``verified_errors``): those must still be found, and their certificates
+must verify.  A raster finding built on OCR-read numbers at risk never carries a
 certificate.  Reading coverage is reported, not asserted: refusing a figure is sound.
 """
 
@@ -16,6 +18,7 @@ from pathlib import Path
 
 import pytest
 
+from trialgeist.certificates import run_certificate
 from trialgeist.scan import scan_pdf
 from trialgeist.verdict import Tier
 
@@ -30,14 +33,27 @@ def test_raster_corpus_manifest_present():
 
 
 @pytest.mark.parametrize("entry", MANIFEST, ids=[m["pmcid"] for m in MANIFEST])
-def test_raster_corpus_no_false_proofs(entry, capsys):
+def test_raster_corpus_no_false_proofs(entry, capsys, tmp_path):
     pdf = CORPUS / entry["pmcid"] / "paper.pdf"
     if not pdf.exists():
         pytest.skip("PDF not downloaded: uv run python scripts/fetch_corpus.py")
     assert hashlib.sha256(pdf.read_bytes()).hexdigest() == entry["pdf_sha256"]
     report = scan_pdf(pdf, raster=True)
     proofs = [f for f in report.findings if f.tier is Tier.PROVEN_IMPOSSIBLE]
-    assert not proofs, [(f.title, f.detail[:200]) for f in proofs]
+    known = entry.get("verified_errors", [])
+
+    def matches(f, k):
+        return f.check == k["check"] and any(p.page == k["page"] - 1 for p in f.provenance)
+
+    unexpected = [f for f in proofs if not any(matches(f, k) for k in known)]
+    assert not unexpected, [(f.title, f.detail[:200]) for f in unexpected]
+    for k in known:
+        hits = [f for f in proofs if matches(f, k)]
+        assert hits, f"verified error no longer found: {k['figure']}"
+        for f in hits:
+            assert f.certificate is not None
+            ok, _, out = run_certificate(f.certificate, tmp_path, f.id)
+            assert ok, out
     for f in report.findings:
         if f.title.startswith("Lead (OCR-read"):
             assert f.certificate is None
